@@ -14,3 +14,4 @@ A good, clear description == a faster review :)
 - [ ] Added tests that cover your change
 - [ ] Added/modified documentation as required (such as the `README.md`)
 - [ ] Made sure the title of the PR is a good description that can go into the release notes
+- [ ] Added a `kind` label to the PR (e.g. `kind/feature`)
