@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a bug report to help us improve pctl
+about: Create a bug report to help us improve profiles
 title: ''
 labels: kind/bug
 assignees: ''
@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 <!--
-Thank you for opening this bug report! You are helping make pctl a better project :)
+Thank you for opening this bug report! You are helping make profiles a better project :)
 In order to help us process this issue faster, please provide as much detail as possible.
 
 When providing command examples, error output or code samples, please use code blocks.
@@ -31,7 +31,7 @@ If using a config file, include it here, removing any sensitive information!
 
 **Logs**
 <!--
-Include the output of the command line when running pctl.
+Include the output of the command line when running profiles.
 Make sure you redact any sensitive information before posting.
 If the output is long, please consider a Gist, or an html details tag.
 -->
@@ -39,14 +39,11 @@ If the output is long, please consider a Gist, or an html details tag.
 **Anything else we need to know?**
 <!--
 What OS are you using?
-Are you using a downloaded binary or did you compile pctl?
+Are you using a downloaded binary or did you compile profiles?
 -->
 
 **Versions**
 <!--
-Please paste in the output of these commands:
+What profiles version are you using?
 -->
-```
-$ pctl version
-```
 

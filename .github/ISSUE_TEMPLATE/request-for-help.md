@@ -1,6 +1,6 @@
 ---
 name: Request for help
-about: Do you need help with pctl?
+about: Do you need help with profiles?
 title: ''
 labels: kind/help
 assignees: ''

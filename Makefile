@@ -1,6 +1,3 @@
-build:
-	go build -o ./pctl cmd/pctl/main.go
-
 test: unit-test integration-test
 
 unit-test:
