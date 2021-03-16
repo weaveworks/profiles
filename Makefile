@@ -1,14 +1,4 @@
 SHELL := /bin/bash
-# test: unit-test integration-test
-
-# unit-test:
-# 	go test -count=1 ./pkg/...
-
-# integration-test:
-# 	go test -count=1 ./tests/...
-
-# lint:
-# 	golangci-lint run
 # VERSION defines the project version for the bundle. 
 # Update this value when you upgrade the version of your project.
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
@@ -71,6 +61,9 @@ ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: generate fmt vet manifests
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); ginkgo -r --skipPackage acceptance
+
+lint:
+	golangci-lint run
 
 # Build manager binary
 manager: generate fmt vet
