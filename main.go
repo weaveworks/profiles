@@ -31,7 +31,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	weaveworksv1alpha1 "github.com/weaveworks/profiles/api/v1alpha1"
+
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	"github.com/weaveworks/profiles/controllers"
 	// +kubebuilder:scaffold:imports
 )
@@ -45,6 +48,8 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(weaveworksv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(sourcev1.AddToScheme(scheme))
+	utilruntime.Must(helmv2.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -63,9 +68,11 @@ func main() {
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
+	// TODO what is this logging setup?
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Namespace:              "",
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
 		Port:                   9443,
