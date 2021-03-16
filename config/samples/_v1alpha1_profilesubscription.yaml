@@ -1,0 +1,7 @@
+apiVersion: weave.works/v1alpha1
+kind: ProfileSubscription
+metadata:
+  name: profilesubscription-sample
+spec:
+  # Add fields here
+  foo: bar
