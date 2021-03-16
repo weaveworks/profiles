@@ -56,10 +56,9 @@ all: manager
 # run acceptance tests
 # change this so that you can run on same kind cluster
 # also image should be reloaded into registry each time
-acceptance: docker-local kind-up install deploy
+acceptance: docker-local kind-up install undeploy deploy
 	flux install --components="source-controller,helm-controller"
 	ginkgo -r tests/acceptance/
-	# $(MAKE) kind-down
 
 kind-up:
 	./hack/load-kind.sh
@@ -96,7 +95,7 @@ deploy: manifests kustomize
 
 # UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
 undeploy:
-	$(KUSTOMIZE) build config/default | kubectl delete -f -
+	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=true -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen

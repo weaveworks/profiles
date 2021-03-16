@@ -1,6 +1,16 @@
 #!/bin/sh
 set -o errexit
 
+
+set +e
+kind get clusters | grep profiles
+exitCode=$?
+set -e
+if [ $exitCode -eq "0" ]; then
+  echo "kind cluster profiles already exists"
+  exit 0
+fi
+
 # create registry container unless it already exists
 reg_name='kind-registry'
 reg_port='5000'
