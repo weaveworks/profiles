@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 # test: unit-test integration-test
 
 # unit-test:
@@ -39,7 +40,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 BUNDLE_IMG ?= controller-bundle:$(VERSION)
 
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= profiles-controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
@@ -52,12 +53,25 @@ endif
 
 all: manager
 
+# run acceptance tests
+# change this so that you can run on same kind cluster
+# also image should be reloaded into registry each time
+acceptance: docker-local kind-up install deploy
+	flux install --components="source-controller,helm-controller"
+	ginkgo -r tests/acceptance/
+	# $(MAKE) kind-down
+
+kind-up:
+	./hack/load-kind.sh
+
+kind-down:
+	kind delete cluster --name profiles
+
 # Run tests
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: generate fmt vet manifests
-	mkdir -p ${ENVTEST_ASSETS_DIR}
-	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.7.0/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh
+	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); ginkgo -r --skipPackage acceptance
 
 # Build manager binary
 manager: generate fmt vet
@@ -77,7 +91,7 @@ uninstall: manifests kustomize
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests kustomize
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image controller=localhost:5000/${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 # UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
@@ -97,8 +111,13 @@ vet:
 	go vet ./...
 
 # Generate code
-generate: controller-gen
+generate: manifests
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+# Build the docker image
+docker-local:
+	docker build -t localhost:5000/${IMG} .
+	docker push localhost:5000/${IMG}
 
 # Build the docker image
 docker-build: test
