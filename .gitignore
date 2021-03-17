@@ -9,6 +9,7 @@
 *.dylib
 bin
 testbin/*
+controllers/testdata
 
 # Test binary, build with `go test -c`
 *.test

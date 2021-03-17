@@ -44,11 +44,11 @@ endif
 all: manager
 
 # run acceptance tests
-# change this so that you can run on same kind cluster
-# also image should be reloaded into registry each time
-acceptance: docker-local kind-up install undeploy deploy
+acceptance: local-env
+	ginkgo -r tests/acceptance/ || kubectl -n profiles-system logs -f $(shell kubectl -n profiles-system get pods -l control-plane=controller-manager -o jsonpath={.items[0].metadata.name}) manager
+
+local-env: docker-build-local kind-up docker-push-local install undeploy deploy
 	flux install --components="source-controller,helm-controller"
-	ginkgo -r tests/acceptance/
 
 kind-up:
 	./hack/load-kind.sh
@@ -58,12 +58,22 @@ kind-down:
 
 # Run tests
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
-test: generate fmt vet manifests
-	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); ginkgo -r --skipPackage acceptance
+test: generate fmt vet manifests test_deps
+	source hack/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); ginkgo -r --skipPackage acceptance
+
+# Running the tests requires the some .toolkit.fluxcd.io CRDs
+SOURCE_VER ?= v0.9.0
+HELM_VER ?= v0.8.1
+TEST_CRDS:=controllers/testdata/crds
+test_deps:
+	mkdir -p ${TEST_CRDS}
+	curl -s --fail https://raw.githubusercontent.com/fluxcd/source-controller/${SOURCE_VER}/config/crd/bases/source.toolkit.fluxcd.io_gitrepositories.yaml \
+		-o ${TEST_CRDS}/gitrepositories.yaml
+	curl -s --fail https://raw.githubusercontent.com/fluxcd/helm-controller/${HELM_VER}/config/crd/bases/helm.toolkit.fluxcd.io_helmreleases.yaml \
+		-o ${TEST_CRDS}/helmreleases.yaml
 
 lint:
-	golangci-lint run
+	golangci-lint run --timeout=5m0s
 
 # Build manager binary
 manager: generate fmt vet
@@ -85,6 +95,9 @@ uninstall: manifests kustomize
 deploy: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=localhost:5000/${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	echo "waiting for controller to be ready"
+	kubectl -n profiles-system wait --for=condition=available deployment profiles-controller-manager
+	kubectl -n profiles-system wait --for=condition=Ready --all pods
 
 # UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
 undeploy:
@@ -106,11 +119,15 @@ vet:
 generate: manifests
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
-# Build the docker image
-docker-local:
+# Builds the local docker image
+docker-build-local:
 	docker build -t localhost:5000/${IMG} .
+
+# Builds the local docker image
+docker-push-local:
 	docker push localhost:5000/${IMG}
 
+# TODO publish image on release
 # Build the docker image
 docker-build: test
 	docker build -t ${IMG} .
@@ -138,6 +155,7 @@ TMP_DIR=$$(mktemp -d) ;\
 cd $$TMP_DIR ;\
 go mod init tmp ;\
 echo "Downloading $(2)" ;\
+mkdir -p $(PROJECT_DIR)/bin ;\
 GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
 rm -rf $$TMP_DIR ;\
 }

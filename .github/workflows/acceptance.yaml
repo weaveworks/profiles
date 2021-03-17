@@ -1,0 +1,37 @@
+name: Acceptance
+
+on:
+  pull_request: {}
+
+jobs:
+  test:
+    name: Acceptance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Cache go-build and mod
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build/
+            ~/go/pkg/mod/
+          key: ${{ hashFiles('go.sum') }}
+      - name: Setup Kind CLI
+        run: |
+          sudo curl -sSLo /usr/local/bin/kind https://github.com/kubernetes-sigs/kind/releases/download/v0.10.0/kind-linux-amd64
+          sudo chmod +x /usr/local/bin/kind
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v1
+        id: install
+      - name: Setup Ginkgo
+        run: |
+          go get -u github.com/onsi/ginkgo/ginkgo
+      - name: Setup Flux v2 CLI
+        uses: fluxcd/flux2/action@main
+      - name: Acceptance
+        run: |
+          PATH=$PATH:$(go env GOPATH)/bin make acceptance
+

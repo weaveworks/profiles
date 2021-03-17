@@ -57,9 +57,7 @@ var _ = BeforeSuite(func() {
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "config", "crd", "bases"),
-			// TODO make sure this is set up in env/dockerfile/makefile
-			filepath.Join("..", "..", "helm-controller", "config", "crd", "bases"),
-			filepath.Join("..", "..", "source-controller", "config", "crd", "bases"),
+			filepath.Join("testdata", "crds"),
 		},
 	}
 

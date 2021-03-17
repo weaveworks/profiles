@@ -74,7 +74,7 @@ var _ = Describe("Acceptance", func() {
 					return v1.PodPhase("")
 				}
 				return podList.Items[0].Status.Phase
-			}, 2*time.Minute, 10*time.Second).Should(Equal(v1.PodPhase("Running")))
+			}, 5*time.Minute, 10*time.Second).Should(Equal(v1.PodPhase("Running")))
 
 			// TODO we check the Pod because for some reason we the HelmRelease will
 			// not register as running, even though all child resources are fine
