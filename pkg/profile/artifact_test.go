@@ -81,8 +81,8 @@ var _ = Describe("Artifact", func() {
 	})
 
 	It("creates the helm and gitrepo resources", func() {
-		_ = sourcev1.AddToScheme(scheme)
-		_ = helmv2.AddToScheme(scheme)
+		Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
+		Expect(helmv2.AddToScheme(scheme)).To(Succeed())
 
 		err := p.CreateArtifacts(ctx)
 		Expect(err).NotTo(HaveOccurred())
@@ -112,7 +112,7 @@ var _ = Describe("Artifact", func() {
 		It("errors", func() {
 			// this is a bit of a hack, but by not adding this resource to the scheme
 			// we can force the Create call to fail
-			_ = helmv2.AddToScheme(scheme)
+			Expect(helmv2.AddToScheme(scheme)).To(Succeed())
 			err := p.CreateArtifacts(ctx)
 			Expect(err).To(MatchError(ContainSubstring("failed to create GitRepository resource")))
 		})
@@ -120,7 +120,7 @@ var _ = Describe("Artifact", func() {
 
 	When("the HelmRelease create fails", func() {
 		It("errors", func() {
-			_ = sourcev1.AddToScheme(scheme)
+			Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
 			err := p.CreateArtifacts(ctx)
 			Expect(err).To(MatchError(ContainSubstring("failed to create HelmRelease resource")))
 		})

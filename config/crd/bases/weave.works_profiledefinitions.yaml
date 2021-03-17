@@ -51,7 +51,8 @@ spec:
                   type: object
                 type: array
               description:
-                description: Description is the description of the Profile
+                description: Description is some text to allow a user to identify
+                  what this profile installs.
                 type: string
             type: object
           status:

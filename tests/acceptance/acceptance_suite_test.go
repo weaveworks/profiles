@@ -21,8 +21,8 @@ var kClient client.Client
 
 var _ = BeforeSuite(func() {
 	scheme := runtime.NewScheme()
-	_ = clientgoscheme.AddToScheme(scheme)
-	_ = v1alpha1.AddToScheme(scheme)
+	Expect(clientgoscheme.AddToScheme(scheme)).To(Succeed())
+	Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
 
 	kubeconfig := ctrl.GetConfigOrDie()
 	var err error

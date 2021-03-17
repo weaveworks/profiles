@@ -75,8 +75,8 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
-	_ = sourcev1.AddToScheme(scheme.Scheme)
-	_ = helmv2.AddToScheme(scheme.Scheme)
+	Expect(sourcev1.AddToScheme(scheme.Scheme)).To(Succeed())
+	Expect(helmv2.AddToScheme(scheme.Scheme)).To(Succeed())
 
 	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme: scheme.Scheme,
