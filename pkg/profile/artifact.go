@@ -51,7 +51,7 @@ func (p *Profile) createGitRepository(ctx context.Context) error {
 		},
 	}
 
-	p.log.Info(fmt.Sprintf("creating git repository %s/%s", namespace, gitRefName))
+	p.log.Info("creating git repository", "resource", gitRefName)
 	return p.client.Create(ctx, &gitRepo)
 }
 
@@ -82,7 +82,7 @@ func (p *Profile) createHelmRelease(ctx context.Context) error {
 		},
 	}
 
-	p.log.Info(fmt.Sprintf("creating helm release %s/%s", namespace, helmReleasename))
+	p.log.Info("creating helm release", "resource", helmReleasename)
 	return p.client.Create(ctx, &helmRelease)
 }
 

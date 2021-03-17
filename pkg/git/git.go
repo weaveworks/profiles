@@ -31,7 +31,7 @@ func GetProfileDefinition(repoURL, branch string, log logr.Logger) (v1alpha1.Pro
 	profileURL := strings.Replace(repoURL, "github.com", "raw.githubusercontent.com", 1)
 	profileURL = fmt.Sprintf("%s/%s/profile.yaml", profileURL, branch)
 
-	log.Info(fmt.Sprintf("fetching profile.yaml for %s", repoURL))
+	log.Info("fetching profile.yaml", "repoURL", repoURL)
 	resp, err := httpClient.Get(profileURL)
 	if err != nil {
 		return v1alpha1.ProfileDefinition{}, errors.Wrap(err, "failed to fetch profile")
