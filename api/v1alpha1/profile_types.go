@@ -25,7 +25,7 @@ import (
 
 // ProfileDefinitionSpec defines the desired state of ProfileDefinition
 type ProfileDefinitionSpec struct {
-	// Description is the description of the Profile
+	// Description is some text to allow a user to identify what this profile installs.
 	Description string `json:"description,omitempty"`
 	// Artifacts is a list of Profile artifacts
 	// can be one of HelmChart, TODO
