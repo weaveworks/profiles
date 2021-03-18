@@ -7,7 +7,6 @@ import (
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
-	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -20,11 +19,11 @@ const (
 
 func (p *Profile) CreateArtifacts(ctx context.Context) error {
 	if err := p.createGitRepository(ctx); err != nil {
-		return errors.Wrap(err, "failed to create GitRepository resource")
+		return fmt.Errorf("failed to create GitRepository resource: %w", err)
 	}
 
 	if err := p.createHelmRelease(ctx); err != nil {
-		return errors.Wrap(err, "failed to create HelmRelease resource")
+		return fmt.Errorf("failed to create HelmRelease resource: %w", err)
 	}
 
 	p.log.Info("all artifacts created")
@@ -51,7 +50,7 @@ func (p *Profile) createGitRepository(ctx context.Context) error {
 		},
 	}
 
-	p.log.Info("creating git repository", "resource", gitRefName)
+	p.log.Info("creating GitRepository", "resource", gitRefName)
 	return p.client.Create(ctx, &gitRepo)
 }
 
@@ -82,7 +81,7 @@ func (p *Profile) createHelmRelease(ctx context.Context) error {
 		},
 	}
 
-	p.log.Info("creating helm release", "resource", helmReleasename)
+	p.log.Info("creating HelmRelease", "resource", helmReleasename)
 	return p.client.Create(ctx, &helmRelease)
 }
 

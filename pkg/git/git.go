@@ -1,13 +1,13 @@
 package git
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	"github.com/weaveworks/profiles/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
@@ -21,7 +21,7 @@ var httpClient HTTPClient = http.DefaultClient
 
 func GetProfileDefinition(repoURL, branch string, log logr.Logger) (v1alpha1.ProfileDefinition, error) {
 	if _, err := url.Parse(repoURL); err != nil {
-		return v1alpha1.ProfileDefinition{}, errors.Wrap(err, "invalid URL")
+		return v1alpha1.ProfileDefinition{}, fmt.Errorf("failed to parse repo URL %q: %w", repoURL, err)
 	}
 
 	if !strings.Contains(repoURL, "github.com") {
@@ -34,7 +34,7 @@ func GetProfileDefinition(repoURL, branch string, log logr.Logger) (v1alpha1.Pro
 	log.Info("fetching profile.yaml", "repoURL", repoURL)
 	resp, err := httpClient.Get(profileURL)
 	if err != nil {
-		return v1alpha1.ProfileDefinition{}, errors.Wrap(err, "failed to fetch profile")
+		return v1alpha1.ProfileDefinition{}, fmt.Errorf("failed to fetch profile: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -45,7 +45,7 @@ func GetProfileDefinition(repoURL, branch string, log logr.Logger) (v1alpha1.Pro
 	profile := v1alpha1.ProfileDefinition{}
 	err = yaml.NewYAMLOrJSONDecoder(resp.Body, 4096).Decode(&profile)
 	if err != nil {
-		return v1alpha1.ProfileDefinition{}, errors.Wrap(err, "failed to parse profile")
+		return v1alpha1.ProfileDefinition{}, fmt.Errorf("failed to parse profile: %w", err)
 	}
 
 	return profile, nil

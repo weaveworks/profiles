@@ -108,7 +108,7 @@ spec:
 		It("returns an error", func() {
 			repoURL = "{}\"!@£!@$:!@£!@"
 			_, err := git.GetProfileDefinition(repoURL, branch, logr.Discard())
-			Expect(err).To(MatchError(ContainSubstring("invalid URL")))
+			Expect(err).To(MatchError(ContainSubstring("failed to parse repo URL")))
 			Expect(fakeHTTPClient.GetCallCount()).To(Equal(0))
 		})
 	})
