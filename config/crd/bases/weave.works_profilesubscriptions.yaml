@@ -51,11 +51,6 @@ spec:
               message:
                 description: Message is the reason for the "failing" state
                 type: string
-              observedGeneration:
-                description: ObservedGeneration is the last Generation observed by
-                  the controller
-                format: int64
-                type: integer
               state:
                 description: State is the current state of the ProfileSubscription
                   Can be "running" or "failing"

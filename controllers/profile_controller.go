@@ -26,7 +26,9 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 // ProfileSubscriptionReconciler reconciles a ProfileSubscription object
@@ -44,6 +46,15 @@ type ProfileSubscriptionReconciler struct {
 // +kubebuilder:rbac:groups=helm.toolkit.fluxcd.io,resources=helmreleases,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=helm.toolkit.fluxcd.io,resources=helmreleases/status,verbs=get
 
+// SetupWithManager sets up the controller with the Manager.
+func (r *ProfileSubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&v1alpha1.ProfileSubscription{}, builder.WithPredicates(
+			predicate.GenerationChangedPredicate{},
+		)).
+		Complete(r)
+}
+
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // For more details, check Reconcile and its Result here:
@@ -56,11 +67,6 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err != nil {
 		logger.Error(err, "failed to get resource")
 		return ctrl.Result{}, err
-	}
-
-	// If there is no change to the resource, quit
-	if pSub.Status.ObservedGeneration == pSub.Generation {
-		return ctrl.Result{}, nil
 	}
 
 	// TODO delete if deletion timestamp != nil
@@ -88,24 +94,15 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{}, nil
 }
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *ProfileSubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.ProfileSubscription{}).
-		Complete(r)
-}
-
 func (r *ProfileSubscriptionReconciler) patchStatusFailing(ctx context.Context, pSub *v1alpha1.ProfileSubscription, logger logr.Logger, message string) {
 	pSub.Status.State = "failing"
 	pSub.Status.Message = message
-	pSub.Status.ObservedGeneration = pSub.Generation
 	r.patchStatus(ctx, pSub, logger)
 }
 
 func (r *ProfileSubscriptionReconciler) patchStatusRunning(ctx context.Context, pSub *v1alpha1.ProfileSubscription, logger logr.Logger) {
 	pSub.Status.State = "running"
 	pSub.Status.Message = ""
-	pSub.Status.ObservedGeneration = pSub.Generation
 	r.patchStatus(ctx, pSub, logger)
 }
 

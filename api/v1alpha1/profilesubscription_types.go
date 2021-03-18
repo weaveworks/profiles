@@ -39,8 +39,6 @@ type ProfileSubscriptionStatus struct {
 	State string `json:"state,omitempty"`
 	// Message is the reason for the "failing" state
 	Message string `json:"message,omitempty"`
-	// ObservedGeneration is the last Generation observed by the controller
-	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 // +kubebuilder:object:root=true
