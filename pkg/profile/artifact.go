@@ -88,9 +88,13 @@ func (p *Profile) createHelmRelease(ctx context.Context) error {
 func (p *Profile) makeGitRepoName() string {
 	repoParts := strings.Split(p.subscription.Spec.ProfileURL, "/")
 	repoName := repoParts[len(repoParts)-1]
-	return fmt.Sprintf("%s-%s-%s", p.subscription.Name, repoName, p.subscription.Spec.Branch)
+	return join(p.subscription.Name, repoName, p.subscription.Spec.Branch)
 }
 
 func (p *Profile) makeHelmReleaseName() string {
-	return fmt.Sprintf("%s-%s-%s", p.subscription.Name, p.definition.Name, p.definition.Spec.Artifacts[0].Name)
+	return join(p.subscription.Name, p.definition.Name, p.definition.Spec.Artifacts[0].Name)
+}
+
+func join(s ...string) string {
+	return strings.Join(s, "-")
 }
