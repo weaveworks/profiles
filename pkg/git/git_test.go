@@ -29,7 +29,7 @@ var _ = Describe("Git", func() {
 		branch = "main"
 	})
 
-	It("returns the profile definintion", func() {
+	It("returns the profile definition", func() {
 		httpBody := bytes.NewBufferString(`
 apiVersion: profiles.fluxcd.io/v1alpha1
 kind: Profile
