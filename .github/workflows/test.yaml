@@ -19,5 +19,9 @@ jobs:
             ~/.cache/go-build/
             ~/go/pkg/mod/
           key: ${{ hashFiles('go.sum') }}
+      - name: Setup Ginkgo
+        run: |
+          go get -u github.com/onsi/ginkgo/ginkgo
       - name: Test
-        run: make test
+        run: |
+          PATH=$PATH:$(go env GOPATH)/bin make test

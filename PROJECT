@@ -1,0 +1,15 @@
+domain: weave.works
+layout: go.kubebuilder.io/v3
+projectName: profiles
+repo: github.com/weaveworks/profiles
+resources:
+- crdVersion: v1
+  kind: ProfileSubscription
+  version: v1alpha1
+- crdVersion: v1
+  kind: Profile
+  version: v1alpha1
+version: 3-alpha
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}

@@ -1,4 +1,4 @@
-package version_test
+package profile_test
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestVersion(t *testing.T) {
+func TestProfile(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Version Suite")
+	RunSpecs(t, "Profile Suite")
 }
