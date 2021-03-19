@@ -19,6 +19,8 @@ package controllers
 import (
 	"context"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/go-logr/logr"
 	"github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/pkg/git"
@@ -65,11 +67,13 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 	pSub := v1alpha1.ProfileSubscription{}
 	err := r.Client.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, &pSub)
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("resource has been deleted")
+			return ctrl.Result{}, nil
+		}
 		logger.Error(err, "failed to get resource")
 		return ctrl.Result{}, err
 	}
-
-	// TODO delete if deletion timestamp != nil
 
 	// TODO replace with mutating webhook
 	if pSub.Spec.Branch == "" {
