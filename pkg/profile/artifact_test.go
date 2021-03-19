@@ -19,13 +19,15 @@ import (
 
 var _ = Describe("Artifact", func() {
 	var (
-		ctx              = context.Background()
-		subscriptionName string
-		namespace        string
-		branch           string
-		profileName      string
-		chartName        string
-		chartPath        string
+		ctx                  = context.Background()
+		subscriptionName     string
+		namespace            string
+		branch               string
+		profileName          string
+		chartName            string
+		chartPath            string
+		profileSubKind       = "ProfileSubscription"
+		profileSubAPIVersion = "weave.works/v1alpha1"
 
 		p          *profile.Profile
 		fakeClient client.Client
@@ -43,8 +45,8 @@ var _ = Describe("Artifact", func() {
 
 		pSub := v1alpha1.ProfileSubscription{
 			TypeMeta: metav1.TypeMeta{
-				Kind:       "ProfileSubscription",
-				APIVersion: "profilesubscriptions.weave.works/v1alpha1",
+				Kind:       profileSubKind,
+				APIVersion: profileSubAPIVersion,
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      subscriptionName,
@@ -80,9 +82,10 @@ var _ = Describe("Artifact", func() {
 		p = profile.New(pDef, pSub, fakeClient, logr.Discard())
 	})
 
-	It("creates the helm and gitrepo resources", func() {
+	It("creates the helm and gitrepo resources with the correct owner", func() {
 		Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
 		Expect(helmv2.AddToScheme(scheme)).To(Succeed())
+		Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
 
 		err := p.CreateArtifacts(ctx)
 		Expect(err).NotTo(HaveOccurred())
@@ -93,6 +96,11 @@ var _ = Describe("Artifact", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(gitRepo.Spec.URL).To(Equal("https://github.com/org/repo-name"))
 		Expect(gitRepo.Spec.Reference.Branch).To(Equal(branch))
+		Expect(gitRepo.OwnerReferences).To(HaveLen(1))
+		Expect(gitRepo.OwnerReferences[0].Name).To(Equal(subscriptionName))
+		Expect(gitRepo.OwnerReferences[0].Kind).To(Equal(profileSubKind))
+		Expect(gitRepo.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
+		Expect(*gitRepo.OwnerReferences[0].Controller).To(BeTrue())
 
 		helmReleaseName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, chartName)
 		helmRelease := helmv2.HelmRelease{}
@@ -106,6 +114,19 @@ var _ = Describe("Artifact", func() {
 				Namespace: namespace,
 			},
 		))
+		Expect(helmRelease.OwnerReferences).To(HaveLen(1))
+		Expect(helmRelease.OwnerReferences[0].Name).To(Equal(subscriptionName))
+		Expect(helmRelease.OwnerReferences[0].Kind).To(Equal(profileSubKind))
+		Expect(helmRelease.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
+		Expect(*helmRelease.OwnerReferences[0].Controller).To(BeTrue())
+	})
+
+	When("setting the resource owner fails", func() {
+		It("errors", func() {
+			Expect(helmv2.AddToScheme(scheme)).To(Succeed())
+			err := p.CreateArtifacts(ctx)
+			Expect(err).To(MatchError(ContainSubstring("failed to set resource ownership")))
+		})
 	})
 
 	When("the GitRepository create fails", func() {
@@ -113,6 +134,7 @@ var _ = Describe("Artifact", func() {
 			// this is a bit of a hack, but by not adding this resource to the scheme
 			// we can force the Create call to fail
 			Expect(helmv2.AddToScheme(scheme)).To(Succeed())
+			Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
 			err := p.CreateArtifacts(ctx)
 			Expect(err).To(MatchError(ContainSubstring("failed to create GitRepository resource")))
 		})
@@ -121,6 +143,7 @@ var _ = Describe("Artifact", func() {
 	When("the HelmRelease create fails", func() {
 		It("errors", func() {
 			Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
+			Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
 			err := p.CreateArtifacts(ctx)
 			Expect(err).To(MatchError(ContainSubstring("failed to create HelmRelease resource")))
 		})

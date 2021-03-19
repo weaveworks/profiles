@@ -2,13 +2,16 @@ package acceptance_test
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/weaveworks/profiles/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -24,8 +27,8 @@ const (
 var _ = Describe("Acceptance", func() {
 	var (
 		profileURL, namespace string
-
-		nsp v1.Namespace
+		subName               = "foo"
+		nsp                   v1.Namespace
 	)
 
 	BeforeEach(func() {
@@ -45,14 +48,14 @@ var _ = Describe("Acceptance", func() {
 	})
 
 	When("subscribing to a Profile with a Helm Chart", func() {
-		It("should deploy the Profile workload", func() {
+		It("should deploy the Profile workload and cleanup on deletion", func() {
 			pSub := v1alpha1.ProfileSubscription{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       profileSubscriptionKind,
 					APIVersion: profileSubscriptionAPIVersion,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "foo",
+					Name:      subName,
 					Namespace: namespace,
 				},
 				Spec: v1alpha1.ProfileSubscriptionSpec{
@@ -60,6 +63,23 @@ var _ = Describe("Acceptance", func() {
 				},
 			}
 			Expect(kClient.Create(context.Background(), &pSub)).To(Succeed())
+
+			By("successfully deploying the helm release")
+			helmReleaseName := fmt.Sprintf("%s-%s-%s", subName, "nginx", "nginx-server")
+			var helmRelease *helmv2.HelmRelease
+			Eventually(func() bool {
+				helmRelease = &helmv2.HelmRelease{}
+				err := kClient.Get(context.Background(), client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, helmRelease)
+				if err != nil {
+					return false
+				}
+				for _, condition := range helmRelease.Status.Conditions {
+					if condition.Type == "Ready" && condition.Status == "True" {
+						return true
+					}
+				}
+				return false
+			}, 2*time.Minute, 5*time.Second).Should(BeTrue())
 
 			opts := []client.ListOption{
 				client.InNamespace(namespace),
@@ -74,12 +94,26 @@ var _ = Describe("Acceptance", func() {
 					return v1.PodPhase("")
 				}
 				return podList.Items[0].Status.Phase
-			}, 5*time.Minute, 10*time.Second).Should(Equal(v1.PodPhase("Running")))
+			}, 2*time.Minute, 5*time.Second).Should(Equal(v1.PodPhase("Running")))
 
-			// TODO we check the Pod because for some reason we the HelmRelease will
-			// not register as running, even though all child resources are fine
-			// :shrug_emoji:
 			Expect(podList.Items[0].Spec.Containers[0].Image).To(Equal(nginxImage))
+
+			By("cleaning up resources on deletion")
+			Expect(kClient.Delete(context.Background(), &pSub)).To(Succeed())
+
+			Eventually(func() bool {
+				helmRelease = &helmv2.HelmRelease{}
+				err := kClient.Get(context.Background(), client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, helmRelease)
+				return apierrors.IsNotFound(err)
+			}, 2*time.Minute, 5*time.Second).Should(BeTrue())
+
+			Eventually(func() int {
+				podList = &v1.PodList{}
+				err := kClient.List(context.Background(), podList, opts...)
+				Expect(err).NotTo(HaveOccurred())
+				return len(podList.Items)
+			}, 5*time.Minute, 10*time.Second).Should(Equal(0))
+
 		})
 	})
 })

@@ -8,6 +8,7 @@ import (
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 const (
@@ -49,6 +50,10 @@ func (p *Profile) createGitRepository(ctx context.Context) error {
 			},
 		},
 	}
+	err := controllerutil.SetControllerReference(&p.subscription, &gitRepo, p.client.Scheme())
+	if err != nil {
+		return fmt.Errorf("failed to set resource ownership: %w", err)
+	}
 
 	p.log.Info("creating GitRepository", "resource", gitRefName)
 	return p.client.Create(ctx, &gitRepo)
@@ -79,6 +84,10 @@ func (p *Profile) createHelmRelease(ctx context.Context) error {
 				},
 			},
 		},
+	}
+	err := controllerutil.SetControllerReference(&p.subscription, &helmRelease, p.client.Scheme())
+	if err != nil {
+		return fmt.Errorf("failed to set resource ownership: %w", err)
 	}
 
 	p.log.Info("creating HelmRelease", "resource", helmReleasename)
