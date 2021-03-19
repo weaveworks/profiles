@@ -47,9 +47,14 @@ all: manager
 acceptance: local-env
 	ginkgo -r tests/acceptance/ || kubectl -n profiles-system logs -f $(shell kubectl -n profiles-system get pods -l control-plane=controller-manager -o jsonpath={.items[0].metadata.name}) manager
 
-local-env: docker-build-local kind-up docker-push-local install undeploy deploy
+local-env: docker-build-local kind-up docker-push-local deploy-cert-manager install undeploy deploy
 	flux install --components="source-controller,helm-controller"
 
+deploy-cert-manager:
+	kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.2.0/cert-manager.yaml
+	kubectl -n cert-manager wait --for=condition=available deployment cert-manager
+	kubectl -n cert-manager wait --for=condition=available deployment cert-manager-cainjector
+	kubectl -n cert-manager wait --for=condition=available deployment cert-manager-webhook
 kind-up:
 	./hack/load-kind.sh
 
@@ -97,7 +102,6 @@ deploy: manifests kustomize
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 	echo "waiting for controller to be ready"
 	kubectl -n profiles-system wait --for=condition=available deployment profiles-controller-manager
-	kubectl -n profiles-system wait --for=condition=Ready --all pods
 
 # UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
 undeploy:

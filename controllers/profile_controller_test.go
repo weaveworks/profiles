@@ -50,6 +50,7 @@ var _ = Describe("ProfileController", func() {
 					},
 					Spec: v1alpha1.ProfileSubscriptionSpec{
 						ProfileURL: profileURL,
+						Branch:     "main",
 					},
 				}
 				Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())
@@ -106,6 +107,7 @@ var _ = Describe("ProfileController", func() {
 					},
 					Spec: v1alpha1.ProfileSubscriptionSpec{
 						ProfileURL: profileURL,
+						Branch:     "main",
 					},
 				}
 				Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())
@@ -156,6 +158,7 @@ var _ = Describe("ProfileController", func() {
 					},
 					Spec: v1alpha1.ProfileSubscriptionSpec{
 						ProfileURL: profileURL,
+						Branch:     "main",
 					},
 				}
 				Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())
