@@ -5,7 +5,7 @@ Gitops native package management
 1. Set up local environment: `make local-env`.
 
     This will start a local `kind` cluster and installs
-    the `profilesubscription`, `source` and `helm` controllers.
+    the `cert-manager`, `profilesubscription`, `source` and `helm` controllers.
 
 1. Then subscribe to the example [nginx-profile](https://github.com/weaveworks/nginx-profile): `kubectl apply -f examples/profile-subscription.yaml`
 
