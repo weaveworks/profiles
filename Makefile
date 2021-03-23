@@ -76,7 +76,7 @@ vet: ## Run go vet against code
 lint: ## Run lint against code
 	golangci-lint run --timeout=5m0s
 
-manager: generate fmt vet ## Build manager binary
+manager: generate fmt vet lint ## Build manager binary
 	go build -o bin/manager main.go
 
 ##@ Development
@@ -141,7 +141,7 @@ docker-push-local: ## Push the local docker image to local image registry
 	docker push localhost:5000/${IMG}
 
 # TODO publish image on release
-docker-build: test ## Build the docker image
+docker-build: ## Build the docker image
 	docker build -t ${IMG} .
 
 docker-push: ## Push the docker image

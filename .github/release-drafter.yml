@@ -16,12 +16,5 @@ template: |
 
   $CHANGES
 
-  ## Acknowledgments
-  # TODO we don't have contributors yet
-  # Weaveworks would like to sincerely thank:
-  # $CONTRIBUTORS
-# replacers:
-  # - search: '/@(Callisto13|aclevername|cPu1|weaveworksbot|dependabot(?:\[bot\])?)(?:,| |$)/gm'
-  #   replace: ''
 exclude-labels:
   - 'skip-release-notes'
