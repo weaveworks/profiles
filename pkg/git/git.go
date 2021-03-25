@@ -36,11 +36,11 @@ func GetProfileDefinition(repoURL, branch string, log logr.Logger) (v1alpha1.Pro
 	if err != nil {
 		return v1alpha1.ProfileDefinition{}, fmt.Errorf("failed to fetch profile: %w", err)
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return v1alpha1.ProfileDefinition{}, fmt.Errorf("failed to fetch profile: status code %d", resp.StatusCode)
 	}
-	defer resp.Body.Close()
 
 	profile := v1alpha1.ProfileDefinition{}
 	err = yaml.NewYAMLOrJSONDecoder(resp.Body, 4096).Decode(&profile)

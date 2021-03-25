@@ -81,7 +81,7 @@ spec:
 
 	When("the return code is not 200", func() {
 		It("returns an error", func() {
-			fakeHTTPClient.GetReturns(&http.Response{StatusCode: 404}, nil)
+			fakeHTTPClient.GetReturns(&http.Response{StatusCode: 404, Body: ioutil.NopCloser(bytes.NewReader(nil))}, nil)
 			_, err := git.GetProfileDefinition(repoURL, branch, logr.Discard())
 			Expect(err).To(MatchError("failed to fetch profile: status code 404"))
 			Expect(fakeHTTPClient.GetCallCount()).To(Equal(1))

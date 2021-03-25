@@ -13,13 +13,6 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 )
 
-const (
-	gitRepositoryKind       = "GitRepository"
-	gitRepositoryAPIVersion = "source.toolkit.fluxcd.io/v1beta1"
-	helmReleaseKind         = "HelmRelease"
-	helmReleaseAPIVersion   = "helm.toolkit.fluxcd.io/v2beta1"
-)
-
 // CreateArtifacts creates and inserts objects to the cluster to deploy the
 // profile as a HelmRelease.
 func (p *Profile) CreateArtifacts(ctx context.Context) error {
@@ -60,8 +53,8 @@ func (p *Profile) makeGitRepository() (*sourcev1.GitRepository, error) {
 			Namespace: p.subscription.ObjectMeta.Namespace,
 		},
 		TypeMeta: metav1.TypeMeta{
-			Kind:       gitRepositoryKind,
-			APIVersion: gitRepositoryAPIVersion,
+			Kind:       sourcev1.GitRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
 		},
 		Spec: sourcev1.GitRepositorySpec{
 			URL: p.subscription.Spec.ProfileURL,
@@ -93,8 +86,8 @@ func (p *Profile) makeHelmRelease() (*helmv2.HelmRelease, error) {
 			Namespace: p.subscription.ObjectMeta.Namespace,
 		},
 		TypeMeta: metav1.TypeMeta{
-			Kind:       helmReleaseKind,
-			APIVersion: helmReleaseAPIVersion,
+			Kind:       helmv2.HelmReleaseKind,
+			APIVersion: helmv2.GroupVersion.String(),
 		},
 		Spec: helmv2.HelmReleaseSpec{
 			Chart: helmv2.HelmChartTemplate{
@@ -102,12 +95,14 @@ func (p *Profile) makeHelmRelease() (*helmv2.HelmRelease, error) {
 					// TODO obvs don't rely on index 0
 					Chart: p.definition.Spec.Artifacts[0].Path,
 					SourceRef: helmv2.CrossNamespaceObjectReference{
-						Kind:      gitRepositoryKind,
+						Kind:      sourcev1.GitRepositoryKind,
 						Name:      p.makeGitRepoName(),
 						Namespace: p.subscription.ObjectMeta.Namespace,
 					},
 				},
 			},
+			Values:     p.subscription.Spec.Values,
+			ValuesFrom: p.subscription.Spec.ValuesFrom,
 		},
 	}
 	err := controllerutil.SetControllerReference(&p.subscription, helmRelease, p.client.Scheme())
