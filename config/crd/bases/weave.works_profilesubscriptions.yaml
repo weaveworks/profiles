@@ -38,6 +38,7 @@ spec:
             description: ProfileSubscriptionSpec defines the desired state of a ProfileSubscription
             properties:
               branch:
+                default: main
                 description: 'Branch is the git repo branch containing the profile
                   definition (default: main)'
                 type: string

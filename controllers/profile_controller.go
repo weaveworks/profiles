@@ -75,11 +75,6 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, err
 	}
 
-	// TODO replace with mutating webhook
-	if pSub.Spec.Branch == "" {
-		pSub.Spec.Branch = "main"
-	}
-
 	pDef, err := git.GetProfileDefinition(pSub.Spec.ProfileURL, pSub.Spec.Branch, logger)
 	if err != nil {
 		r.patchStatusFailing(ctx, &pSub, logger, "error when fetching profile definition")

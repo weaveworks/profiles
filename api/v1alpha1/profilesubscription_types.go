@@ -28,6 +28,7 @@ type ProfileSubscriptionSpec struct {
 	// ProfileURL is a fully qualified URL to a profile repo
 	ProfileURL string `json:"profileURL,omitempty"`
 	// Branch is the git repo branch containing the profile definition (default: main)
+	// +kubebuilder:default:=main
 	// +optional
 	Branch string `json:"branch,omitempty"`
 }
