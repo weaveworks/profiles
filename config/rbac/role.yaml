@@ -45,6 +45,32 @@ rules:
 - apiGroups:
   - weave.works
   resources:
+  - profilecatalogsources
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - weave.works
+  resources:
+  - profilecatalogsources/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - weave.works
+  resources:
+  - profilecatalogsources/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - weave.works
+  resources:
   - profilesubscriptions
   verbs:
   - create

@@ -1,0 +1,24 @@
+# permissions for end users to edit profilecatalogsources.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: profilecatalogsource-editor-role
+rules:
+- apiGroups:
+  - weave.works
+  resources:
+  - profilecatalogsources
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - weave.works
+  resources:
+  - profilecatalogsources/status
+  verbs:
+  - get
