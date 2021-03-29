@@ -20,18 +20,21 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	weaveworksv1alpha1 "github.com/weaveworks/profiles/api/v1alpha1"
+	"github.com/weaveworks/profiles/api/v1alpha1"
+	"github.com/weaveworks/profiles/pkg/catalog"
 )
 
 // ProfileCatalogSourceReconciler reconciles a ProfileCatalogSource object
 type ProfileCatalogSourceReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log      logr.Logger
+	Scheme   *runtime.Scheme
+	Profiles *catalog.Catalog
 }
 
 // +kubebuilder:rbac:groups=weave.works,resources=profilecatalogsources,verbs=get;list;watch;create;update;patch;delete
@@ -48,9 +51,20 @@ type ProfileCatalogSourceReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
 func (r *ProfileCatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = r.Log.WithValues("profilecatalogsource", req.NamespacedName)
+	logger := r.Log.WithValues("profilecatalogsource", req.NamespacedName)
 
-	// your logic here
+	pCatalog := v1alpha1.ProfileCatalogSource{}
+	err := r.Client.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, &pCatalog)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("resource has been deleted")
+			return ctrl.Result{}, nil
+		}
+		logger.Error(err, "failed to get resource")
+		return ctrl.Result{}, err
+	}
+
+	r.Profiles.Add(pCatalog.Spec.Profiles...)
 
 	return ctrl.Result{}, nil
 }
@@ -58,6 +72,6 @@ func (r *ProfileCatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl
 // SetupWithManager sets up the controller with the Manager.
 func (r *ProfileCatalogSourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&weaveworksv1alpha1.ProfileCatalogSource{}).
+		For(&v1alpha1.ProfileCatalogSource{}).
 		Complete(r)
 }

@@ -29,7 +29,12 @@ type ProfileCatalogSourceSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of ProfileCatalogSource. Edit ProfileCatalogSource_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Profiles []ProfileDescription `json:"profiles,omitempty"`
+}
+
+type ProfileDescription struct {
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 // ProfileCatalogSourceStatus defines the observed state of ProfileCatalogSource

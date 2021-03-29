@@ -36,12 +36,16 @@ import (
 	"github.com/weaveworks/profiles/api/v1alpha1"
 	weaveworksv1alpha1 "github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/controllers"
+	"github.com/weaveworks/profiles/pkg/catalog"
 	// +kubebuilder:scaffold:imports
 )
 
-var cfg *rest.Config
-var k8sClient client.Client
-var testEnv *envtest.Environment
+var (
+	cfg               *rest.Config
+	k8sClient         client.Client
+	testEnv           *envtest.Environment
+	catalogReconciler *controllers.ProfileCatalogSourceReconciler
+)
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -91,6 +95,15 @@ var _ = BeforeSuite(func() {
 		Client: k8sManager.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("profilesubscription"),
 	}).SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
+	catalogReconciler = &controllers.ProfileCatalogSourceReconciler{
+		Client:   k8sManager.GetClient(),
+		Log:      ctrl.Log.WithName("controllers").WithName("profilecatalog"),
+		Profiles: catalog.New(),
+	}
+
+	err = catalogReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
 	go func() {

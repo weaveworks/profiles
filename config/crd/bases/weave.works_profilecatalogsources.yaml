@@ -37,10 +37,17 @@ spec:
           spec:
             description: ProfileCatalogSourceSpec defines the desired state of ProfileCatalogSource
             properties:
-              foo:
+              profiles:
                 description: Foo is an example field of ProfileCatalogSource. Edit
                   ProfileCatalogSource_types.go to remove/update
-                type: string
+                items:
+                  properties:
+                    description:
+                      type: string
+                    name:
+                      type: string
+                  type: object
+                type: array
             type: object
           status:
             description: ProfileCatalogSourceStatus defines the observed state of
