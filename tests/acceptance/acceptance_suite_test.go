@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
+	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/weaveworks/profiles/api/v1alpha1"
@@ -25,6 +26,7 @@ var _ = BeforeSuite(func() {
 	Expect(clientgoscheme.AddToScheme(scheme)).To(Succeed())
 	Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
 	Expect(helmv2.AddToScheme(scheme)).To(Succeed())
+	Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
 
 	kubeconfig := ctrl.GetConfigOrDie()
 	var err error

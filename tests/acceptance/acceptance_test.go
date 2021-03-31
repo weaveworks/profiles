@@ -9,6 +9,7 @@ import (
 	"time"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
+	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -108,6 +109,77 @@ var _ = Describe("Acceptance", func() {
 				Eventually(func() bool {
 					helmRelease = &helmv2.HelmRelease{}
 					err := kClient.Get(context.Background(), client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, helmRelease)
+					return apierrors.IsNotFound(err)
+				}, 2*time.Minute, 5*time.Second).Should(BeTrue())
+
+				Eventually(func() int {
+					podList = &v1.PodList{}
+					err := kClient.List(context.Background(), podList, opts...)
+					Expect(err).NotTo(HaveOccurred())
+					return len(podList.Items)
+				}, 5*time.Minute, 10*time.Second).Should(Equal(0))
+
+			})
+		})
+
+		When("subscribing to a Profile with raw yaml", func() {
+			It("should deploy the Profile workload and cleanup on deletion", func() {
+				pSub := v1alpha1.ProfileSubscription{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       profileSubscriptionKind,
+						APIVersion: profileSubscriptionAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      subName,
+						Namespace: namespace,
+					},
+					Spec: v1alpha1.ProfileSubscriptionSpec{
+						ProfileURL: profileURL,
+						Branch:     "yaml",
+					},
+				}
+				Expect(kClient.Create(context.Background(), &pSub)).To(Succeed())
+
+				By("successfully deploying the kustomize resource")
+				kustomizeName := fmt.Sprintf("%s-%s-%s", subName, "nginx", "nginx-server")
+				var kustomize *kustomizev1.Kustomization
+				Eventually(func() bool {
+					kustomize = &kustomizev1.Kustomization{}
+					err := kClient.Get(context.Background(), client.ObjectKey{Name: kustomizeName, Namespace: namespace}, kustomize)
+					if err != nil {
+						return false
+					}
+					for _, condition := range kustomize.Status.Conditions {
+						if condition.Type == "Ready" && condition.Status == "True" {
+							return true
+						}
+					}
+					return false
+				}, 2*time.Minute, 5*time.Second).Should(BeTrue())
+
+				opts := []client.ListOption{
+					client.InNamespace(namespace),
+					client.MatchingLabels{"app": "nginx"},
+				}
+				var podList *v1.PodList
+				Eventually(func() v1.PodPhase {
+					podList = &v1.PodList{}
+					err := kClient.List(context.Background(), podList, opts...)
+					Expect(err).NotTo(HaveOccurred())
+					if len(podList.Items) == 0 {
+						return v1.PodPhase("no pods found")
+					}
+					return podList.Items[0].Status.Phase
+				}, 2*time.Minute, 5*time.Second).Should(Equal(v1.PodPhase("Running")))
+
+				Expect(podList.Items[0].Spec.Containers[0].Image).To(Equal("nginx:1.14.2"))
+
+				By("cleaning up resources on deletion")
+				Expect(kClient.Delete(context.Background(), &pSub)).To(Succeed())
+
+				Eventually(func() bool {
+					kustomize = &kustomizev1.Kustomization{}
+					err := kClient.Get(context.Background(), client.ObjectKey{Name: kustomizeName, Namespace: namespace}, kustomize)
 					return apierrors.IsNotFound(err)
 				}, 2*time.Minute, 5*time.Second).Should(BeTrue())
 

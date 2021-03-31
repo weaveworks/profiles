@@ -49,7 +49,7 @@ acceptance: local-env
 	ginkgo -r tests/acceptance/ || kubectl -n profiles-system logs -f $(shell kubectl -n profiles-system get pods -l control-plane=controller-manager -o jsonpath={.items[0].metadata.name}) manager
 
 local-env: docker-build-local kind-up docker-push-local install undeploy deploy
-	flux install --components="source-controller,helm-controller"
+	flux install --components="source-controller,helm-controller,kustomize-controller"
 
 kind-up:
 	./hack/load-kind.sh

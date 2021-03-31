@@ -38,10 +38,10 @@ import (
 	weaveworksv1alpha1 "github.com/weaveworks/profiles/api/v1alpha1"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
+	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
+	"github.com/weaveworks/profiles/controllers"
 	"github.com/weaveworks/profiles/pkg/api"
 	"github.com/weaveworks/profiles/pkg/catalog"
-
-	"github.com/weaveworks/profiles/controllers"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -56,6 +56,7 @@ func init() {
 	utilruntime.Must(weaveworksv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(sourcev1.AddToScheme(scheme))
 	utilruntime.Must(helmv2.AddToScheme(scheme))
+	utilruntime.Must(kustomizev1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
