@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 const (
@@ -18,6 +20,8 @@ const (
 	helmReleaseAPIVersion   = "helm.toolkit.fluxcd.io/v2beta1"
 )
 
+// CreateArtifacts creates and inserts objects to the cluster to deploy the
+// profile as a HelmRelease.
 func (p *Profile) CreateArtifacts(ctx context.Context) error {
 	if err := p.createGitRepository(ctx); err != nil {
 		return fmt.Errorf("failed to create GitRepository resource: %w", err)
@@ -31,13 +35,29 @@ func (p *Profile) CreateArtifacts(ctx context.Context) error {
 	return nil
 }
 
-func (p *Profile) createGitRepository(ctx context.Context) error {
-	gitRefName := p.makeGitRepoName()
-	namespace := p.subscription.Namespace
-	gitRepo := sourcev1.GitRepository{
+// MakeArtifacts creates and returns a slice of runtime.Object values, which if
+// applied to a cluster would deploy the profile as a HelmRelease.
+func (p *Profile) MakeArtifacts() ([]runtime.Object, error) {
+	objs := []runtime.Object{}
+	gr, err := p.makeGitRepository()
+	if err != nil {
+		return nil, err
+	}
+
+	hr, err := p.makeHelmRelease()
+	if err != nil {
+		return nil, err
+	}
+
+	objs = append(objs, gr, hr)
+	return objs, nil
+}
+
+func (p *Profile) makeGitRepository() (*sourcev1.GitRepository, error) {
+	gitRepo := &sourcev1.GitRepository{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      gitRefName,
-			Namespace: namespace,
+			Name:      p.makeGitRepoName(),
+			Namespace: p.subscription.ObjectMeta.Namespace,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       gitRepositoryKind,
@@ -50,22 +70,27 @@ func (p *Profile) createGitRepository(ctx context.Context) error {
 			},
 		},
 	}
-	err := controllerutil.SetControllerReference(&p.subscription, &gitRepo, p.client.Scheme())
+	err := controllerutil.SetControllerReference(&p.subscription, gitRepo, p.client.Scheme())
 	if err != nil {
-		return fmt.Errorf("failed to set resource ownership: %w", err)
+		return nil, fmt.Errorf("failed to set resource ownership on %s: %w", gitRepo.ObjectMeta.Name, err)
 	}
-
-	p.log.Info("creating GitRepository", "resource", gitRefName)
-	return p.client.Create(ctx, &gitRepo)
+	return gitRepo, nil
 }
 
-func (p *Profile) createHelmRelease(ctx context.Context) error {
-	namespace := p.subscription.Namespace
-	helmReleasename := p.makeHelmReleaseName()
-	helmRelease := helmv2.HelmRelease{
+func (p *Profile) createGitRepository(ctx context.Context) error {
+	r, err := p.makeGitRepository()
+	if err != nil {
+		return err
+	}
+	p.log.Info("creating GitRepository", "resource", r.ObjectMeta.Name)
+	return p.client.Create(ctx, r)
+}
+
+func (p *Profile) makeHelmRelease() (*helmv2.HelmRelease, error) {
+	helmRelease := &helmv2.HelmRelease{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      helmReleasename,
-			Namespace: namespace,
+			Name:      p.makeHelmReleaseName(),
+			Namespace: p.subscription.ObjectMeta.Namespace,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       helmReleaseKind,
@@ -79,19 +104,26 @@ func (p *Profile) createHelmRelease(ctx context.Context) error {
 					SourceRef: helmv2.CrossNamespaceObjectReference{
 						Kind:      gitRepositoryKind,
 						Name:      p.makeGitRepoName(),
-						Namespace: namespace,
+						Namespace: p.subscription.ObjectMeta.Namespace,
 					},
 				},
 			},
 		},
 	}
-	err := controllerutil.SetControllerReference(&p.subscription, &helmRelease, p.client.Scheme())
+	err := controllerutil.SetControllerReference(&p.subscription, helmRelease, p.client.Scheme())
 	if err != nil {
-		return fmt.Errorf("failed to set resource ownership: %w", err)
+		return nil, fmt.Errorf("failed to set resource ownership: %w", err)
 	}
+	return helmRelease, nil
+}
 
-	p.log.Info("creating HelmRelease", "resource", helmReleasename)
-	return p.client.Create(ctx, &helmRelease)
+func (p *Profile) createHelmRelease(ctx context.Context) error {
+	r, err := p.makeHelmRelease()
+	if err != nil {
+		return err
+	}
+	p.log.Info("creating HelmRelease", "resource", r.ObjectMeta.Name)
+	return p.client.Create(ctx, r)
 }
 
 func (p *Profile) makeGitRepoName() string {
