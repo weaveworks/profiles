@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -58,6 +59,16 @@ var _ = Describe("Profile", func() {
 			Spec: v1alpha1.ProfileSubscriptionSpec{
 				ProfileURL: "https://github.com/org/repo-name",
 				Branch:     branch,
+				Values: &apiextensionsv1.JSON{
+					Raw: []byte(`{"replicaCount": 3,"service":{"port":8081}}`),
+				},
+				ValuesFrom: []helmv2.ValuesReference{
+					{
+						Name:     "nginx-values",
+						Kind:     "Secret",
+						Optional: true,
+					},
+				},
 			},
 		}
 
@@ -132,6 +143,19 @@ var _ = Describe("Profile", func() {
 					Namespace: namespace,
 				},
 			))
+			Expect(helmRelease.GetValues()).To(Equal(map[string]interface{}{
+				"replicaCount": float64(3),
+				"service": map[string]interface{}{
+					"port": float64(8081),
+				},
+			}))
+			Expect(helmRelease.Spec.ValuesFrom).To(Equal([]helmv2.ValuesReference{
+				{
+					Name:     "nginx-values",
+					Kind:     "Secret",
+					Optional: true,
+				},
+			}))
 			Expect(helmRelease.OwnerReferences).To(HaveLen(1))
 			Expect(helmRelease.OwnerReferences[0].Name).To(Equal(subscriptionName))
 			Expect(helmRelease.OwnerReferences[0].Kind).To(Equal(profileSubKind))
