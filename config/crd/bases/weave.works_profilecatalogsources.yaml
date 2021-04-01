@@ -38,13 +38,14 @@ spec:
             description: ProfileCatalogSourceSpec defines the desired state of ProfileCatalogSource
             properties:
               profiles:
-                description: Foo is an example field of ProfileCatalogSource. Edit
-                  ProfileCatalogSource_types.go to remove/update
+                description: Profiles is the list of profiles exposed by the catalog
                 items:
                   properties:
                     description:
+                      description: Profile description
                       type: string
                     name:
+                      description: Profile name
                       type: string
                   type: object
                 type: array
