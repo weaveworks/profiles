@@ -8,6 +8,7 @@ exitCode=$?
 set -e
 if [ $exitCode -eq "0" ]; then
   echo "kind cluster profiles already exists"
+  kubectl config use-context kind-profiles
   exit 0
 fi
 
