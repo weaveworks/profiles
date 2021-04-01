@@ -18,6 +18,8 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"net/http"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -32,9 +34,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+
 	weaveworksv1alpha1 "github.com/weaveworks/profiles/api/v1alpha1"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
+	"github.com/weaveworks/profiles/pkg/api"
+	"github.com/weaveworks/profiles/pkg/catalog"
+
 	"github.com/weaveworks/profiles/controllers"
 	// +kubebuilder:scaffold:imports
 )
@@ -54,11 +60,12 @@ func init() {
 }
 
 func main() {
-	var metricsAddr string
 	var enableLeaderElection bool
-	var probeAddr string
+	var metricsAddr, probeAddr, apiAddr string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.StringVar(&apiAddr, "profiles-api-bind-address", ":8000", "The address the profiles catalog api binds to.")
+
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -92,6 +99,17 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ProfileSubscription")
 		os.Exit(1)
 	}
+
+	profileCatalog := catalog.New()
+	if err = (&controllers.ProfileCatalogSourceReconciler{
+		Client:   mgr.GetClient(),
+		Log:      ctrl.Log.WithName("controllers").WithName("ProfileCatalogSource"),
+		Scheme:   mgr.GetScheme(),
+		Profiles: profileCatalog,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ProfileCatalogSource")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("health", healthz.Ping); err != nil {
@@ -102,6 +120,15 @@ func main() {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
+
+	setupLog.Info(fmt.Sprintf("starting profiles api server at %s", apiAddr))
+	go func() {
+		err := http.ListenAndServe(apiAddr, api.New(profileCatalog))
+		if err != nil {
+			setupLog.Error(err, "unable to start profiles api server")
+			os.Exit(1)
+		}
+	}()
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

@@ -45,6 +45,7 @@ all: manager
 
 # run acceptance tests
 acceptance: local-env
+	kubectl -n profiles-system port-forward $(shell kubectl -n profiles-system get pods -l control-plane=controller-manager -o jsonpath={.items[0].metadata.name}) 8000:8000 &
 	ginkgo -r tests/acceptance/ || kubectl -n profiles-system logs -f $(shell kubectl -n profiles-system get pods -l control-plane=controller-manager -o jsonpath={.items[0].metadata.name}) manager
 
 local-env: docker-build-local kind-up docker-push-local install undeploy deploy

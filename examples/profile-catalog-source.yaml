@@ -1,0 +1,10 @@
+apiVersion: weave.works/v1alpha1
+kind: ProfileCatalogSource
+metadata:
+  name: nginx-catalog
+spec:
+  profiles:
+    - name: weaveworks-nginx
+      description: This installs nginx.
+    - name: some-other-nginx
+      description: This installs some other nginx.
