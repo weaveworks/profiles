@@ -99,7 +99,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	profileCatalog := catalog.New()
+	profileCatalog := catalog.New(ctrl.Log.WithName("catalog"))
 	if err = (&controllers.ProfileCatalogSourceReconciler{
 		Client:   mgr.GetClient(),
 		Log:      ctrl.Log.WithName("controllers").WithName("ProfileCatalogSource"),
