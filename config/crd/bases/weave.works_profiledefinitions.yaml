@@ -41,6 +41,9 @@ spec:
                   HelmChart, TODO
                 items:
                   properties:
+                    kind:
+                      description: 'Kind is the kind of artifact: HelmChart or Kustomize'
+                      type: string
                     name:
                       description: Name is the name of the Artifact
                       type: string

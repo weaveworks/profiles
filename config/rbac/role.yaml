@@ -25,6 +25,24 @@ rules:
   verbs:
   - get
 - apiGroups:
+  - kustomize.toolkit.fluxcd.io
+  resources:
+  - kustomizations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kustomize.toolkit.fluxcd.io
+  resources:
+  - kustomizations/status
+  verbs:
+  - get
+- apiGroups:
   - source.toolkit.fluxcd.io
   resources:
   - gitrepositories
