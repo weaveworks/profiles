@@ -41,11 +41,30 @@ spec:
                 description: Profiles is the list of profiles exposed by the catalog
                 items:
                   properties:
+                    catalog:
+                      description: Catalog is the name of the catalog the profile
+                        is listed in TODO necessary?
+                      type: string
                     description:
                       description: Profile description
                       type: string
+                    maintainer:
+                      description: Maintainer is the name of the author(s)
+                      type: string
                     name:
                       description: Profile name
+                      type: string
+                    prerequisites:
+                      description: Prerequisites are a list of dependencies required
+                        by the profile
+                      items:
+                        type: string
+                      type: array
+                    url:
+                      description: URL is the full URL path to the profile.yaml
+                      type: string
+                    version:
+                      description: Version
                       type: string
                   type: object
                 type: array

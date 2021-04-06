@@ -42,4 +42,15 @@ var _ = Describe("Catalog", func() {
 			))
 		})
 	})
+
+	Context("Show", func() {
+		It("returns the requested profile", func() {
+			c := catalog.New(log)
+			profiles := []v1alpha1.ProfileDescription{{Name: "foo"}, {Name: "bar"}, {Name: "alsofoo"}}
+			c.Add(profiles...)
+			Expect(c.Show("foo")).To(Equal(
+				v1alpha1.ProfileDescription{Name: "foo"},
+			))
+		})
+	})
 })

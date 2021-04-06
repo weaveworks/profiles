@@ -46,5 +46,16 @@ func (c *Catalog) Search(name string) []profilesv1.ProfileDescription {
 			profiles = append(profiles, p)
 		}
 	}
+
 	return profiles
+}
+
+func (c *Catalog) Show(name string) v1alpha1.ProfileDescription {
+	for _, p := range c.profiles {
+		if strings.Contains(p.Name, name) {
+			return p
+		}
+	}
+
+	return v1alpha1.ProfileDescription{}
 }

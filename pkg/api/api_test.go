@@ -49,4 +49,28 @@ var _ = Describe("Api", func() {
 		})
 	})
 
+	Context("/profiles/profile-name", func() {
+		BeforeEach(func() {
+			profileCatalog = catalog.New(logr.Discard())
+			profileCatalog.Add(v1alpha1.ProfileDescription{Name: "nginx-1", Description: "nginx 1"})
+			catalogAPI = api.New(profileCatalog)
+		})
+
+		When("the requested profile exists", func() {
+			It("returns the profile summary from the catalog", func() {
+				profileName := "nginx-1"
+				req, err := http.NewRequest("GET", "/profiles/"+profileName, nil)
+				Expect(err).NotTo(HaveOccurred())
+
+				rr := httptest.NewRecorder()
+				handler := http.HandlerFunc(catalogAPI.ProfileHandler)
+
+				handler.ServeHTTP(rr, req)
+
+				// Check the status code is what we expect.
+				Expect(rr.Code).To(Equal(http.StatusOK))
+				Expect(rr.Body.String()).To(Equal(`{"name":"nginx-1","description":"nginx 1"}`))
+			})
+		})
+	})
 })

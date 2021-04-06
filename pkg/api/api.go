@@ -24,6 +24,8 @@ func New(profileCatalog *catalog.Catalog) API {
 	}
 
 	r.HandleFunc("/profiles", a.ProfilesHandler)
+	r.HandleFunc("/profiles/{name}", a.ProfileHandler)
+
 	return a
 }
 
@@ -31,6 +33,18 @@ func New(profileCatalog *catalog.Catalog) API {
 func (a *API) ProfilesHandler(w http.ResponseWriter, r *http.Request) {
 	profileName := r.URL.Query().Get("name")
 	out, err := json.Marshal(a.profileCatalog.Search(profileName))
+	if err != nil {
+		panic(err)
+	}
+	_, err = w.Write(out)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (a *API) ProfileHandler(w http.ResponseWriter, r *http.Request) {
+	profileName := mux.Vars(r)["name"]
+	out, err := json.Marshal(a.profileCatalog.Show(profileName))
 	if err != nil {
 		panic(err)
 	}
