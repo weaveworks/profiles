@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
+	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -20,8 +22,17 @@ func (p *Profile) CreateArtifacts(ctx context.Context) error {
 		return fmt.Errorf("failed to create GitRepository resource: %w", err)
 	}
 
-	if err := p.createHelmRelease(ctx); err != nil {
-		return fmt.Errorf("failed to create HelmRelease resource: %w", err)
+	switch kind := p.definition.Spec.Artifacts[0].Kind; kind {
+	case "HelmChart":
+		if err := p.createHelmRelease(ctx); err != nil {
+			return fmt.Errorf("failed to create HelmRelease resource: %w", err)
+		}
+	case "Kustomize":
+		if err := p.createKustomization(ctx); err != nil {
+			return fmt.Errorf("failed to create Kustomization resource: %w", err)
+		}
+	default:
+		return fmt.Errorf("artifact kind %q not recognized", kind)
 	}
 
 	p.log.Info("all artifacts created")
@@ -82,7 +93,7 @@ func (p *Profile) createGitRepository(ctx context.Context) error {
 func (p *Profile) makeHelmRelease() (*helmv2.HelmRelease, error) {
 	helmRelease := &helmv2.HelmRelease{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      p.makeHelmReleaseName(),
+			Name:      p.makeArtifactName(),
 			Namespace: p.subscription.ObjectMeta.Namespace,
 		},
 		TypeMeta: metav1.TypeMeta{
@@ -121,13 +132,52 @@ func (p *Profile) createHelmRelease(ctx context.Context) error {
 	return p.client.Create(ctx, r)
 }
 
+func (p *Profile) makeKustomization() (*kustomizev1.Kustomization, error) {
+	kustomization := &kustomizev1.Kustomization{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      p.makeArtifactName(),
+			Namespace: p.subscription.ObjectMeta.Namespace,
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       kustomizev1.KustomizationKind,
+			APIVersion: kustomizev1.GroupVersion.String(),
+		},
+		Spec: kustomizev1.KustomizationSpec{
+			// TODO obvs don't rely on index 0
+			Path:            p.definition.Spec.Artifacts[0].Path,
+			Interval:        metav1.Duration{Duration: time.Minute * 5},
+			Prune:           true,
+			TargetNamespace: p.subscription.ObjectMeta.Namespace,
+			SourceRef: kustomizev1.CrossNamespaceSourceReference{
+				Kind:      sourcev1.GitRepositoryKind,
+				Name:      p.makeGitRepoName(),
+				Namespace: p.subscription.ObjectMeta.Namespace,
+			},
+		},
+	}
+	err := controllerutil.SetControllerReference(&p.subscription, kustomization, p.client.Scheme())
+	if err != nil {
+		return nil, fmt.Errorf("failed to set resource ownership: %w", err)
+	}
+	return kustomization, nil
+}
+
+func (p *Profile) createKustomization(ctx context.Context) error {
+	r, err := p.makeKustomization()
+	if err != nil {
+		return err
+	}
+	p.log.Info("creating Kustomization", "resource", r.ObjectMeta.Name)
+	return p.client.Create(ctx, r)
+}
+
 func (p *Profile) makeGitRepoName() string {
 	repoParts := strings.Split(p.subscription.Spec.ProfileURL, "/")
 	repoName := repoParts[len(repoParts)-1]
 	return join(p.subscription.Name, repoName, p.subscription.Spec.Branch)
 }
 
-func (p *Profile) makeHelmReleaseName() string {
+func (p *Profile) makeArtifactName() string {
 	return join(p.subscription.Name, p.definition.Name, p.definition.Spec.Artifacts[0].Name)
 }
 

@@ -37,6 +37,8 @@ type Artifact struct {
 	Name string `json:"name,omitempty"`
 	// Path is the local path to the Artifact in the Profile repo
 	Path string `json:"path,omitempty"`
+	// Kind is the kind of artifact: HelmChart or Kustomize
+	Kind string `json:"kind,omitempty"`
 }
 
 // ProfileDefinitionStatus defines the observed state of ProfileDefinition
