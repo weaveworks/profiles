@@ -2,8 +2,9 @@ package profile
 
 import (
 	"github.com/go-logr/logr"
-	"github.com/weaveworks/profiles/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/weaveworks/profiles/api/v1alpha1"
 )
 
 // Profile contains information and interfaces required for creating and
