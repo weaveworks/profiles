@@ -1,0 +1,9 @@
+# .golangci.yml
+linters-settings:
+  golint:
+    min-confidence: 1
+linters:
+  enable:
+    - golint
+    - gofmt
+    - goimports

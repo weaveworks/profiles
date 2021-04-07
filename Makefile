@@ -74,7 +74,7 @@ test_deps:
 		-o ${TEST_CRDS}/helmreleases.yaml
 
 lint:
-	golangci-lint run --timeout=5m0s
+	golangci-lint run --exclude-use-default=false --timeout=5m0s
 
 # Build manager binary
 manager: generate fmt vet
