@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/weaveworks/profiles/api/v1alpha1"
+	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/pkg/api"
 	"github.com/weaveworks/profiles/pkg/catalog"
 )
@@ -21,7 +21,7 @@ var _ = Describe("Api", func() {
 	Context("/profiles", func() {
 		BeforeEach(func() {
 			profileCatalog = &catalog.Catalog{}
-			profileCatalog.Add(v1alpha1.ProfileDescription{Name: "nginx-1", Description: "nginx 1"})
+			profileCatalog.Add(profilesv1.ProfileDescription{Name: "nginx-1", Description: "nginx 1"})
 			catalogAPI = api.New(profileCatalog)
 		})
 

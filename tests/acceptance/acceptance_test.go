@@ -18,7 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/weaveworks/profiles/api/v1alpha1"
+	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 )
 
 const (
@@ -54,7 +54,7 @@ var _ = Describe("Acceptance", func() {
 
 		When("subscribing to a Profile with a Helm Chart", func() {
 			It("should deploy the Profile workload and cleanup on deletion", func() {
-				pSub := v1alpha1.ProfileSubscription{
+				pSub := profilesv1.ProfileSubscription{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       profileSubscriptionKind,
 						APIVersion: profileSubscriptionAPIVersion,
@@ -63,7 +63,7 @@ var _ = Describe("Acceptance", func() {
 						Name:      subName,
 						Namespace: namespace,
 					},
-					Spec: v1alpha1.ProfileSubscriptionSpec{
+					Spec: profilesv1.ProfileSubscriptionSpec{
 						ProfileURL: profileURL,
 					},
 				}
@@ -124,7 +124,7 @@ var _ = Describe("Acceptance", func() {
 
 		When("subscribing to a Profile with raw yaml", func() {
 			It("should deploy the Profile workload and cleanup on deletion", func() {
-				pSub := v1alpha1.ProfileSubscription{
+				pSub := profilesv1.ProfileSubscription{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       profileSubscriptionKind,
 						APIVersion: profileSubscriptionAPIVersion,
@@ -133,7 +133,7 @@ var _ = Describe("Acceptance", func() {
 						Name:      subName,
 						Namespace: namespace,
 					},
-					Spec: v1alpha1.ProfileSubscriptionSpec{
+					Spec: profilesv1.ProfileSubscriptionSpec{
 						ProfileURL: profileURL,
 						Branch:     "yaml",
 					},
@@ -196,7 +196,7 @@ var _ = Describe("Acceptance", func() {
 
 	Context("ProfileCatalog", func() {
 		It("returns the matching catalogs", func() {
-			pCatalog := v1alpha1.ProfileCatalogSource{
+			pCatalog := profilesv1.ProfileCatalogSource{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ProfileCatalogSource",
 					APIVersion: profileSubscriptionAPIVersion,
@@ -205,8 +205,8 @@ var _ = Describe("Acceptance", func() {
 					Name:      "catalog",
 					Namespace: "default",
 				},
-				Spec: v1alpha1.ProfileCatalogSourceSpec{
-					Profiles: []v1alpha1.ProfileDescription{
+				Spec: profilesv1.ProfileCatalogSourceSpec{
+					Profiles: []profilesv1.ProfileDescription{
 						{
 							Name:        "nginx-1",
 							Description: "nginx 1",
@@ -223,7 +223,7 @@ var _ = Describe("Acceptance", func() {
 				},
 			}
 			Expect(kClient.Create(context.Background(), &pCatalog)).To(Succeed())
-			Eventually(func() []v1alpha1.ProfileDescription {
+			Eventually(func() []profilesv1.ProfileDescription {
 				req, err := http.NewRequest("GET", "http://localhost:8000/profiles", nil)
 				Expect(err).NotTo(HaveOccurred())
 				u, err := url.Parse("http://localhost:8000")
@@ -235,16 +235,16 @@ var _ = Describe("Acceptance", func() {
 				resp, err := http.DefaultClient.Do(req)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				descriptions := []v1alpha1.ProfileDescription{}
+				descriptions := []profilesv1.ProfileDescription{}
 				_ = json.NewDecoder(resp.Body).Decode(&descriptions)
 				return descriptions
 
 			}).Should(ConsistOf(
-				v1alpha1.ProfileDescription{
+				profilesv1.ProfileDescription{
 					Name:        "nginx-1",
 					Description: "nginx 1",
 				},
-				v1alpha1.ProfileDescription{
+				profilesv1.ProfileDescription{
 					Name:        "nginx-2",
 					Description: "nginx 1",
 				},

@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/weaveworks/profiles/api/v1alpha1"
+	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/pkg/git"
 	"github.com/weaveworks/profiles/pkg/git/fakes"
 )
@@ -50,7 +50,7 @@ spec:
 		Expect(err).NotTo(HaveOccurred())
 		Expect(fakeHTTPClient.GetCallCount()).To(Equal(1))
 		Expect(fakeHTTPClient.GetArgsForCall(0)).To(Equal("raw.githubusercontent.com/foo/bar/main/profile.yaml"))
-		Expect(definition).To(Equal(v1alpha1.ProfileDefinition{
+		Expect(definition).To(Equal(profilesv1.ProfileDefinition{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "nginx",
 			},
@@ -58,9 +58,9 @@ spec:
 				Kind:       "Profile",
 				APIVersion: "profiles.fluxcd.io/v1alpha1",
 			},
-			Spec: v1alpha1.ProfileDefinitionSpec{
+			Spec: profilesv1.ProfileDefinitionSpec{
 				Description: "foo",
-				Artifacts: []v1alpha1.Artifact{
+				Artifacts: []profilesv1.Artifact{
 					{
 						Name: "bar",
 						Path: "baz",
