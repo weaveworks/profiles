@@ -20,7 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/weaveworks/profiles/api/v1alpha1"
+	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/pkg/profile"
 )
 
@@ -48,19 +48,19 @@ var _ = Describe("Profile", func() {
 		p          *profile.Profile
 		fakeClient client.Client
 		scheme     *runtime.Scheme
-		pSub       v1alpha1.ProfileSubscription
-		pDef       v1alpha1.ProfileDefinition
+		pSub       profilesv1.ProfileSubscription
+		pDef       profilesv1.ProfileDefinition
 	)
 
 	BeforeEach(func() {
 		scheme = runtime.NewScheme()
-		pSub = v1alpha1.ProfileSubscription{
+		pSub = profilesv1.ProfileSubscription{
 			TypeMeta: profileTypeMeta,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      subscriptionName,
 				Namespace: namespace,
 			},
-			Spec: v1alpha1.ProfileSubscriptionSpec{
+			Spec: profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: "https://github.com/org/repo-name",
 				Branch:     branch,
 				Values: &apiextensionsv1.JSON{
@@ -76,17 +76,17 @@ var _ = Describe("Profile", func() {
 			},
 		}
 
-		pDef = v1alpha1.ProfileDefinition{
+		pDef = profilesv1.ProfileDefinition{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: profileName,
 			},
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Profile",
-				APIVersion: "profiles.fluxcd.io/v1alpha1",
+				APIVersion: "profiles.fluxcd.io/profilesv1",
 			},
-			Spec: v1alpha1.ProfileDefinitionSpec{
+			Spec: profilesv1.ProfileDefinitionSpec{
 				Description: "foo",
-				Artifacts: []v1alpha1.Artifact{
+				Artifacts: []profilesv1.Artifact{
 					{
 						Name: chartName,
 						Path: chartPath,
@@ -103,7 +103,7 @@ var _ = Describe("Profile", func() {
 		It("creates a slice of runtime.Object", func() {
 			Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
 			Expect(helmv2.AddToScheme(scheme)).To(Succeed())
-			Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
+			Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 
 			p = profile.New(pDef, pSub, fakeClient, logr.Discard())
 			o, err := p.MakeArtifacts()
@@ -121,7 +121,7 @@ var _ = Describe("Profile", func() {
 				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
 				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
 				Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
-				Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
+				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 
 				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
 				err := p.CreateArtifacts(ctx)
@@ -181,7 +181,7 @@ var _ = Describe("Profile", func() {
 				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
 				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
 				Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
-				Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
+				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 
 				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
 				err := p.CreateArtifacts(ctx)
@@ -236,7 +236,7 @@ var _ = Describe("Profile", func() {
 				// this is a bit of a hack, but by not adding this resource to the scheme
 				// we can force the Create call to fail
 				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
-				Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
+				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
 				err := p.CreateArtifacts(ctx)
 				Expect(err).To(MatchError(ContainSubstring("failed to create GitRepository resource")))
@@ -246,7 +246,7 @@ var _ = Describe("Profile", func() {
 		When("the HelmRelease create fails", func() {
 			It("errors", func() {
 				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
-				Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
+				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
 				err := p.CreateArtifacts(ctx)
 				Expect(err).To(MatchError(ContainSubstring("failed to create HelmRelease resource")))
@@ -260,7 +260,7 @@ var _ = Describe("Profile", func() {
 
 			It("errors", func() {
 				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
-				Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
+				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
 				err := p.CreateArtifacts(ctx)
 				Expect(err).To(MatchError(ContainSubstring("failed to create Kustomization resource")))
@@ -274,7 +274,7 @@ var _ = Describe("Profile", func() {
 
 			It("errors", func() {
 				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
-				Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
+				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
 				err := p.CreateArtifacts(ctx)
 				Expect(err).To(MatchError(ContainSubstring("artifact kind \"SomeUnknownKind\" not recognized")))

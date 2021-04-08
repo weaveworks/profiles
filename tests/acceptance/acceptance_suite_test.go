@@ -7,11 +7,12 @@ import (
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/weaveworks/profiles/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 )
 
 func TestAcceptance(t *testing.T) {
@@ -24,7 +25,7 @@ var kClient client.Client
 var _ = BeforeSuite(func() {
 	scheme := runtime.NewScheme()
 	Expect(clientgoscheme.AddToScheme(scheme)).To(Succeed())
-	Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
+	Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 	Expect(helmv2.AddToScheme(scheme)).To(Succeed())
 	Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
 

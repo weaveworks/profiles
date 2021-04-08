@@ -3,23 +3,27 @@ package catalog
 import (
 	"strings"
 
-	"github.com/weaveworks/profiles/api/v1alpha1"
+	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 )
 
+// Catalog provides an in-memory cache of profiles from the cluster which can be queried easily.
 type Catalog struct {
-	profiles []v1alpha1.ProfileDescription
+	profiles []profilesv1.ProfileDescription
 }
 
+// New creates a new, empty catalog.
 func New() *Catalog {
-	return &Catalog{profiles: []v1alpha1.ProfileDescription{}}
+	return &Catalog{profiles: []profilesv1.ProfileDescription{}}
 }
 
-func (c *Catalog) Add(p ...v1alpha1.ProfileDescription) {
+// Add adds p profiles to the catalog.
+func (c *Catalog) Add(p ...profilesv1.ProfileDescription) {
 	c.profiles = append(c.profiles, p...)
 }
 
-func (c *Catalog) Search(name string) []v1alpha1.ProfileDescription {
-	var profiles []v1alpha1.ProfileDescription
+// Search returns profile descriptions that contain `name` in their names.
+func (c *Catalog) Search(name string) []profilesv1.ProfileDescription {
+	var profiles []profilesv1.ProfileDescription
 	for _, p := range c.profiles {
 		if strings.Contains(p.Name, name) {
 			profiles = append(profiles, p)
