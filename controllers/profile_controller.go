@@ -94,7 +94,9 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	pDef, err := git.GetProfileDefinition(pSub.Spec.ProfileURL, pSub.Spec.Branch, logger)
 	if err != nil {
-		r.patchStatus(ctx, &pSub, logger, readyFalse, "FetchProfileFailed", "error when fetching profile definition")
+		if err := r.patchStatus(ctx, &pSub, logger, readyFalse, "FetchProfileFailed", "error when fetching profile definition"); err != nil {
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, err
 	}
 
@@ -107,7 +109,9 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 	if !artifactStatus.ResourcesExist {
 		err = instance.CreateArtifacts(ctx)
 		if err != nil {
-			r.patchStatus(ctx, &pSub, logger, readyFalse, "CreateFailed", "error when creating profile artifacts")
+			if err := r.patchStatus(ctx, &pSub, logger, readyFalse, "CreateFailed", "error when creating profile artifacts"); err != nil {
+				return ctrl.Result{}, err
+			}
 			return ctrl.Result{}, err
 		}
 		artifactStatus, err = instance.ArtifactStatus(ctx)
@@ -117,23 +121,25 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	if len(artifactStatus.NotReadyConditions) == 0 {
-		r.patchStatus(ctx, &pSub, logger, readyTrue, "ArtifactsReady", "all artifact resouces ready")
-	} else {
-		var messages []string
-		status := readyUnknown
-		for _, condition := range artifactStatus.NotReadyConditions {
-			logger.Info(fmt.Sprintf("%s=%s, message:%s", condition.Type, string(condition.Status), condition.Message))
-			messages = append(messages, condition.Message)
-			if string(condition.Status) == readyFalse {
-				status = readyFalse
-			}
+		return ctrl.Result{}, r.patchStatus(ctx, &pSub, logger, readyTrue, "ArtifactsReady", "all artifact resouces ready")
+	}
+
+	var messages []string
+	status := readyUnknown
+	for _, condition := range artifactStatus.NotReadyConditions {
+		logger.Info(fmt.Sprintf("%s=%s, message:%s", condition.Type, string(condition.Status), condition.Message))
+		messages = append(messages, condition.Message)
+		if string(condition.Status) == readyFalse {
+			status = readyFalse
 		}
-		r.patchStatus(ctx, &pSub, logger, status, "ArtifactNotReady", strings.Join(messages, ","))
+	}
+	if err := r.patchStatus(ctx, &pSub, logger, status, "ArtifactNotReady", strings.Join(messages, ",")); err != nil {
+		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil
 }
 
-func (r *ProfileSubscriptionReconciler) patchStatus(ctx context.Context, pSub *profilesv1.ProfileSubscription, logger logr.Logger, readyStatus, reason, message string) {
+func (r *ProfileSubscriptionReconciler) patchStatus(ctx context.Context, pSub *profilesv1.ProfileSubscription, logger logr.Logger, readyStatus, reason, message string) error {
 	pSub.Status.Conditions = []metav1.Condition{
 		{
 			Type:               "Ready",
@@ -148,10 +154,12 @@ func (r *ProfileSubscriptionReconciler) patchStatus(ctx context.Context, pSub *p
 	latest := &profilesv1.ProfileSubscription{}
 	if err := r.Client.Get(ctx, key, latest); err != nil {
 		logger.Error(err, "failed to get latest resource during patch")
-		return
+		return err
 	}
 	err := r.Client.Status().Patch(ctx, pSub, client.MergeFrom(latest))
 	if err != nil {
 		logger.Error(err, "failed to patch status")
+		return err
 	}
+	return nil
 }

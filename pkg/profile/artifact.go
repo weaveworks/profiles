@@ -17,6 +17,7 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 )
 
+// Status contains the status of the artifacts
 type Status struct {
 	ResourcesExist     bool
 	NotReadyConditions []metav1.Condition
@@ -50,7 +51,7 @@ func (p *Profile) CreateArtifacts(ctx context.Context) error {
 	return nil
 }
 
-// Checks if the artifacts exists and returns any ready!=true conditions on the artifacts.
+// ArtifactStatus checks if the artifacts exists and returns any ready!=true conditions on the artifacts.
 func (p *Profile) ArtifactStatus(ctx context.Context) (Status, error) {
 	resourcesExist, gitRes, helmRes, kustomizeRes, err := p.getResources(ctx)
 	if err != nil {
