@@ -19,43 +19,20 @@ var _ = Describe("Catalog", func() {
 		catName = "whiskers"
 	})
 
-	Context("Add", func() {
-		BeforeEach(func() {
-			profiles := []v1alpha1.ProfileDescription{{Name: "foo"}, {Name: "bar"}, {Name: "alsofoo"}}
-			c.Add(catName, profiles...)
-		})
+	It("manages an in memory list of profiles", func() {
+		By("adding profiles to the list")
+		profiles := []v1alpha1.ProfileDescription{{Name: "foo"}, {Name: "bar"}, {Name: "alsofoo"}}
+		c.Add(catName, profiles...)
 
-		It("adds the catalog name to each profile", func() {
-			Expect(c.Get("foo")).To(Equal(
-				v1alpha1.ProfileDescription{Name: "foo", Catalog: catName},
-			))
-		})
-	})
+		By("returning all matching profiles based on query string")
+		Expect(c.Search("foo")).To(ConsistOf(
+			v1alpha1.ProfileDescription{Name: "foo", Catalog: catName},
+			v1alpha1.ProfileDescription{Name: "alsofoo", Catalog: catName},
+		))
 
-	Context("Search", func() {
-		BeforeEach(func() {
-			profiles := []v1alpha1.ProfileDescription{{Name: "foo"}, {Name: "bar"}, {Name: "alsofoo"}}
-			c.Add(catName, profiles...)
-		})
-
-		It("returns matching profiles", func() {
-			Expect(c.Search("foo")).To(ConsistOf(
-				v1alpha1.ProfileDescription{Name: "foo", Catalog: catName},
-				v1alpha1.ProfileDescription{Name: "alsofoo", Catalog: catName},
-			))
-		})
-	})
-
-	Context("Get", func() {
-		BeforeEach(func() {
-			profiles := []v1alpha1.ProfileDescription{{Name: "foo"}, {Name: "bar"}, {Name: "alsofoo"}}
-			c.Add(catName, profiles...)
-		})
-
-		It("returns the requested profile", func() {
-			Expect(c.Get("foo")).To(Equal(
-				v1alpha1.ProfileDescription{Name: "foo", Catalog: catName},
-			))
-		})
+		By("getting details for a specific named profile")
+		Expect(c.Get("foo")).To(Equal(
+			v1alpha1.ProfileDescription{Name: "foo", Catalog: catName},
+		))
 	})
 })
