@@ -44,7 +44,7 @@ var _ = Describe("Api", func() {
 
 				// Check the status code is what we expect.
 				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(Equal(`[{"name":"nginx-1","description":"nginx 1"}]`))
+				Expect(rr.Body.String()).To(ContainSubstring(`[{"name":"nginx-1","description":"nginx 1"}]`))
 			})
 		})
 	})
@@ -69,7 +69,7 @@ var _ = Describe("Api", func() {
 
 				// Check the status code is what we expect.
 				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(Equal(`{"name":"nginx-1","description":"nginx 1"}`))
+				Expect(rr.Body.String()).To(ContainSubstring(`{"name":"nginx-1","description":"nginx 1"}`))
 			})
 		})
 	})
