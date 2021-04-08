@@ -52,7 +52,7 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 
 			Eventually(func() []v1alpha1.ProfileDescription {
 				return catalogReconciler.Profiles.Search("foo")
-			}, 2*time.Second).Should(ConsistOf(v1alpha1.ProfileDescription{Name: "foo", Description: "bar"}))
+			}, 2*time.Second).Should(ConsistOf(v1alpha1.ProfileDescription{Name: "foo", Description: "bar", Catalog: "catalog"}))
 		})
 	})
 })

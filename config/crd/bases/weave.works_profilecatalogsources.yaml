@@ -43,7 +43,7 @@ spec:
                   properties:
                     catalog:
                       description: Catalog is the name of the catalog the profile
-                        is listed in TODO necessary?
+                        is listed in
                       type: string
                     description:
                       description: Profile description

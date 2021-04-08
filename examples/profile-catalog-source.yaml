@@ -7,7 +7,6 @@ spec:
     - name: weaveworks-nginx
       description: This installs nginx.
       version: 0.0.1
-      catalog: nginx-catalog
       url: https://github.com/weaveworks/nginx-profile
       maintainer: weaveworks (https://github.com/weaveworks/profiles)
       prerequisites:

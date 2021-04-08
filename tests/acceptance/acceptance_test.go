@@ -196,7 +196,10 @@ var _ = Describe("Acceptance", func() {
 	})
 
 	Context("ProfileCatalog", func() {
-		var pCatalog v1alpha1.ProfileCatalogSource
+		var (
+			pCatalog       v1alpha1.ProfileCatalogSource
+			expectedNginx1 v1alpha1.ProfileDescription
+		)
 
 		BeforeEach(func() {
 			pCatalog = v1alpha1.ProfileCatalogSource{
@@ -211,8 +214,12 @@ var _ = Describe("Acceptance", func() {
 				Spec: profilesv1.ProfileCatalogSourceSpec{
 					Profiles: []profilesv1.ProfileDescription{
 						{
-							Name:        "nginx-1",
-							Description: "nginx 1",
+							Name:          "nginx-1",
+							Description:   "nginx 1",
+							Version:       "0.0.1",
+							URL:           "foo.com/bar",
+							Maintainer:    "my aunt ethel",
+							Prerequisites: []string{"at least 20 years of kubernetes experience"},
 						},
 						{
 							Name:        "nginx-2",
@@ -224,6 +231,17 @@ var _ = Describe("Acceptance", func() {
 						},
 					},
 				},
+			}
+			Expect(kClient.Create(context.Background(), &pCatalog)).To(Succeed())
+
+			expectedNginx1 = v1alpha1.ProfileDescription{
+				Name:          "nginx-1",
+				Description:   "nginx 1",
+				Catalog:       "catalog",
+				Version:       "0.0.1",
+				URL:           "foo.com/bar",
+				Maintainer:    "my aunt ethel",
+				Prerequisites: []string{"at least 20 years of kubernetes experience"},
 			}
 		})
 		Expect(kClient.Create(context.Background(), &pCatalog)).To(Succeed())
@@ -276,19 +294,17 @@ var _ = Describe("Acceptance", func() {
 					_ = json.NewDecoder(resp.Body).Decode(&descriptions)
 					return descriptions
 				}).Should(ConsistOf(
-					v1alpha1.ProfileDescription{
-						Name:        "nginx-1",
-						Description: "nginx 1",
-					},
+					expectedNginx1,
 					v1alpha1.ProfileDescription{
 						Name:        "nginx-2",
 						Description: "nginx 1",
+						Catalog:     "catalog",
 					},
 				))
 			})
 		})
 
-		Context("show", func() {
+		Context("get", func() {
 			It("returns details of the requested catalog entry", func() {
 				profileName := "nginx-1"
 				Eventually(func() v1alpha1.ProfileDescription {
@@ -300,12 +316,7 @@ var _ = Describe("Acceptance", func() {
 					description := v1alpha1.ProfileDescription{}
 					_ = json.NewDecoder(resp.Body).Decode(&description)
 					return description
-				}).Should(Equal(
-					v1alpha1.ProfileDescription{
-						Name:        "nginx-1",
-						Description: "nginx 1",
-					},
-				))
+				}).Should(Equal(expectedNginx1))
 			})
 		})
 	})

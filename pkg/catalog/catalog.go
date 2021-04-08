@@ -18,8 +18,11 @@ func New() *Catalog {
 }
 
 // Add adds p profiles to the catalog.
-func (c *Catalog) Add(p ...profilesv1.ProfileDescription) {
-	c.profiles = append(c.profiles, p...)
+func (c *Catalog) Add(catalogName string, profiles ...v1alpha1.ProfileDescription) {
+	for _, p := range profiles {
+		p.Catalog = catalogName
+		c.profiles = append(c.profiles, p)
+	}
 }
 
 // Search returns profile descriptions that contain `name` in their names.

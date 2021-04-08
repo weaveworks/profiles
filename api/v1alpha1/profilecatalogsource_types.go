@@ -35,7 +35,6 @@ type ProfileDescription struct {
 	// +optional
 	Version string `json:"version,omitempty"`
 	// Catalog is the name of the catalog the profile is listed in
-	// TODO necessary?
 	// +optional
 	Catalog string `json:"catalog,omitempty"`
 	// URL is the full URL path to the profile.yaml

@@ -55,7 +55,7 @@ func (r *ProfileCatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl
 		return ctrl.Result{}, err
 	}
 
-	r.Profiles.Add(pCatalog.Spec.Profiles...)
+	r.Profiles.Add(pCatalog.Name, pCatalog.Spec.Profiles...)
 
 	return ctrl.Result{}, nil
 }

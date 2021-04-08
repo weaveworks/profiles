@@ -21,7 +21,7 @@ var _ = Describe("Api", func() {
 	Context("/profiles", func() {
 		BeforeEach(func() {
 			profileCatalog = catalog.New()
-			profileCatalog.Add(v1alpha1.ProfileDescription{Name: "nginx-1", Description: "nginx 1"})
+			profileCatalog.Add("foo", v1alpha1.ProfileDescription{Name: "nginx-1", Description: "nginx 1"})
 			catalogAPI = api.New(profileCatalog)
 		})
 
@@ -43,7 +43,7 @@ var _ = Describe("Api", func() {
 
 				// Check the status code is what we expect.
 				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(ContainSubstring(`[{"name":"nginx-1","description":"nginx 1"}]`))
+				Expect(rr.Body.String()).To(ContainSubstring(`[{"name":"nginx-1","description":"nginx 1","catalog":"foo"}]`))
 			})
 		})
 	})
@@ -51,7 +51,7 @@ var _ = Describe("Api", func() {
 	Context("/profiles/profile-name", func() {
 		BeforeEach(func() {
 			profileCatalog = catalog.New()
-			profileCatalog.Add(v1alpha1.ProfileDescription{Name: "nginx-1", Description: "nginx 1"})
+			profileCatalog.Add("foo", v1alpha1.ProfileDescription{Name: "nginx-1", Description: "nginx 1"})
 			catalogAPI = api.New(profileCatalog)
 		})
 
@@ -68,7 +68,7 @@ var _ = Describe("Api", func() {
 
 				// Check the status code is what we expect.
 				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(ContainSubstring(`{"name":"nginx-1","description":"nginx 1"}`))
+				Expect(rr.Body.String()).To(ContainSubstring(`{"name":"nginx-1","description":"nginx 1","catalog":"foo"}`))
 			})
 		})
 	})
