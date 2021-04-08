@@ -25,7 +25,7 @@ func New(profileCatalog *catalog.Catalog) API {
 	}
 
 	r.HandleFunc("/profiles", a.ProfilesHandler)
-	r.HandleFunc("/profiles/{name}", a.ProfileHandler)
+	r.HandleFunc("/profiles/{catalog}/{profile}", a.ProfileHandler)
 
 	return a
 }
@@ -37,8 +37,8 @@ func (a *API) ProfilesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) ProfileHandler(w http.ResponseWriter, r *http.Request) {
-	profileName := mux.Vars(r)["name"]
-	marshalResponse(w, a.profileCatalog.Get(profileName))
+	catalogName, profileName := mux.Vars(r)["catalog"], mux.Vars(r)["profile"]
+	marshalResponse(w, a.profileCatalog.Get(catalogName, profileName))
 }
 
 func marshalResponse(w http.ResponseWriter, v interface{}) {

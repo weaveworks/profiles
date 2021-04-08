@@ -30,8 +30,8 @@ var _ = Describe("Catalog", func() {
 			v1alpha1.ProfileDescription{Name: "alsofoo", Catalog: catName},
 		))
 
-		By("getting details for a specific named profile")
-		Expect(c.Get("foo")).To(Equal(
+		By("getting details for a specific named profile in a catalog")
+		Expect(c.Get(catName, "foo")).To(Equal(
 			v1alpha1.ProfileDescription{Name: "foo", Catalog: catName},
 		))
 	})

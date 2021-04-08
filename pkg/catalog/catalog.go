@@ -37,9 +37,9 @@ func (c *Catalog) Search(name string) []profilesv1.ProfileDescription {
 	return profiles
 }
 
-func (c *Catalog) Get(name string) v1alpha1.ProfileDescription {
+func (c *Catalog) Get(catalogName, profileName string) v1alpha1.ProfileDescription {
 	for _, p := range c.profiles {
-		if strings.Contains(p.Name, name) {
+		if p.Name == profileName && p.Catalog == catalogName {
 			return p
 		}
 	}
