@@ -10,32 +10,33 @@ import (
 )
 
 var _ = Describe("Catalog", func() {
-	var log = logr.Discard()
-	Context("Add", func() {
-		It("adds profiles to the catalog", func() {
-			c := catalog.New(log)
-			c.Add(v1alpha1.ProfileDescription{Name: "foo"})
-			Expect(c.Profiles()).To(Equal(
-				[]v1alpha1.ProfileDescription{{Name: "foo"}},
-			))
-		})
+	var (
+		log logr.Logger
+		c   *catalog.Catalog
+	)
 
+	BeforeEach(func() {
+		log = logr.Discard()
+		c = catalog.New(log)
+	})
+
+	Context("Add", func() {
 		It("does not add duplicate profiles", func() {
-			c := catalog.New(log)
-			profiles := []v1alpha1.ProfileDescription{{Name: "foo"}, {Name: "bar"}, {Name: "foo"}}
+			// 2 foos added
+			profiles := []v1alpha1.ProfileDescription{{Name: "foo"}, {Name: "foo"}, {Name: "bar"}}
 			c.Add(profiles...)
-			Expect(c.Profiles()).To(HaveLen(2))
-			Expect(c.Profiles()).To(Equal(
-				[]v1alpha1.ProfileDescription{{Name: "foo"}, {Name: "bar"}},
-			))
+			// only 1 should remain
+			Expect(c.Search("foo")).To(ConsistOf(v1alpha1.ProfileDescription{Name: "foo"}))
 		})
 	})
 
 	Context("Search", func() {
-		It("returns matching profiles", func() {
-			c := catalog.New(log)
+		BeforeEach(func() {
 			profiles := []v1alpha1.ProfileDescription{{Name: "foo"}, {Name: "bar"}, {Name: "alsofoo"}}
 			c.Add(profiles...)
+		})
+
+		It("returns matching profiles", func() {
 			Expect(c.Search("foo")).To(ConsistOf(
 				profilesv1.ProfileDescription{Name: "foo"},
 				profilesv1.ProfileDescription{Name: "alsofoo"},
@@ -43,12 +44,14 @@ var _ = Describe("Catalog", func() {
 		})
 	})
 
-	Context("Show", func() {
-		It("returns the requested profile", func() {
-			c := catalog.New(log)
+	Context("Get", func() {
+		BeforeEach(func() {
 			profiles := []v1alpha1.ProfileDescription{{Name: "foo"}, {Name: "bar"}, {Name: "alsofoo"}}
 			c.Add(profiles...)
-			Expect(c.Show("foo")).To(Equal(
+		})
+
+		It("returns the requested profile", func() {
+			Expect(c.Get("foo")).To(Equal(
 				v1alpha1.ProfileDescription{Name: "foo"},
 			))
 		})

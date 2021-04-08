@@ -29,8 +29,10 @@ func (c *Catalog) Add(p ...profilesv1.ProfileDescription) {
 			// We add all profiles at the top of the func then remove dupes here because
 			// if multiples are being added then it is less straightforward to check against
 			// what is already in the catalog as well as dupes in the Add list
-			ret := c.profiles[:i]
-			c.profiles = append(ret, c.profiles[i+1:]...)
+			// This method is not idiomatic, but it is safer
+			newList := make([]v1alpha1.ProfileDescription, 0)
+			newList = append(newList, c.profiles[:i]...)
+			c.profiles = append(newList, c.profiles[i+1:]...)
 
 			continue
 		}
@@ -50,7 +52,7 @@ func (c *Catalog) Search(name string) []profilesv1.ProfileDescription {
 	return profiles
 }
 
-func (c *Catalog) Show(name string) v1alpha1.ProfileDescription {
+func (c *Catalog) Get(name string) v1alpha1.ProfileDescription {
 	for _, p := range c.profiles {
 		if strings.Contains(p.Name, name) {
 			return p
