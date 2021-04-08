@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 
-	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -21,7 +20,7 @@ var _ = Describe("Api", func() {
 	)
 	Context("/profiles", func() {
 		BeforeEach(func() {
-			profileCatalog = catalog.New(logr.Discard())
+			profileCatalog = catalog.New()
 			profileCatalog.Add(v1alpha1.ProfileDescription{Name: "nginx-1", Description: "nginx 1"})
 			catalogAPI = api.New(profileCatalog)
 		})
@@ -51,7 +50,7 @@ var _ = Describe("Api", func() {
 
 	Context("/profiles/profile-name", func() {
 		BeforeEach(func() {
-			profileCatalog = catalog.New(logr.Discard())
+			profileCatalog = catalog.New()
 			profileCatalog.Add(v1alpha1.ProfileDescription{Name: "nginx-1", Description: "nginx 1"})
 			catalogAPI = api.New(profileCatalog)
 		})

@@ -99,7 +99,7 @@ var _ = BeforeSuite(func() {
 	catalogReconciler = &controllers.ProfileCatalogSourceReconciler{
 		Client:   k8sManager.GetClient(),
 		Log:      ctrl.Log.WithName("controllers").WithName("profilecatalog"),
-		Profiles: catalog.New(ctrl.Log.WithName("catalog")),
+		Profiles: catalog.New(),
 	}
 
 	err = catalogReconciler.SetupWithManager(k8sManager)
