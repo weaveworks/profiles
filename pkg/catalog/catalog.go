@@ -3,7 +3,6 @@ package catalog
 import (
 	"strings"
 
-	"github.com/weaveworks/profiles/api/v1alpha1"
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 )
 
@@ -18,7 +17,7 @@ func New() *Catalog {
 }
 
 // Add adds p profiles to the catalog.
-func (c *Catalog) Add(catalogName string, profiles ...v1alpha1.ProfileDescription) {
+func (c *Catalog) Add(catalogName string, profiles ...profilesv1.ProfileDescription) {
 	for _, p := range profiles {
 		p.Catalog = catalogName
 		c.profiles = append(c.profiles, p)
@@ -38,12 +37,12 @@ func (c *Catalog) Search(name string) []profilesv1.ProfileDescription {
 }
 
 // Get returns the profile description `profileName`.
-func (c *Catalog) Get(catalogName, profileName string) v1alpha1.ProfileDescription {
+func (c *Catalog) Get(catalogName, profileName string) profilesv1.ProfileDescription {
 	for _, p := range c.profiles {
 		if p.Name == profileName && p.Catalog == catalogName {
 			return p
 		}
 	}
 
-	return v1alpha1.ProfileDescription{}
+	return profilesv1.ProfileDescription{}
 }

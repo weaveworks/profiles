@@ -18,7 +18,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/weaveworks/profiles/api/v1alpha1"
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 )
 
@@ -197,14 +196,14 @@ var _ = Describe("Acceptance", func() {
 
 	Context("ProfileCatalog", func() {
 		var (
-			pCatalog                 v1alpha1.ProfileCatalogSource
-			expectedNginx1           v1alpha1.ProfileDescription
+			pCatalog                 profilesv1.ProfileCatalogSource
+			expectedNginx1           profilesv1.ProfileDescription
 			catalogName, profileName string
 		)
 
 		BeforeEach(func() {
 			catalogName, profileName = "catalog", "nginx-1"
-			pCatalog = v1alpha1.ProfileCatalogSource{
+			pCatalog = profilesv1.ProfileCatalogSource{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ProfileCatalogSource",
 					APIVersion: profileSubscriptionAPIVersion,
@@ -236,7 +235,7 @@ var _ = Describe("Acceptance", func() {
 			}
 			Expect(kClient.Create(context.Background(), &pCatalog)).To(Succeed())
 
-			expectedNginx1 = v1alpha1.ProfileDescription{
+			expectedNginx1 = profilesv1.ProfileDescription{
 				Name:          profileName,
 				Description:   "nginx 1",
 				Catalog:       catalogName,
@@ -253,7 +252,7 @@ var _ = Describe("Acceptance", func() {
 
 		Context("search", func() {
 			It("returns the matching catalogs", func() {
-				Eventually(func() []v1alpha1.ProfileDescription {
+				Eventually(func() []profilesv1.ProfileDescription {
 					req, err := http.NewRequest("GET", "http://localhost:8000/profiles", nil)
 					Expect(err).NotTo(HaveOccurred())
 					u, err := url.Parse("http://localhost:8000")
@@ -265,12 +264,12 @@ var _ = Describe("Acceptance", func() {
 					resp, err := http.DefaultClient.Do(req)
 					Expect(err).NotTo(HaveOccurred())
 					Expect(resp.StatusCode).To(Equal(http.StatusOK))
-					descriptions := []v1alpha1.ProfileDescription{}
+					descriptions := []profilesv1.ProfileDescription{}
 					_ = json.NewDecoder(resp.Body).Decode(&descriptions)
 					return descriptions
 				}).Should(ConsistOf(
 					expectedNginx1,
-					v1alpha1.ProfileDescription{
+					profilesv1.ProfileDescription{
 						Name:        "nginx-2",
 						Description: "nginx 1",
 						Catalog:     catalogName,
@@ -281,13 +280,13 @@ var _ = Describe("Acceptance", func() {
 
 		Context("get", func() {
 			It("returns details of the requested catalog entry", func() {
-				Eventually(func() v1alpha1.ProfileDescription {
+				Eventually(func() profilesv1.ProfileDescription {
 					req, err := http.NewRequest("GET", fmt.Sprintf("http://localhost:8000/profiles/%s/%s", catalogName, profileName), nil)
 					Expect(err).NotTo(HaveOccurred())
 					resp, err := http.DefaultClient.Do(req)
 					Expect(err).NotTo(HaveOccurred())
 					Expect(resp.StatusCode).To(Equal(http.StatusOK))
-					description := v1alpha1.ProfileDescription{}
+					description := profilesv1.ProfileDescription{}
 					_ = json.NewDecoder(resp.Body).Decode(&description)
 					return description
 				}).Should(Equal(expectedNginx1))

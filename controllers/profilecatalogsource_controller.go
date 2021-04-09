@@ -25,7 +25,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/weaveworks/profiles/api/v1alpha1"
+	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/pkg/catalog"
 )
 
@@ -44,7 +44,7 @@ type ProfileCatalogSourceReconciler struct {
 func (r *ProfileCatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := r.Log.WithValues("profilecatalogsource", req.NamespacedName)
 
-	pCatalog := v1alpha1.ProfileCatalogSource{}
+	pCatalog := profilesv1.ProfileCatalogSource{}
 	err := r.Client.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, &pCatalog)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -63,6 +63,6 @@ func (r *ProfileCatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl
 // SetupWithManager sets up the controller with the Manager.
 func (r *ProfileCatalogSourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.ProfileCatalogSource{}).
+		For(&profilesv1.ProfileCatalogSource{}).
 		Complete(r)
 }

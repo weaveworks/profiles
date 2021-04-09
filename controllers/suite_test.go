@@ -33,7 +33,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"github.com/weaveworks/profiles/api/v1alpha1"
+	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/controllers"
 	"github.com/weaveworks/profiles/pkg/catalog"
 	// +kubebuilder:scaffold:imports
@@ -70,10 +70,10 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	err = v1alpha1.AddToScheme(scheme.Scheme)
+	err = profilesv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = v1alpha1.AddToScheme(scheme.Scheme)
+	err = profilesv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	// +kubebuilder:scaffold:scheme

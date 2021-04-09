@@ -22,7 +22,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/go-logr/logr"
-	"github.com/weaveworks/profiles/api/v1alpha1"
+	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/pkg/git"
 	"github.com/weaveworks/profiles/pkg/profile"
 
@@ -53,7 +53,7 @@ type ProfileSubscriptionReconciler struct {
 // SetupWithManager sets up the controller with the Manager.
 func (r *ProfileSubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.ProfileSubscription{}, builder.WithPredicates(
+		For(&profilesv1.ProfileSubscription{}, builder.WithPredicates(
 			predicate.GenerationChangedPredicate{},
 		)).
 		Complete(r)
@@ -66,7 +66,7 @@ func (r *ProfileSubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error
 func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := r.Log.WithValues("resource", req.NamespacedName)
 
-	pSub := v1alpha1.ProfileSubscription{}
+	pSub := profilesv1.ProfileSubscription{}
 	err := r.Client.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, &pSub)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -95,21 +95,21 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *ProfileSubscriptionReconciler) patchStatusFailing(ctx context.Context, pSub *v1alpha1.ProfileSubscription, logger logr.Logger, message string) {
+func (r *ProfileSubscriptionReconciler) patchStatusFailing(ctx context.Context, pSub *profilesv1.ProfileSubscription, logger logr.Logger, message string) {
 	pSub.Status.State = "failing"
 	pSub.Status.Message = message
 	r.patchStatus(ctx, pSub, logger)
 }
 
-func (r *ProfileSubscriptionReconciler) patchStatusRunning(ctx context.Context, pSub *v1alpha1.ProfileSubscription, logger logr.Logger) {
+func (r *ProfileSubscriptionReconciler) patchStatusRunning(ctx context.Context, pSub *profilesv1.ProfileSubscription, logger logr.Logger) {
 	pSub.Status.State = "running"
 	pSub.Status.Message = ""
 	r.patchStatus(ctx, pSub, logger)
 }
 
-func (r *ProfileSubscriptionReconciler) patchStatus(ctx context.Context, pSub *v1alpha1.ProfileSubscription, logger logr.Logger) {
+func (r *ProfileSubscriptionReconciler) patchStatus(ctx context.Context, pSub *profilesv1.ProfileSubscription, logger logr.Logger) {
 	key := client.ObjectKeyFromObject(pSub)
-	latest := &v1alpha1.ProfileSubscription{}
+	latest := &profilesv1.ProfileSubscription{}
 	if err := r.Client.Get(ctx, key, latest); err != nil {
 		logger.Error(err, "failed to get latest resource during patch")
 		return
