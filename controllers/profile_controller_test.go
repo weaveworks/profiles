@@ -39,7 +39,7 @@ var _ = Describe("ProfileController", func() {
 	Context("Create", func() {
 		DescribeTable("Applying a Profile creates the correct resources", func(pSubSpec profilesv1.ProfileSubscriptionSpec) {
 			subscriptionName := "foo"
-			branch := "main"
+			branch := pSubSpec.Branch
 
 			pSub := profilesv1.ProfileSubscription{
 				TypeMeta: metav1.TypeMeta{
@@ -138,15 +138,18 @@ var _ = Describe("ProfileController", func() {
 		},
 			Entry("a single Helm chart with no supplied values", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
+				Branch:     "support-helm-urls",
 			}),
 			Entry("a single Helm chart with supplied values", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
+				Branch:     "support-helm-urls",
 				Values: &apiextensionsv1.JSON{
 					Raw: []byte(`{"replicaCount": 3,"service":{"port":8081}}`),
 				},
 			}),
 			Entry("a single Helm chart with values supplied via valuesFrom", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
+				Branch:     "support-helm-urls",
 				ValuesFrom: []helmv2.ValuesReference{
 					{
 						Name:     "nginx-values",
@@ -195,7 +198,7 @@ var _ = Describe("ProfileController", func() {
 				subscriptionName := "git-resource-already-exists-error"
 				profileURL := nginxProfileURL
 
-				gitRefName := fmt.Sprintf("%s-%s-%s", subscriptionName, "nginx-profile", "main")
+				gitRefName := fmt.Sprintf("%s-%s-%s", subscriptionName, "nginx-profile", "support-helm-urls")
 				gitRepo := sourcev1.GitRepository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      gitRefName,
@@ -208,7 +211,7 @@ var _ = Describe("ProfileController", func() {
 					Spec: sourcev1.GitRepositorySpec{
 						URL: profileURL,
 						Reference: &sourcev1.GitRepositoryRef{
-							Branch: "main",
+							Branch: "support-helm-urls",
 						},
 					},
 				}

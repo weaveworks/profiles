@@ -37,12 +37,18 @@ spec:
             description: ProfileDefinitionSpec defines the desired state of ProfileDefinition
             properties:
               artifacts:
-                description: Artifacts is a list of Profile artifacts can be one of
-                  HelmChart, TODO
+                description: Artifacts is a list of Profile artifacts
                 items:
+                  description: Artifact defines a bundled resource of the components
+                    for this profile.
                   properties:
+                    helm_url:
+                      description: HelmURL is the URL of the Helm repository containing
+                        a Helm chart and possible values.
+                      type: string
                     kind:
-                      description: 'Kind is the kind of artifact: HelmChart or Kustomize'
+                      description: 'Kind is the kind of artifact: HelmChartLocal or
+                        Kustomize'
                       type: string
                     name:
                       description: Name is the name of the Artifact

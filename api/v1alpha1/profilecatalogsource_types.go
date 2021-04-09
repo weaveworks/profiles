@@ -26,6 +26,7 @@ type ProfileCatalogSourceSpec struct {
 	Profiles []ProfileDescription `json:"profiles,omitempty"`
 }
 
+// ProfileDescription defines details about a given profile.
 type ProfileDescription struct {
 	// Profile name
 	Name string `json:"name,omitempty"`

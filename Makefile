@@ -100,8 +100,8 @@ deploy: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=localhost:5000/${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 	echo "waiting for controller to be ready"
-	kubectl -n profiles-system wait --for=condition=available deployment profiles-controller-manager
-	kubectl -n profiles-system wait --for=condition=Ready --all pods
+	kubectl -n profiles-system wait --for=condition=available deployment profiles-controller-manager --timeout 5m
+	kubectl -n profiles-system wait --for=condition=Ready --all pods --timeout 5m
 
 # UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
 undeploy:

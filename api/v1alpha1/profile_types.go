@@ -20,6 +20,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// HelmChartLocalKind is the name of the kind of the whatever.. TODO: Come up with something.
+const HelmChartLocalKind = "HelmChartLocal"
+
+// HelmChartRemoteKind something something.
+const HelmChartRemoteKind = "HelmChartRemote"
+
+// KustomizeKind TODO: fill out.
+const KustomizeKind = "Kustomize"
+
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 // NOTE: Run "make" to regenerate code after modifying this file
 
@@ -28,17 +37,19 @@ type ProfileDefinitionSpec struct {
 	// Description is some text to allow a user to identify what this profile installs.
 	Description string `json:"description,omitempty"`
 	// Artifacts is a list of Profile artifacts
-	// can be one of HelmChart, TODO
 	Artifacts []Artifact `json:"artifacts,omitempty"`
 }
 
+// Artifact defines a bundled resource of the components for this profile.
 type Artifact struct {
 	// Name is the name of the Artifact
 	Name string `json:"name,omitempty"`
 	// Path is the local path to the Artifact in the Profile repo
 	Path string `json:"path,omitempty"`
-	// Kind is the kind of artifact: HelmChart or Kustomize
+	// Kind is the kind of artifact: HelmChartLocal or Kustomize
 	Kind string `json:"kind,omitempty"`
+	// HelmURL is the URL of the Helm repository containing a Helm chart and possible values.
+	HelmURL string `json:"helm_url,omitempty"`
 }
 
 // ProfileDefinitionStatus defines the observed state of ProfileDefinition
