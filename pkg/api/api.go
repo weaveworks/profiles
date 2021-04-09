@@ -44,6 +44,7 @@ func (a *API) ProfileHandler(w http.ResponseWriter, r *http.Request) {
 func marshalResponse(w http.ResponseWriter, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(v); err != nil {
+		w.WriteHeader(500)
 		log.Printf("failed to encode response: %s", err)
 	}
 }
