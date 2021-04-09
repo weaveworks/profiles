@@ -246,33 +246,6 @@ var _ = Describe("Acceptance", func() {
 				Prerequisites: []string{"at least 20 years of kubernetes experience"},
 			}
 		})
-		Expect(kClient.Create(context.Background(), &pCatalog)).To(Succeed())
-		Eventually(func() []profilesv1.ProfileDescription {
-			req, err := http.NewRequest("GET", "http://localhost:8000/profiles", nil)
-			Expect(err).NotTo(HaveOccurred())
-			u, err := url.Parse("http://localhost:8000")
-			Expect(err).NotTo(HaveOccurred())
-			q := u.Query()
-			q.Add("name", "nginx")
-			req.URL.RawQuery = q.Encode()
-			Expect(err).NotTo(HaveOccurred())
-			resp, err := http.DefaultClient.Do(req)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(resp.StatusCode).To(Equal(http.StatusOK))
-			descriptions := []profilesv1.ProfileDescription{}
-			_ = json.NewDecoder(resp.Body).Decode(&descriptions)
-			return descriptions
-
-		}).Should(ConsistOf(
-			profilesv1.ProfileDescription{
-				Name:        "nginx-1",
-				Description: "nginx 1",
-			},
-			profilesv1.ProfileDescription{
-				Name:        "nginx-2",
-				Description: "nginx 1",
-			},
-		))
 
 		AfterEach(func() {
 			Expect(kClient.Delete(context.Background(), &pCatalog)).To(Succeed())
