@@ -195,21 +195,32 @@ var _ = Describe("Acceptance", func() {
 	})
 
 	Context("ProfileCatalog", func() {
-		It("returns the matching catalogs", func() {
-			pCatalog := profilesv1.ProfileCatalogSource{
+		var (
+			pCatalog                 profilesv1.ProfileCatalogSource
+			expectedNginx1           profilesv1.ProfileDescription
+			catalogName, profileName string
+		)
+
+		BeforeEach(func() {
+			catalogName, profileName = "catalog", "nginx-1"
+			pCatalog = profilesv1.ProfileCatalogSource{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ProfileCatalogSource",
 					APIVersion: profileSubscriptionAPIVersion,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "catalog",
+					Name:      catalogName,
 					Namespace: "default",
 				},
 				Spec: profilesv1.ProfileCatalogSourceSpec{
 					Profiles: []profilesv1.ProfileDescription{
 						{
-							Name:        "nginx-1",
-							Description: "nginx 1",
+							Name:          profileName,
+							Description:   "nginx 1",
+							Version:       "0.0.1",
+							URL:           "foo.com/bar",
+							Maintainer:    "my aunt ethel",
+							Prerequisites: []string{"at least 20 years of kubernetes experience"},
 						},
 						{
 							Name:        "nginx-2",
@@ -223,33 +234,63 @@ var _ = Describe("Acceptance", func() {
 				},
 			}
 			Expect(kClient.Create(context.Background(), &pCatalog)).To(Succeed())
-			Eventually(func() []profilesv1.ProfileDescription {
-				req, err := http.NewRequest("GET", "http://localhost:8000/profiles", nil)
-				Expect(err).NotTo(HaveOccurred())
-				u, err := url.Parse("http://localhost:8000")
-				Expect(err).NotTo(HaveOccurred())
-				q := u.Query()
-				q.Add("name", "nginx")
-				req.URL.RawQuery = q.Encode()
-				Expect(err).NotTo(HaveOccurred())
-				resp, err := http.DefaultClient.Do(req)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				descriptions := []profilesv1.ProfileDescription{}
-				_ = json.NewDecoder(resp.Body).Decode(&descriptions)
-				return descriptions
 
-			}).Should(ConsistOf(
-				profilesv1.ProfileDescription{
-					Name:        "nginx-1",
-					Description: "nginx 1",
-				},
-				profilesv1.ProfileDescription{
-					Name:        "nginx-2",
-					Description: "nginx 1",
-				},
-			))
+			expectedNginx1 = profilesv1.ProfileDescription{
+				Name:          profileName,
+				Description:   "nginx 1",
+				Catalog:       catalogName,
+				Version:       "0.0.1",
+				URL:           "foo.com/bar",
+				Maintainer:    "my aunt ethel",
+				Prerequisites: []string{"at least 20 years of kubernetes experience"},
+			}
+		})
 
+		AfterEach(func() {
+			Expect(kClient.Delete(context.Background(), &pCatalog)).To(Succeed())
+		})
+
+		Context("search", func() {
+			It("returns the matching catalogs", func() {
+				Eventually(func() []profilesv1.ProfileDescription {
+					req, err := http.NewRequest("GET", "http://localhost:8000/profiles", nil)
+					Expect(err).NotTo(HaveOccurred())
+					u, err := url.Parse("http://localhost:8000")
+					Expect(err).NotTo(HaveOccurred())
+					q := u.Query()
+					q.Add("name", "nginx")
+					req.URL.RawQuery = q.Encode()
+					Expect(err).NotTo(HaveOccurred())
+					resp, err := http.DefaultClient.Do(req)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(resp.StatusCode).To(Equal(http.StatusOK))
+					descriptions := []profilesv1.ProfileDescription{}
+					_ = json.NewDecoder(resp.Body).Decode(&descriptions)
+					return descriptions
+				}).Should(ConsistOf(
+					expectedNginx1,
+					profilesv1.ProfileDescription{
+						Name:        "nginx-2",
+						Description: "nginx 1",
+						Catalog:     catalogName,
+					},
+				))
+			})
+		})
+
+		Context("get", func() {
+			It("returns details of the requested catalog entry", func() {
+				Eventually(func() profilesv1.ProfileDescription {
+					req, err := http.NewRequest("GET", fmt.Sprintf("http://localhost:8000/profiles/%s/%s", catalogName, profileName), nil)
+					Expect(err).NotTo(HaveOccurred())
+					resp, err := http.DefaultClient.Do(req)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(resp.StatusCode).To(Equal(http.StatusOK))
+					description := profilesv1.ProfileDescription{}
+					_ = json.NewDecoder(resp.Body).Decode(&description)
+					return description
+				}).Should(Equal(expectedNginx1))
+			})
 		})
 	})
 })

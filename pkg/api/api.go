@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -24,18 +25,27 @@ func New(profileCatalog *catalog.Catalog) API {
 	}
 
 	r.HandleFunc("/profiles", a.ProfilesHandler)
+	r.HandleFunc("/profiles/{catalog}/{profile}", a.ProfileHandler)
+
 	return a
 }
 
 // ProfilesHandler is the handler for /profiles requests.
 func (a *API) ProfilesHandler(w http.ResponseWriter, r *http.Request) {
-	profileName := r.URL.Query().Get("name")
-	out, err := json.Marshal(a.profileCatalog.Search(profileName))
-	if err != nil {
-		panic(err)
-	}
-	_, err = w.Write(out)
-	if err != nil {
-		panic(err)
+	query := r.URL.Query().Get("name")
+	marshalResponse(w, a.profileCatalog.Search(query))
+}
+
+// ProfileHandler is the handler for /profiles/{catalog}/{profile} requests.
+func (a *API) ProfileHandler(w http.ResponseWriter, r *http.Request) {
+	catalogName, profileName := mux.Vars(r)["catalog"], mux.Vars(r)["profile"]
+	marshalResponse(w, a.profileCatalog.Get(catalogName, profileName))
+}
+
+func marshalResponse(w http.ResponseWriter, v interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		w.WriteHeader(500)
+		log.Printf("failed to encode response: %s", err)
 	}
 }

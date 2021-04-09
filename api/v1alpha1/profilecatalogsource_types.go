@@ -31,6 +31,21 @@ type ProfileDescription struct {
 	Name string `json:"name,omitempty"`
 	// Profile description
 	Description string `json:"description,omitempty"`
+	// Version
+	// +optional
+	Version string `json:"version,omitempty"`
+	// Catalog is the name of the catalog the profile is listed in
+	// +optional
+	Catalog string `json:"catalog,omitempty"`
+	// URL is the full URL path to the profile.yaml
+	// +optional
+	URL string `json:"url,omitempty"`
+	// Maintainer is the name of the author(s)
+	// +optional
+	Maintainer string `json:"maintainer,omitempty"`
+	// Prerequisites are a list of dependencies required by the profile
+	// +optional
+	Prerequisites []string `json:"prerequisites,omitempty"`
 }
 
 // ProfileCatalogSourceStatus defines the observed state of ProfileCatalogSource

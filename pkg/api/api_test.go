@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 
+	"github.com/gorilla/mux"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -20,8 +21,8 @@ var _ = Describe("Api", func() {
 	)
 	Context("/profiles", func() {
 		BeforeEach(func() {
-			profileCatalog = &catalog.Catalog{}
-			profileCatalog.Add(profilesv1.ProfileDescription{Name: "nginx-1", Description: "nginx 1"})
+			profileCatalog = catalog.New()
+			profileCatalog.Add("foo", profilesv1.ProfileDescription{Name: "nginx-1", Description: "nginx 1"})
 			catalogAPI = api.New(profileCatalog)
 		})
 
@@ -43,9 +44,38 @@ var _ = Describe("Api", func() {
 
 				// Check the status code is what we expect.
 				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(Equal(`[{"name":"nginx-1","description":"nginx 1"}]`))
+				Expect(rr.Body.String()).To(ContainSubstring(`[{"name":"nginx-1","description":"nginx 1","catalog":"foo"}]`))
 			})
 		})
 	})
 
+	Context("/profiles/catalog/profile-name", func() {
+		var (
+			catalogName, profileName string
+		)
+
+		BeforeEach(func() {
+			catalogName, profileName = "catalog", "nginx-1"
+			profileCatalog = catalog.New()
+			profileCatalog.Add(catalogName, profilesv1.ProfileDescription{Name: profileName, Description: "nginx 1"})
+			catalogAPI = api.New(profileCatalog)
+		})
+
+		When("the requested profile exists", func() {
+			It("returns the profile summary from the catalog", func() {
+				req, err := http.NewRequest("GET", "/profiles", nil)
+				req = mux.SetURLVars(req, map[string]string{"catalog": catalogName, "profile": profileName})
+				Expect(err).NotTo(HaveOccurred())
+
+				rr := httptest.NewRecorder()
+				handler := http.HandlerFunc(catalogAPI.ProfileHandler)
+
+				handler.ServeHTTP(rr, req)
+
+				// Check the status code is what we expect.
+				Expect(rr.Code).To(Equal(http.StatusOK))
+				Expect(rr.Body.String()).To(ContainSubstring(`{"name":"nginx-1","description":"nginx 1","catalog":"catalog"}`))
+			})
+		})
+	})
 })

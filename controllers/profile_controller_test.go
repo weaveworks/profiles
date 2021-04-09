@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"github.com/weaveworks/profiles/api/v1alpha1"
+	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,11 +37,11 @@ var _ = Describe("ProfileController", func() {
 	})
 
 	Context("Create", func() {
-		DescribeTable("Applying a Profile creates the correct resources", func(pSubSpec v1alpha1.ProfileSubscriptionSpec) {
+		DescribeTable("Applying a Profile creates the correct resources", func(pSubSpec profilesv1.ProfileSubscriptionSpec) {
 			subscriptionName := "foo"
 			branch := "main"
 
-			pSub := v1alpha1.ProfileSubscription{
+			pSub := profilesv1.ProfileSubscription{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ProfileSubscription",
 					APIVersion: "profilesubscriptions.weave.works/v1alpha1",
@@ -88,22 +88,22 @@ var _ = Describe("ProfileController", func() {
 			}
 
 			By("updating the status")
-			profile := v1alpha1.ProfileSubscription{}
+			profile := profilesv1.ProfileSubscription{}
 			Eventually(func() string {
 				Expect(k8sClient.Get(ctx, client.ObjectKey{Name: subscriptionName, Namespace: namespace}, &profile)).To(Succeed())
 				return profile.Status.State
 			}, 10*time.Second).Should(Equal("running"))
 		},
-			Entry("a single Helm chart with no supplied values", v1alpha1.ProfileSubscriptionSpec{
+			Entry("a single Helm chart with no supplied values", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
 			}),
-			Entry("a single Helm chart with supplied values", v1alpha1.ProfileSubscriptionSpec{
+			Entry("a single Helm chart with supplied values", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
 				Values: &apiextensionsv1.JSON{
 					Raw: []byte(`{"replicaCount": 3,"service":{"port":8081}}`),
 				},
 			}),
-			Entry("a single Helm chart with values supplied via valuesFrom", v1alpha1.ProfileSubscriptionSpec{
+			Entry("a single Helm chart with values supplied via valuesFrom", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
 				ValuesFrom: []helmv2.ValuesReference{
 					{
@@ -120,7 +120,7 @@ var _ = Describe("ProfileController", func() {
 				subscriptionName := "fetch-definition-error"
 				profileURL := "https://github.com/does-not/exist"
 
-				pSub := v1alpha1.ProfileSubscription{
+				pSub := profilesv1.ProfileSubscription{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ProfileSubscription",
 						APIVersion: "profilesubscriptions.weave.works/v1alpha1",
@@ -129,16 +129,16 @@ var _ = Describe("ProfileController", func() {
 						Name:      subscriptionName,
 						Namespace: namespace,
 					},
-					Spec: v1alpha1.ProfileSubscriptionSpec{
+					Spec: profilesv1.ProfileSubscriptionSpec{
 						ProfileURL: profileURL,
 					},
 				}
 				Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())
 
-				profile := v1alpha1.ProfileSubscription{}
+				profile := profilesv1.ProfileSubscription{}
 				Eventually(func() bool {
 					err := k8sClient.Get(ctx, client.ObjectKey{Name: subscriptionName, Namespace: namespace}, &profile)
-					return err == nil && profile.Status != v1alpha1.ProfileSubscriptionStatus{}
+					return err == nil && profile.Status != profilesv1.ProfileSubscriptionStatus{}
 				}, 10*time.Second, 1*time.Second).Should(BeTrue())
 
 				Expect(profile.Status.Message).To(Equal("error when fetching profile definition"))
@@ -170,7 +170,7 @@ var _ = Describe("ProfileController", func() {
 				}
 				Expect(k8sClient.Create(ctx, &gitRepo)).Should(Succeed())
 
-				pSub := v1alpha1.ProfileSubscription{
+				pSub := profilesv1.ProfileSubscription{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ProfileSubscription",
 						APIVersion: "profilesubscriptions.weave.works/v1alpha1",
@@ -179,16 +179,16 @@ var _ = Describe("ProfileController", func() {
 						Name:      subscriptionName,
 						Namespace: namespace,
 					},
-					Spec: v1alpha1.ProfileSubscriptionSpec{
+					Spec: profilesv1.ProfileSubscriptionSpec{
 						ProfileURL: profileURL,
 					},
 				}
 				Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())
 
-				profile := v1alpha1.ProfileSubscription{}
+				profile := profilesv1.ProfileSubscription{}
 				Eventually(func() bool {
 					err := k8sClient.Get(ctx, client.ObjectKey{Name: subscriptionName, Namespace: namespace}, &profile)
-					return err == nil && profile.Status != v1alpha1.ProfileSubscriptionStatus{}
+					return err == nil && profile.Status != profilesv1.ProfileSubscriptionStatus{}
 				}, 10*time.Second, 1*time.Second).Should(BeTrue())
 
 				Expect(profile.Status.Message).To(Equal("error when creating profile artifacts"))

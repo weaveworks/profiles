@@ -9,16 +9,30 @@ import (
 )
 
 var _ = Describe("Catalog", func() {
-	Context("Search", func() {
-		It("returns matching profiles", func() {
-			c := catalog.New()
-			c.Add(profilesv1.ProfileDescription{Name: "foo"})
-			c.Add(profilesv1.ProfileDescription{Name: "bar"})
-			c.Add(profilesv1.ProfileDescription{Name: "alsofoo"})
-			Expect(c.Search("foo")).To(ConsistOf(
-				profilesv1.ProfileDescription{Name: "foo"},
-				profilesv1.ProfileDescription{Name: "alsofoo"},
-			))
-		})
+	var (
+		c       *catalog.Catalog
+		catName string
+	)
+
+	BeforeEach(func() {
+		c = catalog.New()
+		catName = "whiskers"
+	})
+
+	It("manages an in memory list of profiles", func() {
+		By("adding profiles to the list")
+		profiles := []profilesv1.ProfileDescription{{Name: "foo"}, {Name: "bar"}, {Name: "alsofoo"}}
+		c.Add(catName, profiles...)
+
+		By("returning all matching profiles based on query string")
+		Expect(c.Search("foo")).To(ConsistOf(
+			profilesv1.ProfileDescription{Name: "foo", Catalog: catName},
+			profilesv1.ProfileDescription{Name: "alsofoo", Catalog: catName},
+		))
+
+		By("getting details for a specific named profile in a catalog")
+		Expect(c.Get(catName, "foo")).To(Equal(
+			profilesv1.ProfileDescription{Name: "foo", Catalog: catName},
+		))
 	})
 })

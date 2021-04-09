@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/weaveworks/profiles/api/v1alpha1"
+	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -30,7 +30,7 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 
 	Context("Create", func() {
 		It("adds the profile to the in-memory list", func() {
-			pSub := v1alpha1.ProfileCatalogSource{
+			pSub := profilesv1.ProfileCatalogSource{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ProfileCatalogSource",
 					APIVersion: "profilesubscriptions.weave.works/v1alpha1",
@@ -39,8 +39,8 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 					Name:      "catalog",
 					Namespace: namespace,
 				},
-				Spec: v1alpha1.ProfileCatalogSourceSpec{
-					Profiles: []v1alpha1.ProfileDescription{
+				Spec: profilesv1.ProfileCatalogSourceSpec{
+					Profiles: []profilesv1.ProfileDescription{
 						{
 							Name:        "foo",
 							Description: "bar",
@@ -50,9 +50,9 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 			}
 			Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())
 
-			Eventually(func() []v1alpha1.ProfileDescription {
+			Eventually(func() []profilesv1.ProfileDescription {
 				return catalogReconciler.Profiles.Search("foo")
-			}, 2*time.Second).Should(ConsistOf(v1alpha1.ProfileDescription{Name: "foo", Description: "bar"}))
+			}, 2*time.Second).Should(ConsistOf(profilesv1.ProfileDescription{Name: "foo", Description: "bar", Catalog: "catalog"}))
 		})
 	})
 })
