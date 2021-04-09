@@ -36,6 +36,7 @@ func (a *API) ProfilesHandler(w http.ResponseWriter, r *http.Request) {
 	marshalResponse(w, a.profileCatalog.Search(query))
 }
 
+// ProfileHandler is the handler for /profiles/{catalog}/{profile} requests.
 func (a *API) ProfileHandler(w http.ResponseWriter, r *http.Request) {
 	catalogName, profileName := mux.Vars(r)["catalog"], mux.Vars(r)["profile"]
 	marshalResponse(w, a.profileCatalog.Get(catalogName, profileName))
