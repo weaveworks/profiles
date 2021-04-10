@@ -42,9 +42,17 @@ spec:
                   description: Artifact defines a bundled resource of the components
                     for this profile.
                   properties:
+                    helm_chart:
+                      description: HelmChart defines the name of the chart at the
+                        remote repository
+                      type: string
+                    helm_chart_version:
+                      description: HelmChartVersion defines the version of the chart
+                        at the remote repository
+                      type: string
                     helm_url:
                       description: HelmURL is the URL of the Helm repository containing
-                        a Helm chart and possible values.
+                        a Helm chart and possible values
                       type: string
                     kind:
                       description: 'Kind is the kind of artifact: HelmChartLocal or

@@ -27,13 +27,12 @@ var remote location = 1
 // CreateArtifacts creates and inserts objects to the cluster to deploy the
 // profile as a HelmRelease.
 func (p *Profile) CreateArtifacts(ctx context.Context) error {
-	if err := p.createGitRepository(ctx); err != nil {
-		return fmt.Errorf("failed to create GitRepository resource: %w", err)
-	}
-
 	// TODO don't depend on 0.
 	switch kind := p.definition.Spec.Artifacts[0].Kind; kind {
 	case profilesv1.HelmChartLocalKind:
+		if err := p.createGitRepository(ctx); err != nil {
+			return fmt.Errorf("failed to create GitRepository resource: %w", err)
+		}
 		if err := p.createHelmRelease(ctx, local); err != nil {
 			return fmt.Errorf("failed to create HelmRelease resource: %w", err)
 		}
@@ -41,6 +40,7 @@ func (p *Profile) CreateArtifacts(ctx context.Context) error {
 		if p.definition.Spec.Artifacts[0].HelmURL == "" {
 			return fmt.Errorf("helmURL for helm repository for remote helm artifact must not be empty")
 		}
+		//TODO: figure out what to do with the chart name and version. Maybe they could be inferred?
 		if err := p.createHelmRepository(ctx, p.definition.Spec.Artifacts[0].HelmURL); err != nil {
 			return fmt.Errorf("failed to create HelmRepository resource: %w", err)
 		}
@@ -48,6 +48,9 @@ func (p *Profile) CreateArtifacts(ctx context.Context) error {
 			return fmt.Errorf("failed to create HelmRelease for remote resource: %w", err)
 		}
 	case profilesv1.KustomizeKind:
+		if err := p.createGitRepository(ctx); err != nil {
+			return fmt.Errorf("failed to create GitRepository resource: %w", err)
+		}
 		if err := p.createKustomization(ctx); err != nil {
 			return fmt.Errorf("failed to create Kustomization resource: %w", err)
 		}
@@ -80,7 +83,7 @@ func (p *Profile) MakeArtifacts() ([]runtime.Object, error) {
 func (p *Profile) makeGitRepository() (*sourcev1.GitRepository, error) {
 	gitRepo := &sourcev1.GitRepository{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      p.makeRepoName(),
+			Name:      p.makeGitRepoName(),
 			Namespace: p.subscription.ObjectMeta.Namespace,
 		},
 		TypeMeta: metav1.TypeMeta{
@@ -104,7 +107,7 @@ func (p *Profile) makeGitRepository() (*sourcev1.GitRepository, error) {
 func (p *Profile) makeHelmRepository(url string) (*sourcev1.HelmRepository, error) {
 	helmRepo := &sourcev1.HelmRepository{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      p.makeRepoName(),
+			Name:      p.makeHelmRepoName(),
 			Namespace: p.subscription.ObjectMeta.Namespace,
 		},
 		TypeMeta: metav1.TypeMeta{
@@ -145,16 +148,14 @@ func (p *Profile) createHelmRelease(ctx context.Context, loc location) error {
 	if err != nil {
 		return err
 	}
-	p.log.Info("creating remote HelmRelease", "resource", r.ObjectMeta.Name)
+	p.log.Info("creating HelmRelease", "resource", r.ObjectMeta.Name)
 	return p.client.Create(ctx, r)
 }
 
 func (p *Profile) makeHelmRelease(loc location) (*helmv2.HelmRelease, error) {
-	kind := sourcev1.GitRepositoryKind
-	chart := p.definition.Spec.Artifacts[0].Path
+	helmChartSpec := p.makeLocalHelmChartSpec()
 	if loc == remote {
-		kind = sourcev1.HelmRepositoryKind
-		chart = p.definition.Spec.Artifacts[0].Name
+		helmChartSpec = p.makeRemoteHelmChartSpec()
 	}
 	helmRelease := &helmv2.HelmRelease{
 		ObjectMeta: metav1.ObjectMeta{
@@ -167,15 +168,7 @@ func (p *Profile) makeHelmRelease(loc location) (*helmv2.HelmRelease, error) {
 		},
 		Spec: helmv2.HelmReleaseSpec{
 			Chart: helmv2.HelmChartTemplate{
-				Spec: helmv2.HelmChartTemplateSpec{
-					// TODO obvs don't rely on index 0
-					Chart: chart,
-					SourceRef: helmv2.CrossNamespaceObjectReference{
-						Kind:      kind,
-						Name:      p.makeRepoName(),
-						Namespace: p.subscription.ObjectMeta.Namespace,
-					},
-				},
+				Spec: helmChartSpec,
 			},
 			Values:     p.subscription.Spec.Values,
 			ValuesFrom: p.subscription.Spec.ValuesFrom,
@@ -186,6 +179,31 @@ func (p *Profile) makeHelmRelease(loc location) (*helmv2.HelmRelease, error) {
 		return nil, fmt.Errorf("failed to set resource ownership: %w", err)
 	}
 	return helmRelease, nil
+}
+
+func (p *Profile) makeLocalHelmChartSpec() helmv2.HelmChartTemplateSpec {
+	return helmv2.HelmChartTemplateSpec{
+		// TODO obvs don't rely on index 0
+		Chart: p.definition.Spec.Artifacts[0].Path,
+		SourceRef: helmv2.CrossNamespaceObjectReference{
+			Kind:      sourcev1.GitRepositoryKind,
+			Name:      p.makeGitRepoName(),
+			Namespace: p.subscription.ObjectMeta.Namespace,
+		},
+	}
+}
+
+func (p *Profile) makeRemoteHelmChartSpec() helmv2.HelmChartTemplateSpec {
+	return helmv2.HelmChartTemplateSpec{
+		// TODO obvs don't rely on index 0
+		Chart: p.definition.Spec.Artifacts[0].HelmChart,
+		SourceRef: helmv2.CrossNamespaceObjectReference{
+			Kind:      sourcev1.HelmRepositoryKind,
+			Name:      p.makeHelmRepoName(),
+			Namespace: p.subscription.ObjectMeta.Namespace,
+		},
+		Version: p.definition.Spec.Artifacts[0].HelmChartVersion,
+	}
 }
 
 func (p *Profile) makeKustomization() (*kustomizev1.Kustomization, error) {
@@ -206,7 +224,7 @@ func (p *Profile) makeKustomization() (*kustomizev1.Kustomization, error) {
 			TargetNamespace: p.subscription.ObjectMeta.Namespace,
 			SourceRef: kustomizev1.CrossNamespaceSourceReference{
 				Kind:      sourcev1.GitRepositoryKind,
-				Name:      p.makeRepoName(),
+				Name:      p.makeGitRepoName(),
 				Namespace: p.subscription.ObjectMeta.Namespace,
 			},
 		},
@@ -227,10 +245,16 @@ func (p *Profile) createKustomization(ctx context.Context) error {
 	return p.client.Create(ctx, r)
 }
 
-func (p *Profile) makeRepoName() string {
+func (p *Profile) makeGitRepoName() string {
 	repoParts := strings.Split(p.subscription.Spec.ProfileURL, "/")
 	repoName := repoParts[len(repoParts)-1]
 	return join(p.subscription.Name, repoName, p.subscription.Spec.Branch)
+}
+
+func (p *Profile) makeHelmRepoName() string {
+	repoParts := strings.Split(p.subscription.Spec.ProfileURL, "/")
+	repoName := repoParts[len(repoParts)-1]
+	return join(p.subscription.Name, repoName, p.subscription.Spec.Branch, "remote")
 }
 
 func (p *Profile) makeArtifactName() string {

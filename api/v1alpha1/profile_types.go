@@ -48,8 +48,12 @@ type Artifact struct {
 	Path string `json:"path,omitempty"`
 	// Kind is the kind of artifact: HelmChartLocal or Kustomize
 	Kind string `json:"kind,omitempty"`
-	// HelmURL is the URL of the Helm repository containing a Helm chart and possible values.
+	// HelmURL is the URL of the Helm repository containing a Helm chart and possible values
 	HelmURL string `json:"helm_url,omitempty"`
+	// HelmChart defines the name of the chart at the remote repository
+	HelmChart string `json:"helm_chart,omitempty"`
+	// HelmChartVersion defines the version of the chart at the remote repository
+	HelmChartVersion string `json:"helm_chart_version,omitempty"`
 }
 
 // ProfileDefinitionStatus defines the observed state of ProfileDefinition
