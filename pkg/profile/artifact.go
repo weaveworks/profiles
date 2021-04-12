@@ -23,8 +23,8 @@ type Status struct {
 	NotReadyConditions []metav1.Condition
 }
 
-// CreateArtifacts creates and inserts objects to the cluster to deploy the
-// profile as a HelmRelease.
+// CreateArtifacts generate and creates the objects in the cluster to deploy the
+// profile
 func (p *Profile) CreateArtifacts(ctx context.Context) error {
 	gitRes, helmRes, kustomizeRes, err := p.makeArtifacts()
 	if err != nil {
