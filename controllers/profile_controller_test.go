@@ -87,12 +87,54 @@ var _ = Describe("ProfileController", func() {
 				Expect(helmRelease.Spec.ValuesFrom).To(Equal(pSub.Spec.ValuesFrom))
 			}
 
-			By("updating the status")
+			conditions := []metav1.Condition{
+				{
+					Type:               "Ready",
+					Status:             "Unknown",
+					Reason:             "foo",
+					Message:            "somethings wrong",
+					LastTransitionTime: metav1.Now(),
+				},
+			}
+			gitResNew := gitRepo.DeepCopyObject().(*sourcev1.GitRepository)
+			gitResNew.Status.Conditions = conditions
+			Expect(k8sClient.Status().Patch(ctx, gitResNew, client.MergeFrom(&gitRepo))).To(Succeed())
+
+			By("updating the status to Ready Unknown if the artifact resource reports it")
 			profile := profilesv1.ProfileSubscription{}
-			Eventually(func() string {
+			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, client.ObjectKey{Name: subscriptionName, Namespace: namespace}, &profile)).To(Succeed())
-				return profile.Status.State
-			}, 10*time.Second).Should(Equal("running"))
+				return len(profile.Status.Conditions) > 0 &&
+					profile.Status.Conditions[0].Type == "Ready" &&
+					profile.Status.Conditions[0].Status == metav1.ConditionStatus("Unknown") &&
+					profile.Status.Conditions[0].Message == "somethings wrong"
+			}, 10*time.Second).Should(BeTrue())
+
+			conditions = []metav1.Condition{
+				{
+					Type:               "Ready",
+					Status:             "True",
+					Reason:             "foo",
+					LastTransitionTime: metav1.Now(),
+				},
+			}
+			gitResNew = gitRepo.DeepCopyObject().(*sourcev1.GitRepository)
+			gitResNew.Status.Conditions = conditions
+			Expect(k8sClient.Status().Patch(ctx, gitResNew, client.MergeFrom(&gitRepo))).To(Succeed())
+
+			helmResNew := helmRelease.DeepCopyObject().(*helmv2.HelmRelease)
+			helmResNew.Status.Conditions = conditions
+			Expect(k8sClient.Status().Patch(ctx, helmResNew, client.MergeFrom(&helmRelease))).To(Succeed())
+
+			By("updating the status to Ready True when the resources are reporting Ready")
+			profile = profilesv1.ProfileSubscription{}
+			Eventually(func() bool {
+				Expect(k8sClient.Get(ctx, client.ObjectKey{Name: subscriptionName, Namespace: namespace}, &profile)).To(Succeed())
+				return len(profile.Status.Conditions) > 0 &&
+					profile.Status.Conditions[0].Type == "Ready" &&
+					profile.Status.Conditions[0].Status == metav1.ConditionStatus("True") &&
+					profile.Status.Conditions[0].Message == "all artifact resouces ready"
+			}, 10*time.Second).Should(BeTrue())
 		},
 			Entry("a single Helm chart with no supplied values", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
@@ -138,11 +180,13 @@ var _ = Describe("ProfileController", func() {
 				profile := profilesv1.ProfileSubscription{}
 				Eventually(func() bool {
 					err := k8sClient.Get(ctx, client.ObjectKey{Name: subscriptionName, Namespace: namespace}, &profile)
-					return err == nil && profile.Status != profilesv1.ProfileSubscriptionStatus{}
+					return err == nil && len(profile.Status.Conditions) > 0
 				}, 10*time.Second, 1*time.Second).Should(BeTrue())
 
-				Expect(profile.Status.Message).To(Equal("error when fetching profile definition"))
-				Expect(profile.Status.State).To(Equal("failing"))
+				Expect(profile.Status.Conditions[0].Message).To(Equal("error when fetching profile definition"))
+				Expect(profile.Status.Conditions[0].Reason).To(Equal("FetchProfileFailed"))
+				Expect(profile.Status.Conditions[0].Type).To(Equal("Ready"))
+				Expect(profile.Status.Conditions[0].Status).To(Equal(metav1.ConditionStatus("False")))
 			})
 		})
 
@@ -188,11 +232,13 @@ var _ = Describe("ProfileController", func() {
 				profile := profilesv1.ProfileSubscription{}
 				Eventually(func() bool {
 					err := k8sClient.Get(ctx, client.ObjectKey{Name: subscriptionName, Namespace: namespace}, &profile)
-					return err == nil && profile.Status != profilesv1.ProfileSubscriptionStatus{}
+					return err == nil && len(profile.Status.Conditions) > 0
 				}, 10*time.Second, 1*time.Second).Should(BeTrue())
 
-				Expect(profile.Status.Message).To(Equal("error when creating profile artifacts"))
-				Expect(profile.Status.State).To(Equal("failing"))
+				Expect(profile.Status.Conditions[0].Message).To(Equal("error when creating profile artifacts"))
+				Expect(profile.Status.Conditions[0].Type).To(Equal("Ready"))
+				Expect(profile.Status.Conditions[0].Status).To(Equal(metav1.ConditionStatus("False")))
+				Expect(profile.Status.Conditions[0].Reason).To(Equal("CreateFailed"))
 			})
 		})
 	})

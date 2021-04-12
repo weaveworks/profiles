@@ -65,6 +65,7 @@ test: generate fmt vet manifests test_deps
 # Running the tests requires the some .toolkit.fluxcd.io CRDs
 SOURCE_VER ?= v0.9.0
 HELM_VER ?= v0.8.1
+KUSTOMIZE_VER ?= v0.10.0
 TEST_CRDS:=controllers/testdata/crds
 test_deps:
 	mkdir -p ${TEST_CRDS}
@@ -72,6 +73,8 @@ test_deps:
 		-o ${TEST_CRDS}/gitrepositories.yaml
 	curl -s --fail https://raw.githubusercontent.com/fluxcd/helm-controller/${HELM_VER}/config/crd/bases/helm.toolkit.fluxcd.io_helmreleases.yaml \
 		-o ${TEST_CRDS}/helmreleases.yaml
+	curl -s --fail https://raw.githubusercontent.com/fluxcd/kustomize-controller/${KUSTOMIZE_VER}/config/crd/bases/kustomize.toolkit.fluxcd.io_kustomizations.yaml \
+		-o ${TEST_CRDS}/kustomize.yaml
 
 lint:
 	golangci-lint run --exclude-use-default=false --timeout=5m0s

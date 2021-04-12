@@ -7,54 +7,181 @@ import (
 	"time"
 
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 )
 
-// CreateArtifacts creates and inserts objects to the cluster to deploy the
-// profile as a HelmRelease.
+// Status contains the status of the artifacts
+type Status struct {
+	ResourcesExist     bool
+	NotReadyConditions []metav1.Condition
+}
+
+// CreateArtifacts generate and creates the objects in the cluster to deploy the
+// profile
 func (p *Profile) CreateArtifacts(ctx context.Context) error {
-	if err := p.createGitRepository(ctx); err != nil {
+	gitRes, helmRes, kustomizeRes, err := p.makeArtifacts()
+	if err != nil {
+		return err
+	}
+
+	p.log.Info("creating GitRepository", "resource", gitRes.ObjectMeta.Name)
+	if err := p.client.Create(ctx, gitRes); err != nil {
 		return fmt.Errorf("failed to create GitRepository resource: %w", err)
 	}
 
-	switch kind := p.definition.Spec.Artifacts[0].Kind; kind {
-	case "HelmChart":
-		if err := p.createHelmRelease(ctx); err != nil {
+	if helmRes != nil {
+		p.log.Info("creating HelmRelease", "resource", helmRes.ObjectMeta.Name)
+		if err := p.client.Create(ctx, helmRes); err != nil {
 			return fmt.Errorf("failed to create HelmRelease resource: %w", err)
 		}
-	case "Kustomize":
-		if err := p.createKustomization(ctx); err != nil {
+	} else {
+		p.log.Info("creating Kustomization", "resource", kustomizeRes.ObjectMeta.Name)
+		if err := p.client.Create(ctx, kustomizeRes); err != nil {
 			return fmt.Errorf("failed to create Kustomization resource: %w", err)
 		}
-	default:
-		return fmt.Errorf("artifact kind %q not recognized", kind)
 	}
-
 	p.log.Info("all artifacts created")
 	return nil
+}
+
+// ArtifactStatus checks if the artifacts exists and returns any ready!=true conditions on the artifacts.
+func (p *Profile) ArtifactStatus(ctx context.Context) (Status, error) {
+	resourcesExist, gitRes, helmRes, kustomizeRes, err := p.getResources(ctx)
+	if err != nil {
+		return Status{}, err
+	}
+
+	return Status{
+		ResourcesExist:     resourcesExist,
+		NotReadyConditions: p.checkResourcesReady(gitRes, helmRes, kustomizeRes),
+	}, nil
+}
+
+func (p *Profile) checkResourcesReady(gitRes *sourcev1.GitRepository, helmRes *helmv2.HelmRelease, kustomizeRes *kustomizev1.Kustomization) []metav1.Condition {
+	var notReadyConditions []metav1.Condition
+	if gitRes != nil {
+		if condition := getNotReadyCondition(gitRes.Status.Conditions); condition != (metav1.Condition{}) {
+			notReadyConditions = append(notReadyConditions, condition)
+		}
+	}
+
+	if helmRes != nil {
+		if condition := getNotReadyCondition(helmRes.Status.Conditions); condition != (metav1.Condition{}) {
+			notReadyConditions = append(notReadyConditions, condition)
+		}
+	}
+
+	if kustomizeRes != nil {
+		if condition := getNotReadyCondition(kustomizeRes.Status.Conditions); condition != (metav1.Condition{}) {
+			notReadyConditions = append(notReadyConditions, condition)
+		}
+	}
+	return notReadyConditions
+}
+
+func (p *Profile) getResources(ctx context.Context) (bool, *sourcev1.GitRepository, *helmv2.HelmRelease, *kustomizev1.Kustomization, error) {
+	gitRes, helmRes, kustomizeRes, err := p.makeArtifacts()
+	if err != nil {
+		return false, nil, nil, nil, err
+	}
+	gitResExists := true
+	helmResExists := true
+	kustomizeResExists := true
+	if gitRes != nil {
+		gitResExists, err = p.getResourceIfExists(ctx, gitRes)
+		if err != nil {
+			return false, nil, nil, nil, err
+		}
+	}
+
+	if helmRes != nil {
+		helmResExists, err = p.getResourceIfExists(ctx, helmRes)
+		if err != nil {
+			return false, nil, nil, nil, err
+		}
+	}
+
+	if kustomizeRes != nil {
+		kustomizeResExists, err = p.getResourceIfExists(ctx, kustomizeRes)
+		if err != nil {
+			return false, nil, nil, nil, err
+		}
+	}
+	return gitResExists && helmResExists && kustomizeResExists, gitRes, helmRes, kustomizeRes, nil
+}
+
+func getNotReadyCondition(conditions []metav1.Condition) metav1.Condition {
+	for _, condition := range conditions {
+		if condition.Type == "Ready" && string(condition.Status) != "True" {
+			return condition
+		}
+	}
+	return metav1.Condition{}
+}
+
+func (p *Profile) getResourceIfExists(ctx context.Context, res client.Object) (bool, error) {
+	if err := p.client.Get(ctx, client.ObjectKey{Name: res.GetName(), Namespace: res.GetNamespace()}, res); err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to get resource: %w", err)
+	}
+
+	return true, nil
 }
 
 // MakeArtifacts creates and returns a slice of runtime.Object values, which if
 // applied to a cluster would deploy the profile as a HelmRelease.
 func (p *Profile) MakeArtifacts() ([]runtime.Object, error) {
 	objs := []runtime.Object{}
-	gr, err := p.makeGitRepository()
+	gitRes, helmRes, kustomizeRes, err := p.makeArtifacts()
 	if err != nil {
 		return nil, err
 	}
 
-	hr, err := p.makeHelmRelease()
-	if err != nil {
-		return nil, err
-	}
+	objs = append(objs, gitRes)
 
-	objs = append(objs, gr, hr)
+	if helmRes != nil {
+		objs = append(objs, helmRes)
+	} else {
+		objs = append(objs, kustomizeRes)
+	}
 	return objs, nil
+}
+
+func (p *Profile) makeArtifacts() (*sourcev1.GitRepository, *helmv2.HelmRelease, *kustomizev1.Kustomization, error) {
+	gitRes, err := p.makeGitRepository()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to create GitRepository resource: %w", err)
+	}
+
+	var helmRes *helmv2.HelmRelease
+	var kustomizeRes *kustomizev1.Kustomization
+
+	switch kind := p.definition.Spec.Artifacts[0].Kind; kind {
+	case "HelmChart":
+		helmRes, err = p.makeHelmRelease()
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("failed to create HelmRelease resource: %w", err)
+
+		}
+	case "Kustomize":
+		kustomizeRes, err = p.makeKustomization()
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("failed to create Kustomization resource: %w", err)
+		}
+	default:
+		return nil, nil, nil, fmt.Errorf("artifact kind %q not recognized", kind)
+	}
+
+	return gitRes, helmRes, kustomizeRes, nil
 }
 
 func (p *Profile) makeGitRepository() (*sourcev1.GitRepository, error) {
@@ -79,15 +206,6 @@ func (p *Profile) makeGitRepository() (*sourcev1.GitRepository, error) {
 		return nil, fmt.Errorf("failed to set resource ownership on %s: %w", gitRepo.ObjectMeta.Name, err)
 	}
 	return gitRepo, nil
-}
-
-func (p *Profile) createGitRepository(ctx context.Context) error {
-	r, err := p.makeGitRepository()
-	if err != nil {
-		return err
-	}
-	p.log.Info("creating GitRepository", "resource", r.ObjectMeta.Name)
-	return p.client.Create(ctx, r)
 }
 
 func (p *Profile) makeHelmRelease() (*helmv2.HelmRelease, error) {
@@ -123,15 +241,6 @@ func (p *Profile) makeHelmRelease() (*helmv2.HelmRelease, error) {
 	return helmRelease, nil
 }
 
-func (p *Profile) createHelmRelease(ctx context.Context) error {
-	r, err := p.makeHelmRelease()
-	if err != nil {
-		return err
-	}
-	p.log.Info("creating HelmRelease", "resource", r.ObjectMeta.Name)
-	return p.client.Create(ctx, r)
-}
-
 func (p *Profile) makeKustomization() (*kustomizev1.Kustomization, error) {
 	kustomization := &kustomizev1.Kustomization{
 		ObjectMeta: metav1.ObjectMeta{
@@ -160,15 +269,6 @@ func (p *Profile) makeKustomization() (*kustomizev1.Kustomization, error) {
 		return nil, fmt.Errorf("failed to set resource ownership: %w", err)
 	}
 	return kustomization, nil
-}
-
-func (p *Profile) createKustomization(ctx context.Context) error {
-	r, err := p.makeKustomization()
-	if err != nil {
-		return err
-	}
-	p.log.Info("creating Kustomization", "resource", r.ObjectMeta.Name)
-	return p.client.Create(ctx, r)
 }
 
 func (p *Profile) makeGitRepoName() string {

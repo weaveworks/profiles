@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -26,11 +28,21 @@ import (
 	"github.com/weaveworks/profiles/pkg/git"
 	"github.com/weaveworks/profiles/pkg/profile"
 
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
+	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+)
+
+const (
+	readyFalse   = "False"
+	readyTrue    = "True"
+	readyUnknown = "Unknown"
 )
 
 // ProfileSubscriptionReconciler reconciles a ProfileSubscription object
@@ -55,7 +67,10 @@ func (r *ProfileSubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&profilesv1.ProfileSubscription{}, builder.WithPredicates(
 			predicate.GenerationChangedPredicate{},
-		)).
+		)). // Owns ensures that changes to resouces owned by the pSub cause the pSub to get requeued
+		Owns(&sourcev1.GitRepository{}).
+		Owns(&helmv2.HelmRelease{}).
+		Owns(&kustomizev1.Kustomization{}).
 		Complete(r)
 }
 
@@ -79,43 +94,72 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	pDef, err := git.GetProfileDefinition(pSub.Spec.ProfileURL, pSub.Spec.Branch, logger)
 	if err != nil {
-		r.patchStatusFailing(ctx, &pSub, logger, "error when fetching profile definition")
+		if err := r.patchStatus(ctx, &pSub, logger, readyFalse, "FetchProfileFailed", "error when fetching profile definition"); err != nil {
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, err
 	}
 
 	instance := profile.New(pDef, pSub, r.Client, logger)
-	err = instance.CreateArtifacts(ctx)
+	artifactStatus, err := instance.ArtifactStatus(ctx)
 	if err != nil {
-		r.patchStatusFailing(ctx, &pSub, logger, "error when creating profile artifacts")
 		return ctrl.Result{}, err
 	}
 
-	r.patchStatusRunning(ctx, &pSub, logger)
-	// TODO requeuing
+	if !artifactStatus.ResourcesExist {
+		err = instance.CreateArtifacts(ctx)
+		if err != nil {
+			if err := r.patchStatus(ctx, &pSub, logger, readyFalse, "CreateFailed", "error when creating profile artifacts"); err != nil {
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{}, err
+		}
+		artifactStatus, err = instance.ArtifactStatus(ctx)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
+	if len(artifactStatus.NotReadyConditions) == 0 {
+		return ctrl.Result{}, r.patchStatus(ctx, &pSub, logger, readyTrue, "ArtifactsReady", "all artifact resouces ready")
+	}
+
+	var messages []string
+	status := readyUnknown
+	for _, condition := range artifactStatus.NotReadyConditions {
+		logger.Info(fmt.Sprintf("%s=%s, message:%s", condition.Type, string(condition.Status), condition.Message))
+		messages = append(messages, condition.Message)
+		if string(condition.Status) == readyFalse {
+			status = readyFalse
+		}
+	}
+	if err := r.patchStatus(ctx, &pSub, logger, status, "ArtifactNotReady", strings.Join(messages, ",")); err != nil {
+		return ctrl.Result{}, err
+	}
 	return ctrl.Result{}, nil
 }
 
-func (r *ProfileSubscriptionReconciler) patchStatusFailing(ctx context.Context, pSub *profilesv1.ProfileSubscription, logger logr.Logger, message string) {
-	pSub.Status.State = "failing"
-	pSub.Status.Message = message
-	r.patchStatus(ctx, pSub, logger)
-}
+func (r *ProfileSubscriptionReconciler) patchStatus(ctx context.Context, pSub *profilesv1.ProfileSubscription, logger logr.Logger, readyStatus, reason, message string) error {
+	pSub.Status.Conditions = []metav1.Condition{
+		{
+			Type:               "Ready",
+			Status:             metav1.ConditionStatus(readyStatus),
+			Message:            message,
+			Reason:             reason,
+			LastTransitionTime: metav1.Now(),
+		},
+	}
 
-func (r *ProfileSubscriptionReconciler) patchStatusRunning(ctx context.Context, pSub *profilesv1.ProfileSubscription, logger logr.Logger) {
-	pSub.Status.State = "running"
-	pSub.Status.Message = ""
-	r.patchStatus(ctx, pSub, logger)
-}
-
-func (r *ProfileSubscriptionReconciler) patchStatus(ctx context.Context, pSub *profilesv1.ProfileSubscription, logger logr.Logger) {
 	key := client.ObjectKeyFromObject(pSub)
 	latest := &profilesv1.ProfileSubscription{}
 	if err := r.Client.Get(ctx, key, latest); err != nil {
 		logger.Error(err, "failed to get latest resource during patch")
-		return
+		return err
 	}
 	err := r.Client.Status().Patch(ctx, pSub, client.MergeFrom(latest))
 	if err != nil {
 		logger.Error(err, "failed to patch status")
+		return err
 	}
+	return nil
 }

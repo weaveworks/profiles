@@ -99,7 +99,7 @@ var _ = Describe("Profile", func() {
 		fakeClient = fake.NewClientBuilder().WithScheme(scheme).Build()
 	})
 
-	var _ = Describe("MakeArtifacts", func() {
+	Describe("MakeArtifacts", func() {
 		It("creates a slice of runtime.Object", func() {
 			Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
 			Expect(helmv2.AddToScheme(scheme)).To(Succeed())
@@ -115,7 +115,123 @@ var _ = Describe("Profile", func() {
 		})
 	})
 
-	var _ = Describe("CreateArtifacts", func() {
+	Describe("ArtifactStatus", func() {
+		BeforeEach(func() {
+			p = profile.New(pDef, pSub, fakeClient, logr.Discard())
+		})
+
+		When("the artifact exists", func() {
+			var (
+				gitRes    *sourcev1.GitRepository
+				helmRes   *helmv2.HelmRelease
+				condition metav1.Condition
+			)
+
+			BeforeEach(func() {
+				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
+				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
+				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
+
+				res, err := p.MakeArtifacts()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(res).To(HaveLen(2))
+				gitRes = res[0].(*sourcev1.GitRepository)
+				helmRes = res[1].(*helmv2.HelmRelease)
+				Expect(fakeClient.Create(ctx, gitRes)).To(Succeed())
+				Expect(fakeClient.Create(ctx, helmRes)).To(Succeed())
+				condition = metav1.Condition{
+					Type:               "Ready",
+					Status:             "True",
+					Reason:             "foo",
+					LastTransitionTime: metav1.Now(),
+				}
+				conditions := []metav1.Condition{condition}
+				gitResNew := gitRes.DeepCopyObject().(*sourcev1.GitRepository)
+				gitResNew.Status.Conditions = conditions
+				Expect(fakeClient.Status().Patch(ctx, gitResNew, client.MergeFrom(gitRes))).To(Succeed())
+
+				helmResNew := helmRes.DeepCopyObject().(*helmv2.HelmRelease)
+				helmResNew.Status.Conditions = conditions
+				Expect(fakeClient.Status().Patch(ctx, helmResNew, client.MergeFrom(helmRes))).To(Succeed())
+			})
+
+			When("the artifacts are all ready=true", func() {
+				It("returns empty condition", func() {
+					status, err := p.ArtifactStatus(ctx)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(status.ResourcesExist).To(BeTrue())
+					Expect(status.NotReadyConditions).To(HaveLen(0))
+				})
+			})
+
+			When("the an artifact is ready=false", func() {
+				BeforeEach(func() {
+					condition = metav1.Condition{
+						Type:               "Ready",
+						Status:             "False",
+						Reason:             "foo",
+						LastTransitionTime: metav1.Now(),
+					}
+					helmResNew := helmRes.DeepCopyObject().(*helmv2.HelmRelease)
+					helmResNew.Status.Conditions = []metav1.Condition{condition}
+					Expect(fakeClient.Status().Patch(ctx, helmResNew, client.MergeFrom(helmRes))).To(Succeed())
+				})
+
+				It("returns the ready=false condition", func() {
+					status, err := p.ArtifactStatus(ctx)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(status.ResourcesExist).To(BeTrue())
+					Expect(status.NotReadyConditions).To(HaveLen(1))
+					//The GET returned from k8sclient mutatates the time format
+					//this hack overrides them so it doesn't cause the equal to fail
+					now := metav1.Now()
+					status.NotReadyConditions[0].LastTransitionTime = now
+					condition.LastTransitionTime = now
+					Expect(status.NotReadyConditions[0]).To(Equal(condition))
+				})
+			})
+
+			When("an artifact is ready=unknown", func() {
+				BeforeEach(func() {
+					condition = metav1.Condition{
+						Type:               "Ready",
+						Status:             "Unknown",
+						Reason:             "foo",
+						LastTransitionTime: metav1.Now(),
+					}
+					helmResNew := helmRes.DeepCopyObject().(*helmv2.HelmRelease)
+					helmResNew.Status.Conditions = []metav1.Condition{condition}
+					Expect(fakeClient.Status().Patch(ctx, helmResNew, client.MergeFrom(helmRes))).To(Succeed())
+				})
+
+				It("returns the ready=unknown condition", func() {
+					status, err := p.ArtifactStatus(ctx)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(status.ResourcesExist).To(BeTrue())
+					//The GET returned from k8sclient mutatates the time format
+					//this hack overrides them so it doesn't cause the equal to fail
+					now := metav1.Now()
+					status.NotReadyConditions[0].LastTransitionTime = now
+					condition.LastTransitionTime = now
+					Expect(status.NotReadyConditions[0]).To(Equal(condition))
+				})
+			})
+		})
+
+		When("the artifact don't exist", func() {
+			It("returns false", func() {
+				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
+				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
+				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
+
+				status, err := p.ArtifactStatus(ctx)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(status.ResourcesExist).To(BeFalse())
+			})
+		})
+	})
+
+	Describe("CreateArtifacts", func() {
 		When("the profile consists of a HelmChart", func() {
 			It("creates the helm and gitrepo resources with the correct owner", func() {
 				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
