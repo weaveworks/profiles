@@ -17,7 +17,7 @@ import (
 var _ = Describe("Api", func() {
 	var (
 		catalogAPI     api.API
-		profileCatalog *catalog.Catalog
+		profileCatalog catalog.Catalog
 	)
 	Context("/profiles", func() {
 		BeforeEach(func() {

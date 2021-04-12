@@ -13,11 +13,11 @@ import (
 // API defines a catalog router.
 type API struct {
 	*mux.Router
-	profileCatalog *catalog.Catalog
+	profileCatalog catalog.Catalog
 }
 
 // New returns a new mux based api router.
-func New(profileCatalog *catalog.Catalog) API {
+func New(profileCatalog catalog.Catalog) API {
 	r := mux.NewRouter()
 	a := API{
 		Router:         r,
@@ -26,6 +26,8 @@ func New(profileCatalog *catalog.Catalog) API {
 
 	r.HandleFunc("/profiles", a.ProfilesHandler)
 	r.HandleFunc("/profiles/{catalog}/{profile}", a.ProfileHandler)
+	r.HandleFunc("/profiles/{catalog}", a.DeleteCatalogHandler).
+		Methods(http.MethodDelete)
 
 	return a
 }
@@ -38,8 +40,19 @@ func (a *API) ProfilesHandler(w http.ResponseWriter, r *http.Request) {
 
 // ProfileHandler is the handler for /profiles/{catalog}/{profile} requests.
 func (a *API) ProfileHandler(w http.ResponseWriter, r *http.Request) {
-	catalogName, profileName := mux.Vars(r)["catalog"], mux.Vars(r)["profile"]
-	marshalResponse(w, a.profileCatalog.Get(catalogName, profileName))
+	vars := mux.Vars(r)
+	catalogName, profileName := vars["catalog"], vars["profile"]
+	profile, found := a.profileCatalog.Get(catalogName, profileName)
+	if !found {
+		w.WriteHeader(404)
+		return
+	}
+	marshalResponse(w, profile)
+}
+
+// DeleteCatalogHandler deletes a catalog
+func (a *API) DeleteCatalogHandler(w http.ResponseWriter, r *http.Request) {
+	a.profileCatalog.Remove(mux.Vars(r)["catalog"])
 }
 
 func marshalResponse(w http.ResponseWriter, v interface{}) {

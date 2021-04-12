@@ -34,7 +34,7 @@ type ProfileCatalogSourceReconciler struct {
 	client.Client
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
-	Profiles *catalog.Catalog
+	Profiles catalog.Catalog
 }
 
 // +kubebuilder:rbac:groups=weave.works,resources=profilecatalogsources,verbs=get;list;watch;create;update;patch;delete

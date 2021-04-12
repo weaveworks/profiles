@@ -10,7 +10,7 @@ import (
 
 var _ = Describe("Catalog", func() {
 	var (
-		c       *catalog.Catalog
+		c       catalog.Catalog
 		catName string
 	)
 
@@ -19,7 +19,7 @@ var _ = Describe("Catalog", func() {
 		catName = "whiskers"
 	})
 
-	It("manages an in memory list of profiles", func() {
+	It("manages an in-memory list of profiles", func() {
 		By("adding profiles to the list")
 		profiles := []profilesv1.ProfileDescription{{Name: "foo"}, {Name: "bar"}, {Name: "alsofoo"}}
 		c.Add(catName, profiles...)
@@ -31,8 +31,15 @@ var _ = Describe("Catalog", func() {
 		))
 
 		By("getting details for a specific named profile in a catalog")
-		Expect(c.Get(catName, "foo")).To(Equal(
+		profile, found := c.Get(catName, "foo")
+		Expect(found).To(BeTrue())
+		Expect(profile).To(Equal(
 			profilesv1.ProfileDescription{Name: "foo", Catalog: catName},
 		))
+
+		By("deleting a catalog")
+		c.Remove(catName)
+		_, found = c.Get(catName, "foo")
+		Expect(found).To(BeFalse())
 	})
 })
