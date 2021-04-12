@@ -31,13 +31,16 @@ const (
 var _ = Describe("Acceptance", func() {
 	Context("ProfileSubscription", func() {
 		var (
-			profileURL, namespace string
-			subName               = "foo"
-			nsp                   v1.Namespace
+			profileURL string
+			namespace  string
+			branch     string
+			subName    = "foo"
+			nsp        v1.Namespace
 		)
 
 		BeforeEach(func() {
 			profileURL = "https://github.com/weaveworks/nginx-profile"
+			branch = "multiple-artifacts"
 
 			namespace = uuid.New().String()
 			nsp = v1.Namespace{
@@ -65,6 +68,7 @@ var _ = Describe("Acceptance", func() {
 					},
 					Spec: profilesv1.ProfileSubscriptionSpec{
 						ProfileURL: profileURL,
+						Branch:     branch,
 					},
 				}
 				Expect(kClient.Create(context.Background(), &pSub)).To(Succeed())
@@ -86,14 +90,14 @@ var _ = Describe("Acceptance", func() {
 					return false
 				}, 2*time.Minute, 5*time.Second).Should(BeTrue())
 
-				opts := []client.ListOption{
+				helmOpts := []client.ListOption{
 					client.InNamespace(namespace),
 					client.MatchingLabels{"app.kubernetes.io/name": "nginx"},
 				}
 				var podList *v1.PodList
 				Eventually(func() v1.PodPhase {
 					podList = &v1.PodList{}
-					err := kClient.List(context.Background(), podList, opts...)
+					err := kClient.List(context.Background(), podList, helmOpts...)
 					Expect(err).NotTo(HaveOccurred())
 					if len(podList.Items) == 0 {
 						return v1.PodPhase("")
@@ -103,45 +107,8 @@ var _ = Describe("Acceptance", func() {
 
 				Expect(podList.Items[0].Spec.Containers[0].Image).To(Equal(nginxImage))
 
-				By("cleaning up resources on deletion")
-				Expect(kClient.Delete(context.Background(), &pSub)).To(Succeed())
-
-				Eventually(func() bool {
-					helmRelease = &helmv2.HelmRelease{}
-					err := kClient.Get(context.Background(), client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, helmRelease)
-					return apierrors.IsNotFound(err)
-				}, 2*time.Minute, 5*time.Second).Should(BeTrue())
-
-				Eventually(func() int {
-					podList = &v1.PodList{}
-					err := kClient.List(context.Background(), podList, opts...)
-					Expect(err).NotTo(HaveOccurred())
-					return len(podList.Items)
-				}, 5*time.Minute, 10*time.Second).Should(Equal(0))
-
-			})
-		})
-
-		When("subscribing to a Profile with raw yaml", func() {
-			It("should deploy the Profile workload and cleanup on deletion", func() {
-				pSub := profilesv1.ProfileSubscription{
-					TypeMeta: metav1.TypeMeta{
-						Kind:       profileSubscriptionKind,
-						APIVersion: profileSubscriptionAPIVersion,
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      subName,
-						Namespace: namespace,
-					},
-					Spec: profilesv1.ProfileSubscriptionSpec{
-						ProfileURL: profileURL,
-						Branch:     "yaml",
-					},
-				}
-				Expect(kClient.Create(context.Background(), &pSub)).To(Succeed())
-
 				By("successfully deploying the kustomize resource")
-				kustomizeName := fmt.Sprintf("%s-%s-%s", subName, "nginx", "nginx-server")
+				kustomizeName := fmt.Sprintf("%s-%s-%s", subName, "nginx", "nginx-deployment")
 				var kustomize *kustomizev1.Kustomization
 				Eventually(func() bool {
 					kustomize = &kustomizev1.Kustomization{}
@@ -157,14 +124,13 @@ var _ = Describe("Acceptance", func() {
 					return false
 				}, 2*time.Minute, 5*time.Second).Should(BeTrue())
 
-				opts := []client.ListOption{
+				kustomizeOpts := []client.ListOption{
 					client.InNamespace(namespace),
 					client.MatchingLabels{"app": "nginx"},
 				}
-				var podList *v1.PodList
 				Eventually(func() v1.PodPhase {
 					podList = &v1.PodList{}
-					err := kClient.List(context.Background(), podList, opts...)
+					err := kClient.List(context.Background(), podList, kustomizeOpts...)
 					Expect(err).NotTo(HaveOccurred())
 					if len(podList.Items) == 0 {
 						return v1.PodPhase("no pods found")
@@ -185,7 +151,20 @@ var _ = Describe("Acceptance", func() {
 
 				Eventually(func() int {
 					podList = &v1.PodList{}
-					err := kClient.List(context.Background(), podList, opts...)
+					err := kClient.List(context.Background(), podList, kustomizeOpts...)
+					Expect(err).NotTo(HaveOccurred())
+					return len(podList.Items)
+				}, 5*time.Minute, 10*time.Second).Should(Equal(0))
+
+				Eventually(func() bool {
+					helmRelease = &helmv2.HelmRelease{}
+					err := kClient.Get(context.Background(), client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, helmRelease)
+					return apierrors.IsNotFound(err)
+				}, 2*time.Minute, 5*time.Second).Should(BeTrue())
+
+				Eventually(func() int {
+					podList = &v1.PodList{}
+					err := kClient.List(context.Background(), podList, helmOpts...)
 					Expect(err).NotTo(HaveOccurred())
 					return len(podList.Items)
 				}, 5*time.Minute, 10*time.Second).Should(Equal(0))
