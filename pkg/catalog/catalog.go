@@ -24,6 +24,7 @@ func (c Catalog) Add(catalogName string, profiles ...profilesv1.ProfileDescripti
 	c[catalogName] = catalogProfiles
 }
 
+// Remove removes the specified catalog
 func (c Catalog) Remove(catalogName string) {
 	delete(c, catalogName)
 }
