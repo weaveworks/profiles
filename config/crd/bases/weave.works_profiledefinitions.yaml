@@ -42,28 +42,35 @@ spec:
                   description: Artifact defines a bundled resource of the components
                     for this profile.
                   properties:
-                    helm_chart:
-                      description: HelmChart defines the name of the chart at the
-                        remote repository
-                      type: string
-                    helm_chart_version:
-                      description: HelmChartVersion defines the version of the chart
-                        at the remote repository
-                      type: string
-                    helm_url:
-                      description: HelmURL is the URL of the Helm repository containing
-                        a Helm chart and possible values
-                      type: string
+                    chart:
+                      description: Chart defines properties to access a remote chart.
+                        This is an optional value.
+                      properties:
+                        helm_chart:
+                          description: HelmChart defines the name of the chart at
+                            the remote repository
+                          type: string
+                        helm_chart_version:
+                          description: HelmChartVersion defines the version of the
+                            chart at the remote repository
+                          type: string
+                        helm_url:
+                          description: HelmURL is the URL of the Helm repository containing
+                            a Helm chart and possible values
+                          type: string
+                      type: object
                     kind:
-                      description: 'Kind is the kind of artifact: HelmChartLocal or
-                        Kustomize'
+                      description: 'Kind is the kind of artifact: HelmChart or Kustomize'
+                      enum:
+                      - HelmChart
+                      - Kustomize
                       type: string
                     name:
                       description: Name is the name of the Artifact
                       type: string
                     path:
                       description: Path is the local path to the Artifact in the Profile
-                        repo
+                        repo. This is an optional value.
                       type: string
                   type: object
                 type: array

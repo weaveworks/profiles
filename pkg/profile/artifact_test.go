@@ -30,7 +30,6 @@ const (
 	branch               = "main"
 	profileName          = "profileName"
 	chartName            = "artifactName"
-	chartPath            = "artifactPath"
 	profileSubKind       = "ProfileSubscription"
 	profileSubAPIVersion = "weave.works/v1alpha1"
 )
@@ -40,6 +39,7 @@ var (
 		Kind:       profileSubKind,
 		APIVersion: profileSubAPIVersion,
 	}
+	chartPath = "artifactPath"
 )
 
 var _ = Describe("Profile", func() {
@@ -89,8 +89,8 @@ var _ = Describe("Profile", func() {
 				Artifacts: []profilesv1.Artifact{
 					{
 						Name: chartName,
-						Path: chartPath,
-						Kind: profilesv1.HelmChartLocalKind,
+						Path: &chartPath,
+						Kind: profilesv1.HelmChartKind,
 					},
 				},
 			},
@@ -116,7 +116,7 @@ var _ = Describe("Profile", func() {
 	})
 
 	var _ = Describe("CreateArtifacts", func() {
-		When("the profile consists of a HelmChartLocal", func() {
+		When("the profile consists of a HelmChart", func() {
 			It("creates the helm and gitrepo resources with the correct owner", func() {
 				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
 				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
@@ -172,12 +172,33 @@ var _ = Describe("Profile", func() {
 			})
 		})
 
-		When("the profile consists of a HelmChartRemote", func() {
+		When("the profile consists of a HelmChart", func() {
 			It("creates the helm and helmrepo resources with the correct owner", func() {
 				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
 				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
 				Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
 				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
+				pSub = profilesv1.ProfileSubscription{
+					TypeMeta: profileTypeMeta,
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      subscriptionName,
+						Namespace: namespace,
+					},
+					Spec: profilesv1.ProfileSubscriptionSpec{
+						ProfileURL: "https://github.com/org/repo-name",
+						Branch:     "support-helm-urls",
+						Values: &apiextensionsv1.JSON{
+							Raw: []byte(`{"replicaCount": 3,"service":{"port":8081}}`),
+						},
+						ValuesFrom: []helmv2.ValuesReference{
+							{
+								Name:     "nginx-values",
+								Kind:     "Secret",
+								Optional: true,
+							},
+						},
+					},
+				}
 				pDef = profilesv1.ProfileDefinition{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: profileName,
@@ -190,9 +211,13 @@ var _ = Describe("Profile", func() {
 						Description: "foo",
 						Artifacts: []profilesv1.Artifact{
 							{
-								Name:    chartName,
-								Kind:    profilesv1.HelmChartRemoteKind,
-								HelmURL: "https://org.github.io/charts",
+								Name: chartName,
+								Kind: profilesv1.HelmChartKind,
+								Chart: &profilesv1.Chart{
+									HelmURL:          "https://org.github.io/charts",
+									HelmChartVersion: "8.8.3",
+									HelmChart:        "nginx",
+								},
 							},
 						},
 					},
@@ -201,7 +226,7 @@ var _ = Describe("Profile", func() {
 				err := p.CreateArtifacts(ctx)
 				Expect(err).NotTo(HaveOccurred())
 
-				gitRefName := fmt.Sprintf("%s-%s-%s", subscriptionName, "repo-name", branch)
+				gitRefName := fmt.Sprintf("%s-%s-%s-remote", subscriptionName, "repo-name", "support-helm-urls")
 				helmRepository := sourcev1.HelmRepository{}
 				err = fakeClient.Get(ctx, client.ObjectKey{Name: gitRefName, Namespace: namespace}, &helmRepository)
 				Expect(err).NotTo(HaveOccurred())
@@ -216,7 +241,7 @@ var _ = Describe("Profile", func() {
 				helmRelease := helmv2.HelmRelease{}
 				err = fakeClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(helmRelease.Spec.Chart.Spec.Chart).To(Equal(chartName))
+				Expect(helmRelease.Spec.Chart.Spec.Chart).To(Equal("nginx"))
 				Expect(helmRelease.Spec.Chart.Spec.SourceRef).To(Equal(
 					helmv2.CrossNamespaceObjectReference{
 						Kind:      "HelmRepository",

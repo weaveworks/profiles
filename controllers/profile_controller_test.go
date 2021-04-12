@@ -36,7 +36,170 @@ var _ = Describe("ProfileController", func() {
 		Expect(k8sClient.Create(context.Background(), &nsp)).To(Succeed())
 	})
 
-	Context("Create", func() {
+	//Context("Create Local", func() {
+	//	DescribeTable("Applying a Profile creates the correct resources", func(pSubSpec profilesv1.ProfileSubscriptionSpec) {
+	//		subscriptionName := "foo"
+	//		branch := pSubSpec.Branch
+	//
+	//		pSub := profilesv1.ProfileSubscription{
+	//			TypeMeta: metav1.TypeMeta{
+	//				Kind:       "ProfileSubscription",
+	//				APIVersion: "profilesubscriptions.weave.works/v1alpha1",
+	//			},
+	//			ObjectMeta: metav1.ObjectMeta{
+	//				Name:      subscriptionName,
+	//				Namespace: namespace,
+	//			},
+	//		}
+	//		pSub.Spec = pSubSpec
+	//		Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())
+	//
+	//		By("creating a GitRepository resource")
+	//		profileRepoName := "nginx-profile"
+	//		gitRepoName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileRepoName, branch)
+	//		gitRepo := sourcev1.GitRepository{}
+	//		Eventually(func() error {
+	//			return k8sClient.Get(ctx, client.ObjectKey{Name: gitRepoName, Namespace: namespace}, &gitRepo)
+	//		}, 10*time.Second).ShouldNot(HaveOccurred())
+	//		Expect(gitRepo.Spec.URL).To(Equal(nginxProfileURL))
+	//		Expect(gitRepo.Spec.Reference.Branch).To(Equal(branch))
+	//
+	//		By("creating a HelmRelease resource")
+	//		profileName := "nginx"
+	//		chartName := "nginx-server"
+	//		helmReleaseName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, chartName)
+	//		helmRelease := helmv2.HelmRelease{}
+	//		Eventually(func() error {
+	//			return k8sClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
+	//		}, 10*time.Second).ShouldNot(HaveOccurred())
+	//		Expect(helmRelease.Spec.Chart.Spec.Chart).To(Equal("nginx/chart"))
+	//		Expect(helmRelease.Spec.Chart.Spec.SourceRef).To(Equal(
+	//			helmv2.CrossNamespaceObjectReference{
+	//				Kind:      "GitRepository",
+	//				Name:      gitRepoName,
+	//				Namespace: namespace,
+	//			},
+	//		))
+	//		if pSub.Spec.Values != nil {
+	//			Expect(helmRelease.Spec.Values).To(Equal(pSub.Spec.Values))
+	//		}
+	//		if pSub.Spec.ValuesFrom != nil {
+	//			Expect(helmRelease.Spec.ValuesFrom).To(Equal(pSub.Spec.ValuesFrom))
+	//		}
+	//
+	//		By("updating the status")
+	//		profile := profilesv1.ProfileSubscription{}
+	//		Eventually(func() string {
+	//			Expect(k8sClient.Get(ctx, client.ObjectKey{Name: subscriptionName, Namespace: namespace}, &profile)).To(Succeed())
+	//			return profile.Status.State
+	//		}, 10*time.Second).Should(Equal("running"))
+	//	},
+	//		Entry("a single Helm chart with no supplied values", profilesv1.ProfileSubscriptionSpec{
+	//			ProfileURL: nginxProfileURL,
+	//			Branch:     "support-helm-urls",
+	//		}),
+	//		Entry("a single Helm chart with supplied values", profilesv1.ProfileSubscriptionSpec{
+	//			ProfileURL: nginxProfileURL,
+	//			Branch:     "support-helm-urls",
+	//			Values: &apiextensionsv1.JSON{
+	//				Raw: []byte(`{"replicaCount": 3,"service":{"port":8081}}`),
+	//			},
+	//		}),
+	//		Entry("a single Helm chart with values supplied via valuesFrom", profilesv1.ProfileSubscriptionSpec{
+	//			ProfileURL: nginxProfileURL,
+	//			Branch:     "support-helm-urls",
+	//			ValuesFrom: []helmv2.ValuesReference{
+	//				{
+	//					Name:     "nginx-values",
+	//					Kind:     "Secret",
+	//					Optional: true,
+	//				},
+	//			},
+	//		}),
+	//	)
+	//
+	//	When("retrieving the Profile Definition fails", func() {
+	//		It("updates the status", func() {
+	//			subscriptionName := "fetch-definition-error"
+	//			profileURL := "https://github.com/does-not/exist"
+	//
+	//			pSub := profilesv1.ProfileSubscription{
+	//				TypeMeta: metav1.TypeMeta{
+	//					Kind:       "ProfileSubscription",
+	//					APIVersion: "profilesubscriptions.weave.works/v1alpha1",
+	//				},
+	//				ObjectMeta: metav1.ObjectMeta{
+	//					Name:      subscriptionName,
+	//					Namespace: namespace,
+	//				},
+	//				Spec: profilesv1.ProfileSubscriptionSpec{
+	//					ProfileURL: profileURL,
+	//				},
+	//			}
+	//			Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())
+	//
+	//			profile := profilesv1.ProfileSubscription{}
+	//			Eventually(func() bool {
+	//				err := k8sClient.Get(ctx, client.ObjectKey{Name: subscriptionName, Namespace: namespace}, &profile)
+	//				return err == nil && profile.Status != profilesv1.ProfileSubscriptionStatus{}
+	//			}, 10*time.Second, 1*time.Second).Should(BeTrue())
+	//
+	//			Expect(profile.Status.Message).To(Equal("error when fetching profile definition"))
+	//			Expect(profile.Status.State).To(Equal("failing"))
+	//		})
+	//	})
+	//
+	//	When("creating Profile artifacts fail", func() {
+	//		It("updates the status", func() {
+	//			subscriptionName := "git-resource-already-exists-error"
+	//			profileURL := nginxProfileURL
+	//
+	//			gitRefName := fmt.Sprintf("%s-%s-%s", subscriptionName, "nginx-profile", "support-helm-urls")
+	//			gitRepo := sourcev1.GitRepository{
+	//				ObjectMeta: metav1.ObjectMeta{
+	//					Name:      gitRefName,
+	//					Namespace: namespace,
+	//				},
+	//				TypeMeta: metav1.TypeMeta{
+	//					Kind:       "GitRepository",
+	//					APIVersion: "source.toolkit.fluxcd.io/v1beta1",
+	//				},
+	//				Spec: sourcev1.GitRepositorySpec{
+	//					URL: profileURL,
+	//					Reference: &sourcev1.GitRepositoryRef{
+	//						Branch: "support-helm-urls",
+	//					},
+	//				},
+	//			}
+	//			Expect(k8sClient.Create(ctx, &gitRepo)).Should(Succeed())
+	//
+	//			pSub := profilesv1.ProfileSubscription{
+	//				TypeMeta: metav1.TypeMeta{
+	//					Kind:       "ProfileSubscription",
+	//					APIVersion: "profilesubscriptions.weave.works/v1alpha1",
+	//				},
+	//				ObjectMeta: metav1.ObjectMeta{
+	//					Name:      subscriptionName,
+	//					Namespace: namespace,
+	//				},
+	//				Spec: profilesv1.ProfileSubscriptionSpec{
+	//					ProfileURL: profileURL,
+	//				},
+	//			}
+	//			Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())
+	//
+	//			profile := profilesv1.ProfileSubscription{}
+	//			Eventually(func() bool {
+	//				err := k8sClient.Get(ctx, client.ObjectKey{Name: subscriptionName, Namespace: namespace}, &profile)
+	//				return err == nil && profile.Status != profilesv1.ProfileSubscriptionStatus{}
+	//			}, 10*time.Second, 1*time.Second).Should(BeTrue())
+	//
+	//			Expect(profile.Status.Message).To(Equal("error when creating profile artifacts"))
+	//			Expect(profile.Status.State).To(Equal("failing"))
+	//		})
+	//	})
+	//})
+	Context("Create Remote", func() {
 		DescribeTable("Applying a Profile creates the correct resources", func(pSubSpec profilesv1.ProfileSubscriptionSpec) {
 			subscriptionName := "foo"
 			branch := pSubSpec.Branch
@@ -54,15 +217,14 @@ var _ = Describe("ProfileController", func() {
 			pSub.Spec = pSubSpec
 			Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())
 
-			By("creating a GitRepository resource")
+			By("creating a HelmRepository resource")
 			profileRepoName := "nginx-profile"
-			gitRepoName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileRepoName, branch)
-			gitRepo := sourcev1.GitRepository{}
+			gitRepoName := fmt.Sprintf("%s-%s-%s-remote", subscriptionName, profileRepoName, branch)
+			helmRepository := sourcev1.HelmRepository{}
 			Eventually(func() error {
-				return k8sClient.Get(ctx, client.ObjectKey{Name: gitRepoName, Namespace: namespace}, &gitRepo)
+				return k8sClient.Get(ctx, client.ObjectKey{Name: gitRepoName, Namespace: namespace}, &helmRepository)
 			}, 10*time.Second).ShouldNot(HaveOccurred())
-			Expect(gitRepo.Spec.URL).To(Equal(nginxProfileURL))
-			Expect(gitRepo.Spec.Reference.Branch).To(Equal(branch))
+			Expect(helmRepository.Spec.URL).To(Equal("https://charts.bitnami.com/bitnami"))
 
 			By("creating a HelmRelease resource")
 			profileName := "nginx"
@@ -72,10 +234,11 @@ var _ = Describe("ProfileController", func() {
 			Eventually(func() error {
 				return k8sClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
 			}, 10*time.Second).ShouldNot(HaveOccurred())
-			Expect(helmRelease.Spec.Chart.Spec.Chart).To(Equal("nginx/chart"))
+			Expect(helmRelease.Spec.Chart.Spec.Chart).To(Equal("nginx"))
+			Expect(helmRelease.Spec.Chart.Spec.Version).To(Equal("8.8.1"))
 			Expect(helmRelease.Spec.Chart.Spec.SourceRef).To(Equal(
 				helmv2.CrossNamespaceObjectReference{
-					Kind:      "GitRepository",
+					Kind:      "HelmRepository",
 					Name:      gitRepoName,
 					Namespace: namespace,
 				},
@@ -196,26 +359,23 @@ var _ = Describe("ProfileController", func() {
 		When("creating Profile artifacts fail", func() {
 			It("updates the status", func() {
 				subscriptionName := "git-resource-already-exists-error"
-				profileURL := nginxProfileURL
+				helmRepositoryUrl := "https://charts.bitnami.com/bitnami"
 
-				gitRefName := fmt.Sprintf("%s-%s-%s", subscriptionName, "nginx-profile", "support-helm-urls")
-				gitRepo := sourcev1.GitRepository{
+				gitRefName := fmt.Sprintf("%s-%s-%s-remote", subscriptionName, "nginx-profile", "support-helm-urls")
+				helmRepository := sourcev1.HelmRepository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      gitRefName,
 						Namespace: namespace,
 					},
 					TypeMeta: metav1.TypeMeta{
-						Kind:       "GitRepository",
+						Kind:       "HelmRepository",
 						APIVersion: "source.toolkit.fluxcd.io/v1beta1",
 					},
-					Spec: sourcev1.GitRepositorySpec{
-						URL: profileURL,
-						Reference: &sourcev1.GitRepositoryRef{
-							Branch: "support-helm-urls",
-						},
+					Spec: sourcev1.HelmRepositorySpec{
+						URL: helmRepositoryUrl,
 					},
 				}
-				Expect(k8sClient.Create(ctx, &gitRepo)).Should(Succeed())
+				Expect(k8sClient.Create(ctx, &helmRepository)).Should(Succeed())
 
 				pSub := profilesv1.ProfileSubscription{
 					TypeMeta: metav1.TypeMeta{
@@ -227,7 +387,8 @@ var _ = Describe("ProfileController", func() {
 						Namespace: namespace,
 					},
 					Spec: profilesv1.ProfileSubscriptionSpec{
-						ProfileURL: profileURL,
+						ProfileURL: nginxProfileURL,
+						Branch:     "support-helm-urls",
 					},
 				}
 				Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())

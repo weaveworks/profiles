@@ -71,6 +71,8 @@ test_deps:
 	mkdir -p ${TEST_CRDS}
 	curl -s --fail https://raw.githubusercontent.com/fluxcd/source-controller/${SOURCE_VER}/config/crd/bases/source.toolkit.fluxcd.io_gitrepositories.yaml \
 		-o ${TEST_CRDS}/gitrepositories.yaml
+	curl -s --fail https://raw.githubusercontent.com/fluxcd/source-controller/${SOURCE_VER}/config/crd/bases/source.toolkit.fluxcd.io_helmrepositories.yaml \
+		-o ${TEST_CRDS}/helmrepositories.yaml
 	curl -s --fail https://raw.githubusercontent.com/fluxcd/helm-controller/${HELM_VER}/config/crd/bases/helm.toolkit.fluxcd.io_helmreleases.yaml \
 		-o ${TEST_CRDS}/helmreleases.yaml
 	curl -s --fail https://raw.githubusercontent.com/fluxcd/kustomize-controller/${KUSTOMIZE_VER}/config/crd/bases/kustomize.toolkit.fluxcd.io_kustomizations.yaml \

@@ -47,6 +47,7 @@ spec:
 		}, nil)
 
 		definition, err := git.GetProfileDefinition(repoURL, branch, logr.Discard())
+		path := "baz"
 		Expect(err).NotTo(HaveOccurred())
 		Expect(fakeHTTPClient.GetCallCount()).To(Equal(1))
 		Expect(fakeHTTPClient.GetArgsForCall(0)).To(Equal("raw.githubusercontent.com/foo/bar/main/profile.yaml"))
@@ -63,7 +64,7 @@ spec:
 				Artifacts: []profilesv1.Artifact{
 					{
 						Name: "bar",
-						Path: "baz",
+						Path: &path,
 					},
 				},
 			},

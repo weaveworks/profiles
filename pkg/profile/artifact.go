@@ -21,31 +21,31 @@ import (
 // local -> in the profile repository
 type location int
 
-var local location = 0
-var remote location = 1
+const (
+	local = iota
+	remote
+)
 
 // CreateArtifacts creates and inserts objects to the cluster to deploy the
 // profile as a HelmRelease.
 func (p *Profile) CreateArtifacts(ctx context.Context) error {
 	// TODO don't depend on 0.
 	switch kind := p.definition.Spec.Artifacts[0].Kind; kind {
-	case profilesv1.HelmChartLocalKind:
-		if err := p.createGitRepository(ctx); err != nil {
-			return fmt.Errorf("failed to create GitRepository resource: %w", err)
-		}
-		if err := p.createHelmRelease(ctx, local); err != nil {
-			return fmt.Errorf("failed to create HelmRelease resource: %w", err)
-		}
-	case profilesv1.HelmChartRemoteKind:
-		if p.definition.Spec.Artifacts[0].HelmURL == "" {
-			return fmt.Errorf("helmURL for helm repository for remote helm artifact must not be empty")
-		}
-		//TODO: figure out what to do with the chart name and version. Maybe they could be inferred?
-		if err := p.createHelmRepository(ctx, p.definition.Spec.Artifacts[0].HelmURL); err != nil {
-			return fmt.Errorf("failed to create HelmRepository resource: %w", err)
-		}
-		if err := p.createHelmRelease(ctx, remote); err != nil {
-			return fmt.Errorf("failed to create HelmRelease for remote resource: %w", err)
+	case profilesv1.HelmChartKind:
+		if p.definition.Spec.Artifacts[0].Path != nil {
+			if err := p.createGitRepository(ctx); err != nil {
+				return fmt.Errorf("failed to create GitRepository resource: %w", err)
+			}
+			if err := p.createHelmRelease(ctx, local); err != nil {
+				return fmt.Errorf("failed to create HelmRelease resource: %w", err)
+			}
+		} else if p.definition.Spec.Artifacts[0].Chart != nil {
+			if err := p.createHelmRepository(ctx, p.definition.Spec.Artifacts[0].Chart.HelmURL); err != nil {
+				return fmt.Errorf("failed to create HelmRepository resource: %w", err)
+			}
+			if err := p.createHelmRelease(ctx, remote); err != nil {
+				return fmt.Errorf("failed to create HelmRelease for remote resource: %w", err)
+			}
 		}
 	case profilesv1.KustomizeKind:
 		if err := p.createGitRepository(ctx); err != nil {
@@ -153,9 +153,11 @@ func (p *Profile) createHelmRelease(ctx context.Context, loc location) error {
 }
 
 func (p *Profile) makeHelmRelease(loc location) (*helmv2.HelmRelease, error) {
-	helmChartSpec := p.makeLocalHelmChartSpec()
+	var helmChartSpec helmv2.HelmChartTemplateSpec
 	if loc == remote {
 		helmChartSpec = p.makeRemoteHelmChartSpec()
+	} else {
+		helmChartSpec = p.makeLocalHelmChartSpec()
 	}
 	helmRelease := &helmv2.HelmRelease{
 		ObjectMeta: metav1.ObjectMeta{
@@ -184,7 +186,7 @@ func (p *Profile) makeHelmRelease(loc location) (*helmv2.HelmRelease, error) {
 func (p *Profile) makeLocalHelmChartSpec() helmv2.HelmChartTemplateSpec {
 	return helmv2.HelmChartTemplateSpec{
 		// TODO obvs don't rely on index 0
-		Chart: p.definition.Spec.Artifacts[0].Path,
+		Chart: *p.definition.Spec.Artifacts[0].Path,
 		SourceRef: helmv2.CrossNamespaceObjectReference{
 			Kind:      sourcev1.GitRepositoryKind,
 			Name:      p.makeGitRepoName(),
@@ -196,13 +198,13 @@ func (p *Profile) makeLocalHelmChartSpec() helmv2.HelmChartTemplateSpec {
 func (p *Profile) makeRemoteHelmChartSpec() helmv2.HelmChartTemplateSpec {
 	return helmv2.HelmChartTemplateSpec{
 		// TODO obvs don't rely on index 0
-		Chart: p.definition.Spec.Artifacts[0].HelmChart,
+		Chart: p.definition.Spec.Artifacts[0].Chart.HelmChart,
 		SourceRef: helmv2.CrossNamespaceObjectReference{
 			Kind:      sourcev1.HelmRepositoryKind,
 			Name:      p.makeHelmRepoName(),
 			Namespace: p.subscription.ObjectMeta.Namespace,
 		},
-		Version: p.definition.Spec.Artifacts[0].HelmChartVersion,
+		Version: p.definition.Spec.Artifacts[0].Chart.HelmChartVersion,
 	}
 }
 
@@ -218,7 +220,7 @@ func (p *Profile) makeKustomization() (*kustomizev1.Kustomization, error) {
 		},
 		Spec: kustomizev1.KustomizationSpec{
 			// TODO obvs don't rely on index 0
-			Path:            p.definition.Spec.Artifacts[0].Path,
+			Path:            *p.definition.Spec.Artifacts[0].Path,
 			Interval:        metav1.Duration{Duration: time.Minute * 5},
 			Prune:           true,
 			TargetNamespace: p.subscription.ObjectMeta.Namespace,

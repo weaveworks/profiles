@@ -20,13 +20,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// HelmChartLocalKind is the name of the kind of the whatever.. TODO: Come up with something.
-const HelmChartLocalKind = "HelmChartLocal"
+// HelmChartKind defines properties about the underlying helm chart for an artifact.
+const HelmChartKind = "HelmChart"
 
-// HelmChartRemoteKind something something.
-const HelmChartRemoteKind = "HelmChartRemote"
-
-// KustomizeKind TODO: fill out.
+// KustomizeKind defines a kind containing kustomize yaml files for an artifact.
 const KustomizeKind = "Kustomize"
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -44,10 +41,19 @@ type ProfileDefinitionSpec struct {
 type Artifact struct {
 	// Name is the name of the Artifact
 	Name string `json:"name,omitempty"`
-	// Path is the local path to the Artifact in the Profile repo
-	Path string `json:"path,omitempty"`
-	// Kind is the kind of artifact: HelmChartLocal or Kustomize
+	// Path is the local path to the Artifact in the Profile repo.
+	// This is an optional value.
+	Path *string `json:"path,omitempty"`
+	// Kind is the kind of artifact: HelmChart or Kustomize
+	// +kubebuilder:validation:Enum=HelmChart;Kustomize
 	Kind string `json:"kind,omitempty"`
+	// Chart defines properties to access a remote chart.
+	// This is an optional value.
+	Chart *Chart `json:"chart,omitempty"`
+}
+
+// Chart defines properties to access remote helm charts.
+type Chart struct {
 	// HelmURL is the URL of the Helm repository containing a Helm chart and possible values
 	HelmURL string `json:"helm_url,omitempty"`
 	// HelmChart defines the name of the chart at the remote repository
