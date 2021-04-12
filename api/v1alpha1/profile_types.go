@@ -42,13 +42,15 @@ type Artifact struct {
 	// Name is the name of the Artifact
 	Name string `json:"name,omitempty"`
 	// Path is the local path to the Artifact in the Profile repo.
-	// This is an optional value.
-	Path *string `json:"path,omitempty"`
+	// This is an optional value. If defined, it takes precedence over Chart.
+	// +optional
+	Path string `json:"path,omitempty"`
 	// Kind is the kind of artifact: HelmChart or Kustomize
 	// +kubebuilder:validation:Enum=HelmChart;Kustomize
 	Kind string `json:"kind,omitempty"`
 	// Chart defines properties to access a remote chart.
-	// This is an optional value.
+	// This is an optional value. It is ignored in case Path is defined.
+	// +optional
 	Chart *Chart `json:"chart,omitempty"`
 }
 
