@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"fmt"
+
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -28,9 +30,10 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 		Expect(k8sClient.Create(context.Background(), &nsp)).To(Succeed())
 	})
 
-	Context("Create", func() {
-		It("adds the profile to the in-memory list", func() {
-			pSub := profilesv1.ProfileCatalogSource{
+	Context("Create, update and delete", func() {
+		It("syncs the in-memory list when a ProfileCatalogSource is added or deleted", func() {
+			By("creating a new ProfileCatalogSource")
+			pSub := &profilesv1.ProfileCatalogSource{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ProfileCatalogSource",
 					APIVersion: "profilesubscriptions.weave.works/v1alpha1",
@@ -48,11 +51,34 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 					},
 				},
 			}
-			Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())
+			Expect(k8sClient.Create(ctx, pSub)).Should(Succeed())
+
+			By("searching for a profile")
+			query := func() []profilesv1.ProfileDescription {
+				return catalogReconciler.Profiles.Search("foo")
+			}
+			Eventually(query, 2*time.Second).Should(ConsistOf(profilesv1.ProfileDescription{Name: "foo", Description: "bar", CatalogSource: "catalog"}))
+
+			By("adding more items to ProfileCatalogSource")
+			pName := fmt.Sprintf("new-profile-%s", uuid.New().String())
+			pSub.Spec.Profiles = append(pSub.Spec.Profiles, profilesv1.ProfileDescription{
+				Name:        pName,
+				Description: "I am new here",
+			})
+			Expect(k8sClient.Update(context.Background(), pSub)).To(Succeed())
 
 			Eventually(func() []profilesv1.ProfileDescription {
-				return catalogReconciler.Profiles.Search("foo")
-			}, 2*time.Second).Should(ConsistOf(profilesv1.ProfileDescription{Name: "foo", Description: "bar", CatalogSource: "catalog"}))
+				return catalogReconciler.Profiles.Search(pName)
+			}, 2*time.Second).Should(ConsistOf(profilesv1.ProfileDescription{
+				Name:          pName,
+				Description:   "I am new here",
+				CatalogSource: "catalog",
+			}))
+
+			By("deleting the ProfileCatalogSource")
+			Expect(k8sClient.Delete(ctx, pSub)).To(Succeed())
+			Eventually(query, 2*time.Second).Should(BeEmpty())
+			Expect(catalogReconciler.Profiles.Search(pName)).To(BeEmpty())
 		})
 	})
 })
