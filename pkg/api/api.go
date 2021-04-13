@@ -13,11 +13,11 @@ import (
 // API defines a catalog router.
 type API struct {
 	*mux.Router
-	profileCatalog *catalog.Catalog
+	profileCatalog catalog.Catalog
 }
 
 // New returns a new mux based api router.
-func New(profileCatalog *catalog.Catalog) API {
+func New(profileCatalog catalog.Catalog) API {
 	r := mux.NewRouter()
 	a := API{
 		Router:         r,

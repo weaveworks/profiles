@@ -17,12 +17,12 @@ import (
 var _ = Describe("Api", func() {
 	var (
 		catalogAPI     api.API
-		profileCatalog *catalog.Catalog
+		profileCatalog catalog.Catalog
 	)
 	Context("/profiles", func() {
 		BeforeEach(func() {
 			profileCatalog = catalog.New()
-			profileCatalog.Add("foo", profilesv1.ProfileDescription{Name: "nginx-1", Description: "nginx 1"})
+			profileCatalog.Update("foo", profilesv1.ProfileDescription{Name: "nginx-1", Description: "nginx 1"})
 			catalogAPI = api.New(profileCatalog)
 		})
 
@@ -57,7 +57,7 @@ var _ = Describe("Api", func() {
 		BeforeEach(func() {
 			catalogName, profileName = "catalog", "nginx-1"
 			profileCatalog = catalog.New()
-			profileCatalog.Add(catalogName, profilesv1.ProfileDescription{Name: profileName, Description: "nginx 1"})
+			profileCatalog.Update(catalogName, profilesv1.ProfileDescription{Name: profileName, Description: "nginx 1"})
 			catalogAPI = api.New(profileCatalog)
 		})
 
