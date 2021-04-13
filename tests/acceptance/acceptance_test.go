@@ -289,18 +289,61 @@ var _ = Describe("Acceptance", func() {
 			})
 		})
 
+		getProfile := func(profileName string) (profilesv1.ProfileDescription, error) {
+			resp, err := http.Get(fmt.Sprintf("http://localhost:8000/profiles/%s/%s", catalogName, profileName))
+			if err != nil {
+				return profilesv1.ProfileDescription{}, err
+			}
+			defer func() {
+				_ = resp.Body.Close()
+			}()
+			if resp.StatusCode != http.StatusOK {
+				return profilesv1.ProfileDescription{}, fmt.Errorf("expected status code 200; got %d", resp.StatusCode)
+			}
+			var p profilesv1.ProfileDescription
+			if err := json.NewDecoder(resp.Body).Decode(&p); err != nil {
+				return profilesv1.ProfileDescription{}, err
+			}
+			return p, nil
+		}
+
 		Context("get", func() {
 			It("returns details of the requested catalog entry", func() {
 				Eventually(func() profilesv1.ProfileDescription {
-					req, err := http.NewRequest("GET", fmt.Sprintf("http://localhost:8000/profiles/%s/%s", catalogName, profileName), nil)
+					description, err := getProfile(profileName)
 					Expect(err).NotTo(HaveOccurred())
-					resp, err := http.DefaultClient.Do(req)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(resp.StatusCode).To(Equal(http.StatusOK))
-					description := profilesv1.ProfileDescription{}
-					_ = json.NewDecoder(resp.Body).Decode(&description)
 					return description
 				}).Should(Equal(expectedNginx1))
+			})
+		})
+
+		Context("update", func() {
+			It("updates a ProfileCatalogSource with new profiles", func() {
+				pCatalog.Spec.Profiles = append(pCatalog.Spec.Profiles, profilesv1.ProfileDescription{
+					Name:        "new-profile",
+					Description: "I am new here",
+				})
+				Expect(kClient.Update(context.Background(), &pCatalog)).To(Succeed())
+				Eventually(func() profilesv1.ProfileDescription {
+					description, err := getProfile("new-profile")
+					Expect(err).NotTo(HaveOccurred())
+					return description
+				}).Should(Equal(profilesv1.ProfileDescription{
+					Name:        "new-profile",
+					Description: "I am new here",
+					Catalog:     catalogName,
+				}))
+			})
+		})
+
+		Context("delete", func() {
+			It("clears the in-memory cache when a ProfileCatalogSource is deleted", func() {
+				Expect(kClient.Delete(context.Background(), &pCatalog)).To(Succeed())
+				Eventually(func() profilesv1.ProfileDescription {
+					description, err := getProfile(profileName)
+					Expect(err).NotTo(HaveOccurred())
+					return description
+				}).Should(BeEmpty())
 			})
 		})
 	})
