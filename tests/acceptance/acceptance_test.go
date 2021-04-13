@@ -244,7 +244,7 @@ var _ = Describe("Acceptance", func() {
 					Expect(err).NotTo(HaveOccurred())
 					Expect(resp.StatusCode).To(Equal(http.StatusOK))
 					descriptions := []profilesv1.ProfileDescription{}
-					_ = json.NewDecoder(resp.Body).Decode(&descriptions)
+					Expect(json.NewDecoder(resp.Body).Decode(&descriptions)).To(Succeed())
 					return descriptions
 				}).Should(ConsistOf(
 					expectedNginx1,
@@ -257,19 +257,52 @@ var _ = Describe("Acceptance", func() {
 			})
 		})
 
-		Context("get", func() {
-			It("returns details of the requested catalog entry", func() {
+		makeProfileURL := func() string {
+			return fmt.Sprintf("http://localhost:8000/profiles/%s/%s", catalogName, profileName)
+		}
+
+		getProfileDescription := func() (profilesv1.ProfileDescription, error) {
+			resp, err := http.Get(makeProfileURL())
+			if err != nil {
+				return profilesv1.ProfileDescription{}, err
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusOK {
+				return profilesv1.ProfileDescription{}, fmt.Errorf("expected status code 200; got %d", resp.StatusCode)
+			}
+			var description profilesv1.ProfileDescription
+			if err := json.NewDecoder(resp.Body).Decode(&description); err != nil {
+				return profilesv1.ProfileDescription{}, err
+			}
+			return description, nil
+		}
+
+		Context("get and delete", func() {
+			It("returns details of the requested catalog entry and deletes it", func() {
+				By("fetching the catalog entry")
 				Eventually(func() profilesv1.ProfileDescription {
-					req, err := http.NewRequest("GET", fmt.Sprintf("http://localhost:8000/profiles/%s/%s", catalogName, profileName), nil)
+					description, err := getProfileDescription()
 					Expect(err).NotTo(HaveOccurred())
-					resp, err := http.DefaultClient.Do(req)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(resp.StatusCode).To(Equal(http.StatusOK))
-					description := profilesv1.ProfileDescription{}
-					_ = json.NewDecoder(resp.Body).Decode(&description)
 					return description
 				}).Should(Equal(expectedNginx1))
+
+				By("deleting the catalog")
+				client := http.Client{
+					Timeout: 5 * time.Second,
+				}
+				req, err := http.NewRequest(http.MethodDelete, makeProfileURL(), nil)
+				Expect(err).NotTo(HaveOccurred())
+				resp, err := client.Do(req)
+				Expect(err).NotTo(HaveOccurred())
+				defer resp.Body.Close()
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+				resp, err = client.Get(makeProfileURL())
+				Expect(err).NotTo(HaveOccurred())
+				defer resp.Body.Close()
+				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 			})
 		})
+
 	})
 })
