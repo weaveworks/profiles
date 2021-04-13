@@ -145,12 +145,12 @@ var _ = Describe("Profile", func() {
 
 			Expect(o).To(HaveLen(7))
 			Expect(o[0]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "GitRepository", APIVersion: "source.toolkit.fluxcd.io/v1beta1"}))
-			Expect(o[1]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "HelmRepository", APIVersion: "source.toolkit.fluxcd.io/v1beta1"}))
+			Expect(o[1]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "HelmRelease", APIVersion: "helm.toolkit.fluxcd.io/v2beta1"}))
 			Expect(o[2]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "HelmRelease", APIVersion: "helm.toolkit.fluxcd.io/v2beta1"}))
-			Expect(o[3]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "HelmRelease", APIVersion: "helm.toolkit.fluxcd.io/v2beta1"}))
-			Expect(o[4]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "HelmRelease", APIVersion: "helm.toolkit.fluxcd.io/v2beta1"}))
-			Expect(o[5]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "Kustomization", APIVersion: "kustomize.toolkit.fluxcd.io/v1beta1"}))
-			Expect(o[6]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "Kustomization", APIVersion: "kustomize.toolkit.fluxcd.io/v1beta1"}))
+			Expect(o[3]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "Kustomization", APIVersion: "kustomize.toolkit.fluxcd.io/v1beta1"}))
+			Expect(o[4]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "Kustomization", APIVersion: "kustomize.toolkit.fluxcd.io/v1beta1"}))
+			Expect(o[5]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "HelmRelease", APIVersion: "helm.toolkit.fluxcd.io/v2beta1"}))
+			Expect(o[6]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "HelmRepository", APIVersion: "source.toolkit.fluxcd.io/v1beta1"}))
 		})
 	})
 
@@ -178,19 +178,19 @@ var _ = Describe("Profile", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(res).To(HaveLen(7))
 				gitRes = res[0].(*sourcev1.GitRepository)
-				helmRep = res[1].(*sourcev1.HelmRepository)
-				helmRes1 = res[2].(*helmv2.HelmRelease)
-				helmRes2 = res[3].(*helmv2.HelmRelease)
-				helmRes3 = res[4].(*helmv2.HelmRelease)
-				kustomizeRes1 = res[5].(*kustomizev1.Kustomization)
-				kustomizeRes2 = res[6].(*kustomizev1.Kustomization)
+				helmRes1 = res[1].(*helmv2.HelmRelease)
+				helmRes2 = res[2].(*helmv2.HelmRelease)
+				kustomizeRes1 = res[3].(*kustomizev1.Kustomization)
+				kustomizeRes2 = res[4].(*kustomizev1.Kustomization)
+				helmRes3 = res[5].(*helmv2.HelmRelease)
+				helmRep = res[6].(*sourcev1.HelmRepository)
 				Expect(fakeClient.Create(ctx, gitRes)).To(Succeed())
 				Expect(fakeClient.Create(ctx, helmRes1)).To(Succeed())
 				Expect(fakeClient.Create(ctx, helmRes2)).To(Succeed())
 				Expect(fakeClient.Create(ctx, kustomizeRes1)).To(Succeed())
 				Expect(fakeClient.Create(ctx, kustomizeRes2)).To(Succeed())
-				Expect(fakeClient.Create(ctx, helmRep)).To(Succeed())
 				Expect(fakeClient.Create(ctx, helmRes3)).To(Succeed())
+				Expect(fakeClient.Create(ctx, helmRep)).To(Succeed())
 				condition = metav1.Condition{
 					Type:               "Ready",
 					Status:             "True",
@@ -451,7 +451,7 @@ var _ = Describe("Profile", func() {
 				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
 				err := p.CreateArtifacts(ctx)
-				Expect(err).To(MatchError(ContainSubstring("failed to create GitRepository resource")))
+				Expect(err).To(MatchError(ContainSubstring("failed to create GitRepository: no kind is registered for the type v1beta1.GitRepository in scheme")))
 			})
 		})
 
@@ -462,7 +462,7 @@ var _ = Describe("Profile", func() {
 				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
 				err := p.CreateArtifacts(ctx)
-				Expect(err).To(MatchError(ContainSubstring("failed to create HelmRelease resource")))
+				Expect(err).To(MatchError(ContainSubstring("failed to create HelmRelease: no kind is registered for the type v2beta1.HelmRelease in scheme")))
 			})
 		})
 
@@ -473,7 +473,7 @@ var _ = Describe("Profile", func() {
 				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
 				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
 				err := p.CreateArtifacts(ctx)
-				Expect(err).To(MatchError(ContainSubstring("failed to create Kustomization resource")))
+				Expect(err).To(MatchError(ContainSubstring("failed to create Kustomization: no kind is registered for the type v1beta1.Kustomization in scheme")))
 			})
 		})
 
@@ -488,6 +488,43 @@ var _ = Describe("Profile", func() {
 				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
 				err := p.CreateArtifacts(ctx)
 				Expect(err).To(MatchError(ContainSubstring("artifact kind \"SomeUnknownKind\" not recognized")))
+			})
+		})
+
+		When("helmRepository has an invalid artifact", func() {
+			It("errors", func() {
+				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
+				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
+				Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
+				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
+
+				pDef = profilesv1.ProfileDefinition{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: profileName,
+					},
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Profile",
+						APIVersion: "profiles.fluxcd.io/profilesv1",
+					},
+					Spec: profilesv1.ProfileDefinitionSpec{
+						Description: "foo",
+						Artifacts: []profilesv1.Artifact{
+							{
+								Name: helmChartName1,
+								Chart: &profilesv1.Chart{
+									HelmURL:          helmChartURL1,
+									HelmChart:        helmChartChart1,
+									HelmChartVersion: helmChartVersion1,
+								},
+								Path: "https://not.empty",
+								Kind: profilesv1.HelmChartKind,
+							},
+						},
+					},
+				}
+				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
+				err := p.CreateArtifacts(ctx)
+				Expect(err).To(MatchError(ContainSubstring("validation failed for artifact helmChartArtifactName1: expected exactly one, got both: chart, path")))
 			})
 		})
 	})

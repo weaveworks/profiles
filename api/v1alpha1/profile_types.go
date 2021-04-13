@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"knative.dev/pkg/apis"
 )
 
 // HelmChartKind defines properties about the underlying helm chart for an artifact.
@@ -52,6 +53,14 @@ type Artifact struct {
 	// This is an optional value. It is ignored in case Path is defined.
 	// +optional
 	Chart *Chart `json:"chart,omitempty"`
+}
+
+// Validate will validate Artifacts properties.
+func (in Artifact) Validate() error {
+	if in.Chart != nil && in.Path != "" {
+		return apis.ErrMultipleOneOf("chart", "path")
+	}
+	return nil
 }
 
 // Chart defines properties to access remote helm charts.
