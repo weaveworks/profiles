@@ -140,9 +140,13 @@ func (p *Profile) MakeArtifacts() ([]runtime.Object, error) {
 	return objs, nil
 }
 
-func (p *Profile) makeArtifacts() ([]runtime.Object, error) {
-	objs := make([]runtime.Object, 0)
-	var gitRes *sourcev1.GitRepository
+// MakeOwnerlessArtifacts generates artifacts without owners for manual applying to
+// a personal cluster.
+func (p *Profile) MakeOwnerlessArtifacts() ([]runtime.Object, error) {
+	var (
+		objs   []runtime.Object
+		gitRes *sourcev1.GitRepository
+	)
 
 	for _, artifact := range p.definition.Spec.Artifacts {
 		if err := artifact.Validate(); err != nil {
@@ -161,8 +165,9 @@ func (p *Profile) makeArtifacts() ([]runtime.Object, error) {
 				if err != nil {
 					return nil, fmt.Errorf("failed to create GitRepository resource: %w", err)
 				}
-			} else if artifact.Chart != nil {
-				helmRep, err := p.makeHelmRepository(artifact.Chart.HelmURL, artifact.Chart.HelmChart)
+			}
+			if artifact.Chart != nil {
+				helmRep, err := p.makeHelmRepository(artifact.Chart.URL, artifact.Chart.Name)
 				if err != nil {
 					return nil, fmt.Errorf("failed to create HelmRepository resource: %w", err)
 				}
@@ -191,6 +196,25 @@ func (p *Profile) makeArtifacts() ([]runtime.Object, error) {
 	if gitRes != nil {
 		objs = append([]runtime.Object{gitRes}, objs...)
 	}
+	return objs, nil
+}
+
+func (p *Profile) makeArtifacts() ([]runtime.Object, error) {
+	objs, err := p.MakeOwnerlessArtifacts()
+	if err != nil {
+		return nil, err
+	}
+
+	// setup ownership
+	for _, o := range objs {
+		obj, ok := o.(client.Object)
+		if !ok {
+			return nil, fmt.Errorf("object is not a client.Object %v", o)
+		}
+		if err := controllerutil.SetControllerReference(&p.subscription, obj, p.client.Scheme()); err != nil {
+			return nil, fmt.Errorf("failed to set resource ownership on %s: %w", obj.GetName(), err)
+		}
+	}
 
 	return objs, nil
 }
@@ -212,10 +236,6 @@ func (p *Profile) makeGitRepository() (*sourcev1.GitRepository, error) {
 			},
 		},
 	}
-	err := controllerutil.SetControllerReference(&p.subscription, gitRepo, p.client.Scheme())
-	if err != nil {
-		return nil, fmt.Errorf("failed to set resource ownership on %s: %w", gitRepo.ObjectMeta.Name, err)
-	}
 	return gitRepo, nil
 }
 
@@ -233,10 +253,6 @@ func (p *Profile) makeHelmRepository(url string, name string) (*sourcev1.HelmRep
 			URL: url,
 		},
 	}
-	err := controllerutil.SetControllerReference(&p.subscription, helmRepo, p.client.Scheme())
-	if err != nil {
-		return nil, fmt.Errorf("failed to set resource ownership on %s: %w", helmRepo.ObjectMeta.Name, err)
-	}
 	return helmRepo, nil
 }
 
@@ -251,7 +267,7 @@ func (p *Profile) makeHelmRelease(artifact profilesv1.Artifact) (*helmv2.HelmRel
 	if artifact.Path != "" {
 		helmChartSpec = p.makeGitChartSpec(artifact.Path)
 	} else if artifact.Chart != nil {
-		helmChartSpec = p.makeHelmChartSpec(artifact.Chart.HelmChart, artifact.Chart.HelmChartVersion)
+		helmChartSpec = p.makeHelmChartSpec(artifact.Chart.Name, artifact.Chart.Version)
 	}
 	helmRelease := &helmv2.HelmRelease{
 		ObjectMeta: metav1.ObjectMeta{
@@ -269,10 +285,6 @@ func (p *Profile) makeHelmRelease(artifact profilesv1.Artifact) (*helmv2.HelmRel
 			Values:     p.subscription.Spec.Values,
 			ValuesFrom: p.subscription.Spec.ValuesFrom,
 		},
-	}
-	err := controllerutil.SetControllerReference(&p.subscription, helmRelease, p.client.Scheme())
-	if err != nil {
-		return nil, fmt.Errorf("failed to set resource ownership: %w", err)
 	}
 	return helmRelease, nil
 }
@@ -321,10 +333,6 @@ func (p *Profile) makeKustomization(artifact profilesv1.Artifact) (*kustomizev1.
 				Namespace: p.subscription.ObjectMeta.Namespace,
 			},
 		},
-	}
-	err := controllerutil.SetControllerReference(&p.subscription, kustomization, p.client.Scheme())
-	if err != nil {
-		return nil, fmt.Errorf("failed to set resource ownership: %w", err)
 	}
 	return kustomization, nil
 }

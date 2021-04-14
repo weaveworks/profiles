@@ -65,12 +65,12 @@ func (in Artifact) Validate() error {
 
 // Chart defines properties to access remote helm charts.
 type Chart struct {
-	// HelmURL is the URL of the Helm repository containing a Helm chart and possible values
-	HelmURL string `json:"helm_url,omitempty"`
-	// HelmChart defines the name of the chart at the remote repository
-	HelmChart string `json:"helm_chart,omitempty"`
-	// HelmChartVersion defines the version of the chart at the remote repository
-	HelmChartVersion string `json:"helm_chart_version,omitempty"`
+	// URL is the URL of the Helm repository containing a Helm chart and possible values
+	URL string `json:"url,omitempty"`
+	// Name defines the name of the chart at the remote repository
+	Name string `json:"name,omitempty"`
+	// Version defines the version of the chart at the remote repository
+	Version string `json:"version,omitempty"`
 }
 
 // ProfileDefinitionStatus defines the observed state of ProfileDefinition

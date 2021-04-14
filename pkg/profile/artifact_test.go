@@ -120,9 +120,9 @@ var _ = Describe("Profile", func() {
 					{
 						Name: helmChartName1,
 						Chart: &profilesv1.Chart{
-							HelmURL:          helmChartURL1,
-							HelmChart:        helmChartChart1,
-							HelmChartVersion: helmChartVersion1,
+							URL:     helmChartURL1,
+							Name:    helmChartChart1,
+							Version: helmChartVersion1,
 						},
 						Kind: profilesv1.HelmChartKind,
 					},
@@ -151,6 +151,36 @@ var _ = Describe("Profile", func() {
 			Expect(o[4]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "Kustomization", APIVersion: "kustomize.toolkit.fluxcd.io/v1beta1"}))
 			Expect(o[5]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "HelmRelease", APIVersion: "helm.toolkit.fluxcd.io/v2beta1"}))
 			Expect(o[6]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "HelmRepository", APIVersion: "source.toolkit.fluxcd.io/v1beta1"}))
+		})
+	})
+
+	Describe("MakeOwnerlessArtifacts", func() {
+		It("creates a slice of runtime.Object without ownership set up", func() {
+			Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
+			Expect(helmv2.AddToScheme(scheme)).To(Succeed())
+			Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
+			Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
+
+			p = profile.New(pDef, pSub, fakeClient, logr.Discard())
+			o, err := p.MakeArtifacts()
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(o).To(HaveLen(7))
+			Expect(o[0]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "GitRepository", APIVersion: "source.toolkit.fluxcd.io/v1beta1"}))
+			Expect(o[1]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "HelmRelease", APIVersion: "helm.toolkit.fluxcd.io/v2beta1"}))
+			Expect(o[2]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "HelmRelease", APIVersion: "helm.toolkit.fluxcd.io/v2beta1"}))
+			Expect(o[3]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "Kustomization", APIVersion: "kustomize.toolkit.fluxcd.io/v1beta1"}))
+			Expect(o[4]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "Kustomization", APIVersion: "kustomize.toolkit.fluxcd.io/v1beta1"}))
+			Expect(o[5]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "HelmRelease", APIVersion: "helm.toolkit.fluxcd.io/v2beta1"}))
+			Expect(o[6]).To(HaveTypeMeta(metav1.TypeMeta{Kind: "HelmRepository", APIVersion: "source.toolkit.fluxcd.io/v1beta1"}))
+
+			Expect(o[0].(*sourcev1.GitRepository).OwnerReferences).To(HaveLen(1))
+			Expect(o[1].(*helmv2.HelmRelease).OwnerReferences).To(HaveLen(1))
+			Expect(o[2].(*helmv2.HelmRelease).OwnerReferences).To(HaveLen(1))
+			Expect(o[3].(*kustomizev1.Kustomization).OwnerReferences).To(HaveLen(1))
+			Expect(o[4].(*kustomizev1.Kustomization).OwnerReferences).To(HaveLen(1))
+			Expect(o[5].(*helmv2.HelmRelease).OwnerReferences).To(HaveLen(1))
+			Expect(o[6].(*sourcev1.HelmRepository).OwnerReferences).To(HaveLen(1))
 		})
 	})
 
@@ -433,6 +463,87 @@ var _ = Describe("Profile", func() {
 			})
 		})
 
+		When("the profile consists of a HelmChart and HelmRepository artifact", func() {
+			It("creates the helmrelease and helmrepo resources with the correct owner", func() {
+				pDef = profilesv1.ProfileDefinition{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: profileName,
+					},
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Profile",
+						APIVersion: "profiles.fluxcd.io/profilesv1",
+					},
+					Spec: profilesv1.ProfileDefinitionSpec{
+						Description: "foo",
+						Artifacts: []profilesv1.Artifact{
+							{
+								Name: helmChartName1,
+								Chart: &profilesv1.Chart{
+									URL:     helmChartURL1,
+									Name:    helmChartChart1,
+									Version: helmChartVersion1,
+								},
+								Kind: profilesv1.HelmChartKind,
+							},
+						},
+					},
+				}
+
+				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
+				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
+				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
+
+				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
+				err := p.CreateArtifacts(ctx)
+				Expect(err).NotTo(HaveOccurred())
+
+				helmRefName := fmt.Sprintf("%s-%s-%s-%s", subscriptionName, "repo-name", branch, helmChartChart1)
+				helmRepo := sourcev1.HelmRepository{}
+				err = fakeClient.Get(ctx, client.ObjectKey{Name: helmRefName, Namespace: namespace}, &helmRepo)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(helmRepo.Spec.URL).To(Equal(helmChartURL1))
+				Expect(helmRepo.OwnerReferences).To(HaveLen(1))
+				Expect(helmRepo.OwnerReferences[0].Name).To(Equal(subscriptionName))
+				Expect(helmRepo.OwnerReferences[0].Kind).To(Equal(profileSubKind))
+				Expect(helmRepo.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
+				Expect(*helmRepo.OwnerReferences[0].Controller).To(BeTrue())
+
+				helmReleaseName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, helmChartName1)
+				helmRelease := helmv2.HelmRelease{}
+				err = fakeClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(helmRelease.Spec.Chart.Spec.Chart).To(Equal(helmChartChart1))
+				Expect(helmRelease.Spec.Chart.Spec.Version).To(Equal(helmChartVersion1))
+				Expect(helmRelease.Spec.Chart.Spec.SourceRef).To(Equal(
+					helmv2.CrossNamespaceObjectReference{
+						Kind:      "HelmRepository",
+						Name:      helmRefName,
+						Namespace: namespace,
+					},
+				))
+				Expect(helmRelease.GetValues()).To(Equal(map[string]interface{}{
+					"replicaCount": float64(3),
+					"service": map[string]interface{}{
+						"port": float64(8081),
+					},
+				}))
+				Expect(helmRelease.Spec.ValuesFrom).To(Equal([]helmv2.ValuesReference{
+					{
+						Name:     "nginx-values",
+						Kind:     "Secret",
+						Optional: true,
+					},
+				}))
+				Expect(helmRelease.OwnerReferences).To(HaveLen(1))
+				Expect(helmRelease.OwnerReferences[0].Name).To(Equal(subscriptionName))
+				Expect(helmRelease.OwnerReferences[0].Kind).To(Equal(profileSubKind))
+				Expect(helmRelease.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
+				Expect(*helmRelease.OwnerReferences[0].Controller).To(BeTrue())
+
+				Expect(*helmRelease.OwnerReferences[0].Controller).To(BeTrue())
+			})
+		})
+
 		When("setting the resource owner fails", func() {
 			It("errors", func() {
 				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
@@ -512,9 +623,9 @@ var _ = Describe("Profile", func() {
 							{
 								Name: helmChartName1,
 								Chart: &profilesv1.Chart{
-									HelmURL:          helmChartURL1,
-									HelmChart:        helmChartChart1,
-									HelmChartVersion: helmChartVersion1,
+									URL:     helmChartURL1,
+									Name:    helmChartChart1,
+									Version: helmChartVersion1,
 								},
 								Path: "https://not.empty",
 								Kind: profilesv1.HelmChartKind,

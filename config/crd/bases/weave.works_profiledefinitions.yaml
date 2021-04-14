@@ -46,17 +46,17 @@ spec:
                       description: Chart defines properties to access a remote chart.
                         This is an optional value. It is ignored in case Path is defined.
                       properties:
-                        helm_chart:
-                          description: HelmChart defines the name of the chart at
-                            the remote repository
+                        name:
+                          description: Name defines the name of the chart at the remote
+                            repository
                           type: string
-                        helm_chart_version:
-                          description: HelmChartVersion defines the version of the
-                            chart at the remote repository
-                          type: string
-                        helm_url:
-                          description: HelmURL is the URL of the Helm repository containing
+                        url:
+                          description: URL is the URL of the Helm repository containing
                             a Helm chart and possible values
+                          type: string
+                        version:
+                          description: Version defines the version of the chart at
+                            the remote repository
                           type: string
                       type: object
                     kind:
