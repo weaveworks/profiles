@@ -34,5 +34,9 @@ var _ = Describe("Catalog", func() {
 		Expect(c.Get(catName, "foo")).To(Equal(
 			profilesv1.ProfileDescription{Name: "foo", CatalogSource: catName},
 		))
+
+		By("removing a catalog source")
+		c.Remove(catName)
+		Expect(c.Search("foo")).To(BeEmpty())
 	})
 })
