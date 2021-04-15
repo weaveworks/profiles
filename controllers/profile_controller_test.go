@@ -20,6 +20,7 @@ import (
 
 var _ = Describe("ProfileController", func() {
 	const nginxProfileURL = "https://github.com/weaveworks/nginx-profile"
+	const helmChartURL = "https://charts.bitnami.com/bitnami"
 
 	var (
 		namespace string
@@ -36,7 +37,7 @@ var _ = Describe("ProfileController", func() {
 		Expect(k8sClient.Create(context.Background(), &nsp)).To(Succeed())
 	})
 
-	Context("Create", func() {
+	Context("Create with multiple artifacts", func() {
 		DescribeTable("Applying a Profile creates the correct resources", func(pSubSpec profilesv1.ProfileSubscriptionSpec) {
 			subscriptionName := "foo"
 			branch := "main"
@@ -80,11 +81,38 @@ var _ = Describe("ProfileController", func() {
 					Namespace: namespace,
 				},
 			))
+
+			By("creating a HelmRepository resource")
+			helmRepoName := fmt.Sprintf("%s-%s-%s-%s", subscriptionName, profileRepoName, branch, "dokuwiki")
+			helmRepo := sourcev1.HelmRepository{}
+			Eventually(func() error {
+				return k8sClient.Get(ctx, client.ObjectKey{Name: helmRepoName, Namespace: namespace}, &helmRepo)
+			}, 10*time.Second).ShouldNot(HaveOccurred())
+			Expect(helmRepo.Spec.URL).To(Equal(helmChartURL))
+
+			By("and creating a HelmRelease resource for the HelmRepository")
+			secondProfileChartName := "dokuwiki"
+			secondHelmReleaseName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, secondProfileChartName)
+			secondHelmRelease := helmv2.HelmRelease{}
+			Eventually(func() error {
+				return k8sClient.Get(ctx, client.ObjectKey{Name: secondHelmReleaseName, Namespace: namespace}, &secondHelmRelease)
+			}, 10*time.Second).ShouldNot(HaveOccurred())
+			Expect(secondHelmRelease.Spec.Chart.Spec.Chart).To(Equal("dokuwiki"))
+			Expect(secondHelmRelease.Spec.Chart.Spec.SourceRef).To(Equal(
+				helmv2.CrossNamespaceObjectReference{
+					Kind:      "HelmRepository",
+					Name:      helmRepoName,
+					Namespace: namespace,
+				},
+			))
+
 			if pSub.Spec.Values != nil {
 				Expect(helmRelease.Spec.Values).To(Equal(pSub.Spec.Values))
+				Expect(secondHelmRelease.Spec.Values).To(Equal(pSub.Spec.Values))
 			}
 			if pSub.Spec.ValuesFrom != nil {
 				Expect(helmRelease.Spec.ValuesFrom).To(Equal(pSub.Spec.ValuesFrom))
+				Expect(secondHelmRelease.Spec.ValuesFrom).To(Equal(pSub.Spec.ValuesFrom))
 			}
 
 			conditions := []metav1.Condition{
@@ -100,14 +128,18 @@ var _ = Describe("ProfileController", func() {
 			gitResNew.Status.Conditions = conditions
 			Expect(k8sClient.Status().Patch(ctx, gitResNew, client.MergeFrom(&gitRepo))).To(Succeed())
 
+			helmRepNew := helmRepo.DeepCopyObject().(*sourcev1.HelmRepository)
+			helmRepNew.Status.Conditions = conditions
+			Expect(k8sClient.Status().Patch(ctx, helmRepNew, client.MergeFrom(&helmRepo))).To(Succeed())
+
 			By("updating the status to Ready Unknown if the artifact resource reports it")
 			profile := profilesv1.ProfileSubscription{}
 			Eventually(func() bool {
 				Expect(k8sClient.Get(ctx, client.ObjectKey{Name: subscriptionName, Namespace: namespace}, &profile)).To(Succeed())
 				return len(profile.Status.Conditions) > 0 &&
 					profile.Status.Conditions[0].Type == "Ready" &&
-					profile.Status.Conditions[0].Status == metav1.ConditionStatus("Unknown") &&
-					profile.Status.Conditions[0].Message == "somethings wrong"
+					profile.Status.Conditions[0].Status == "Unknown" &&
+					profile.Status.Conditions[0].Message == "somethings wrong,somethings wrong"
 			}, 10*time.Second).Should(BeTrue())
 
 			conditions = []metav1.Condition{
@@ -122,6 +154,10 @@ var _ = Describe("ProfileController", func() {
 			gitResNew.Status.Conditions = conditions
 			Expect(k8sClient.Status().Patch(ctx, gitResNew, client.MergeFrom(&gitRepo))).To(Succeed())
 
+			helmRepNew = helmRepo.DeepCopyObject().(*sourcev1.HelmRepository)
+			helmRepNew.Status.Conditions = conditions
+			Expect(k8sClient.Status().Patch(ctx, helmRepNew, client.MergeFrom(&helmRepo))).To(Succeed())
+
 			helmResNew := helmRelease.DeepCopyObject().(*helmv2.HelmRelease)
 			helmResNew.Status.Conditions = conditions
 			Expect(k8sClient.Status().Patch(ctx, helmResNew, client.MergeFrom(&helmRelease))).To(Succeed())
@@ -132,8 +168,8 @@ var _ = Describe("ProfileController", func() {
 				Expect(k8sClient.Get(ctx, client.ObjectKey{Name: subscriptionName, Namespace: namespace}, &profile)).To(Succeed())
 				return len(profile.Status.Conditions) > 0 &&
 					profile.Status.Conditions[0].Type == "Ready" &&
-					profile.Status.Conditions[0].Status == metav1.ConditionStatus("True") &&
-					profile.Status.Conditions[0].Message == "all artifact resouces ready"
+					profile.Status.Conditions[0].Status == "True" &&
+					profile.Status.Conditions[0].Message == "all artifact resources ready"
 			}, 10*time.Second).Should(BeTrue())
 		},
 			Entry("a single Helm chart with no supplied values", profilesv1.ProfileSubscriptionSpec{

@@ -57,6 +57,8 @@ type ProfileSubscriptionReconciler struct {
 // +kubebuilder:rbac:groups=weave.works,resources=profilesubscriptions/finalizers,verbs=update
 // +kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=gitrepositories,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=gitrepositories/status,verbs=get
+// +kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=helmrepositories,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=helmrepositories/status,verbs=get
 // +kubebuilder:rbac:groups=helm.toolkit.fluxcd.io,resources=helmreleases,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=helm.toolkit.fluxcd.io,resources=helmreleases/status,verbs=get
 // +kubebuilder:rbac:groups=kustomize.toolkit.fluxcd.io,resources=kustomizations,verbs=get;list;watch;create;update;patch;delete
@@ -67,7 +69,7 @@ func (r *ProfileSubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&profilesv1.ProfileSubscription{}, builder.WithPredicates(
 			predicate.GenerationChangedPredicate{},
-		)). // Owns ensures that changes to resouces owned by the pSub cause the pSub to get requeued
+		)). // Owns ensures that changes to resources owned by the pSub cause the pSub to get requeued
 		Owns(&sourcev1.GitRepository{}).
 		Owns(&helmv2.HelmRelease{}).
 		Owns(&kustomizev1.Kustomization{}).
@@ -121,7 +123,7 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	if len(artifactStatus.NotReadyConditions) == 0 {
-		return ctrl.Result{}, r.patchStatus(ctx, &pSub, logger, readyTrue, "ArtifactsReady", "all artifact resouces ready")
+		return ctrl.Result{}, r.patchStatus(ctx, &pSub, logger, readyTrue, "ArtifactsReady", "all artifact resources ready")
 	}
 
 	var messages []string

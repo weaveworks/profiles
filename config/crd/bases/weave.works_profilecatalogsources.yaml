@@ -40,6 +40,7 @@ spec:
               profiles:
                 description: Profiles is the list of profiles exposed by the catalog
                 items:
+                  description: ProfileDescription defines details about a given profile.
                   properties:
                     catalog:
                       description: Catalog is the name of the catalog the profile

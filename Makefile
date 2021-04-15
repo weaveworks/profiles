@@ -71,6 +71,8 @@ test_deps:
 	mkdir -p ${TEST_CRDS}
 	curl -s --fail https://raw.githubusercontent.com/fluxcd/source-controller/${SOURCE_VER}/config/crd/bases/source.toolkit.fluxcd.io_gitrepositories.yaml \
 		-o ${TEST_CRDS}/gitrepositories.yaml
+	curl -s --fail https://raw.githubusercontent.com/fluxcd/source-controller/${SOURCE_VER}/config/crd/bases/source.toolkit.fluxcd.io_helmrepositories.yaml \
+		-o ${TEST_CRDS}/helmrepositories.yaml
 	curl -s --fail https://raw.githubusercontent.com/fluxcd/helm-controller/${HELM_VER}/config/crd/bases/helm.toolkit.fluxcd.io_helmreleases.yaml \
 		-o ${TEST_CRDS}/helmreleases.yaml
 	curl -s --fail https://raw.githubusercontent.com/fluxcd/kustomize-controller/${KUSTOMIZE_VER}/config/crd/bases/kustomize.toolkit.fluxcd.io_kustomizations.yaml \
@@ -100,8 +102,8 @@ deploy: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=localhost:5000/${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 	echo "waiting for controller to be ready"
-	kubectl -n profiles-system wait --for=condition=available deployment profiles-controller-manager
-	kubectl -n profiles-system wait --for=condition=Ready --all pods
+	kubectl -n profiles-system wait --for=condition=available deployment profiles-controller-manager --timeout 5m
+	kubectl -n profiles-system wait --for=condition=Ready --all pods --timeout 5m
 
 # UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
 undeploy:

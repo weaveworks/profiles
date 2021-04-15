@@ -18,7 +18,14 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"knative.dev/pkg/apis"
 )
+
+// HelmChartKind defines properties about the underlying helm chart for an artifact.
+const HelmChartKind = "HelmChart"
+
+// KustomizeKind defines a kind containing kustomize yaml files for an artifact.
+const KustomizeKind = "Kustomize"
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 // NOTE: Run "make" to regenerate code after modifying this file
@@ -28,17 +35,42 @@ type ProfileDefinitionSpec struct {
 	// Description is some text to allow a user to identify what this profile installs.
 	Description string `json:"description,omitempty"`
 	// Artifacts is a list of Profile artifacts
-	// can be one of HelmChart, TODO
 	Artifacts []Artifact `json:"artifacts,omitempty"`
 }
 
+// Artifact defines a bundled resource of the components for this profile.
 type Artifact struct {
 	// Name is the name of the Artifact
 	Name string `json:"name,omitempty"`
-	// Path is the local path to the Artifact in the Profile repo
+	// Path is the local path to the Artifact in the Profile repo.
+	// This is an optional value. If defined, it takes precedence over Chart.
+	// +optional
 	Path string `json:"path,omitempty"`
 	// Kind is the kind of artifact: HelmChart or Kustomize
+	// +kubebuilder:validation:Enum=HelmChart;Kustomize
 	Kind string `json:"kind,omitempty"`
+	// Chart defines properties to access a remote chart.
+	// This is an optional value. It is ignored in case Path is defined.
+	// +optional
+	Chart *Chart `json:"chart,omitempty"`
+}
+
+// Validate will validate Artifacts properties.
+func (in Artifact) Validate() error {
+	if in.Chart != nil && in.Path != "" {
+		return apis.ErrMultipleOneOf("chart", "path")
+	}
+	return nil
+}
+
+// Chart defines properties to access remote helm charts.
+type Chart struct {
+	// URL is the URL of the Helm repository containing a Helm chart and possible values
+	URL string `json:"url,omitempty"`
+	// Name defines the name of the chart at the remote repository
+	Name string `json:"name,omitempty"`
+	// Version defines the version of the chart at the remote repository
+	Version string `json:"version,omitempty"`
 }
 
 // ProfileDefinitionStatus defines the observed state of ProfileDefinition

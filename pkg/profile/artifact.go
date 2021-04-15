@@ -6,15 +6,15 @@ import (
 	"strings"
 	"time"
 
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 )
 
@@ -27,94 +27,87 @@ type Status struct {
 // CreateArtifacts generate and creates the objects in the cluster to deploy the
 // profile
 func (p *Profile) CreateArtifacts(ctx context.Context) error {
-	gitRes, helmResources, kustomizeResources, err := p.makeArtifacts()
+	objs, err := p.MakeArtifacts()
 	if err != nil {
 		return err
 	}
 
-	p.log.Info("creating GitRepository", "resource", gitRes.ObjectMeta.Name)
-	if err := p.client.Create(ctx, gitRes); err != nil {
-		return fmt.Errorf("failed to create GitRepository resource: %w", err)
-	}
-
-	for _, helmRes := range helmResources {
-		p.log.Info("creating HelmRelease", "resource", helmRes.ObjectMeta.Name)
-		if err := p.client.Create(ctx, helmRes); err != nil {
-			return fmt.Errorf("failed to create HelmRelease resource: %w", err)
+	for _, o := range objs {
+		obj, ok := o.(client.Object)
+		if !ok {
+			return fmt.Errorf("object %v cannot be asserted to client.Object", o)
+		}
+		p.log.Info("creating...", "kind", obj.GetObjectKind().GroupVersionKind().Kind, "resource", obj.GetName())
+		if err := p.client.Create(ctx, obj); err != nil {
+			return fmt.Errorf("failed to create %s: %w", obj.GetObjectKind().GroupVersionKind().Kind, err)
 		}
 	}
 
-	for _, kustomizeRes := range kustomizeResources {
-		p.log.Info("creating Kustomization", "resource", kustomizeRes.ObjectMeta.Name)
-		if err := p.client.Create(ctx, kustomizeRes); err != nil {
-			return fmt.Errorf("failed to create Kustomization resource: %w", err)
-		}
-	}
 	p.log.Info("all artifacts created")
 	return nil
 }
 
 // ArtifactStatus checks if the artifacts exists and returns any ready!=true conditions on the artifacts.
 func (p *Profile) ArtifactStatus(ctx context.Context) (Status, error) {
-	resourcesExist, gitRes, helmResources, kustomizeResources, err := p.getResources(ctx)
+	resourcesExist, objs, err := p.getResources(ctx)
 	if err != nil {
 		return Status{}, err
 	}
 
+	conditions, err := p.checkResourcesReady(objs)
+	if err != nil {
+		return Status{}, err
+	}
 	return Status{
 		ResourcesExist:     resourcesExist,
-		NotReadyConditions: p.checkResourcesReady(gitRes, helmResources, kustomizeResources),
+		NotReadyConditions: conditions,
 	}, nil
 }
 
-func (p *Profile) checkResourcesReady(gitRes *sourcev1.GitRepository, helmResources []*helmv2.HelmRelease, kustomizeResources []*kustomizev1.Kustomization) []metav1.Condition {
+func (p *Profile) checkResourcesReady(objs []runtime.Object) ([]metav1.Condition, error) {
 	var notReadyConditions []metav1.Condition
-	if gitRes != nil {
-		if condition := getNotReadyCondition(gitRes.Status.Conditions); condition != (metav1.Condition{}) {
-			notReadyConditions = append(notReadyConditions, condition)
+	for _, o := range objs {
+		switch t := o.(type) {
+		// annoying, but can't combine these.
+		case *sourcev1.GitRepository:
+			if condition := getNotReadyCondition(t.Status.Conditions); condition != (metav1.Condition{}) {
+				notReadyConditions = append(notReadyConditions, condition)
+			}
+		case *sourcev1.HelmRepository:
+			if condition := getNotReadyCondition(t.Status.Conditions); condition != (metav1.Condition{}) {
+				notReadyConditions = append(notReadyConditions, condition)
+			}
+		case *helmv2.HelmRelease:
+			if condition := getNotReadyCondition(t.Status.Conditions); condition != (metav1.Condition{}) {
+				notReadyConditions = append(notReadyConditions, condition)
+			}
+		case *kustomizev1.Kustomization:
+			if condition := getNotReadyCondition(t.Status.Conditions); condition != (metav1.Condition{}) {
+				notReadyConditions = append(notReadyConditions, condition)
+			}
+		default:
+			return nil, fmt.Errorf("unsupported resource type %v", t)
 		}
-	}
 
-	for _, helmRes := range helmResources {
-		if condition := getNotReadyCondition(helmRes.Status.Conditions); condition != (metav1.Condition{}) {
-			notReadyConditions = append(notReadyConditions, condition)
-		}
 	}
-
-	for _, kustomizeRes := range kustomizeResources {
-		if condition := getNotReadyCondition(kustomizeRes.Status.Conditions); condition != (metav1.Condition{}) {
-			notReadyConditions = append(notReadyConditions, condition)
-		}
-	}
-	return notReadyConditions
+	return notReadyConditions, nil
 }
 
-func (p *Profile) getResources(ctx context.Context) (bool, *sourcev1.GitRepository, []*helmv2.HelmRelease, []*kustomizev1.Kustomization, error) {
-	gitRes, helmResources, kustomizeResources, err := p.makeArtifacts()
+func (p *Profile) getResources(ctx context.Context) (bool, []runtime.Object, error) {
+	objs, err := p.MakeArtifacts()
 	if err != nil {
-		return false, nil, nil, nil, err
+		return false, nil, err
 	}
-	if gitRes != nil {
-		gitResExists, err := p.getResourceIfExists(ctx, gitRes)
-		if err != nil || !gitResExists {
-			return false, nil, nil, nil, err
+	for _, o := range objs {
+		obj, ok := o.(client.Object)
+		if !ok {
+			return false, nil, fmt.Errorf("object is not a client.Object %v", o)
+		}
+		if exists, err := p.getResourceIfExists(ctx, obj); !exists || err != nil {
+			return false, nil, err
 		}
 	}
-
-	for _, helmRes := range helmResources {
-		helmResExists, err := p.getResourceIfExists(ctx, helmRes)
-		if err != nil || !helmResExists {
-			return false, nil, nil, nil, err
-		}
-	}
-
-	for _, kustomizeRes := range kustomizeResources {
-		kustomizeResExists, err := p.getResourceIfExists(ctx, kustomizeRes)
-		if err != nil || !kustomizeResExists {
-			return false, nil, nil, nil, err
-		}
-	}
-	return true, gitRes, helmResources, kustomizeResources, nil
+	return true, objs, nil
 }
 
 func getNotReadyCondition(conditions []metav1.Condition) metav1.Condition {
@@ -137,55 +130,85 @@ func (p *Profile) getResourceIfExists(ctx context.Context, res client.Object) (b
 	return true, nil
 }
 
-// MakeArtifacts creates and returns a slice of runtime.Object values, which if
-// applied to a cluster would deploy the profile as a HelmRelease.
-func (p *Profile) MakeArtifacts() ([]runtime.Object, error) {
-	objs := []runtime.Object{}
-	gitRes, helmResources, kustomizeResources, err := p.makeArtifacts()
-	if err != nil {
-		return nil, err
+// MakeOwnerlessArtifacts generates artifacts without owners for manual applying to
+// a personal cluster.
+func (p *Profile) MakeOwnerlessArtifacts() ([]runtime.Object, error) {
+	var (
+		objs   []runtime.Object
+		gitRes *sourcev1.GitRepository
+	)
+
+	for _, artifact := range p.definition.Spec.Artifacts {
+		if err := artifact.Validate(); err != nil {
+			return nil, fmt.Errorf("validation failed for artifact %s: %w", artifact.Name, err)
+		}
+		switch artifact.Kind {
+		case profilesv1.HelmChartKind:
+			helmRes, err := p.makeHelmRelease(artifact)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create HelmRelease resource: %w", err)
+			}
+			objs = append(objs, helmRes)
+			if artifact.Path != "" && gitRes == nil {
+				// this resource is added at the end because it's generated once.
+				gitRes, err = p.makeGitRepository()
+				if err != nil {
+					return nil, fmt.Errorf("failed to create GitRepository resource: %w", err)
+				}
+			}
+			if artifact.Chart != nil {
+				helmRep, err := p.makeHelmRepository(artifact.Chart.URL, artifact.Chart.Name)
+				if err != nil {
+					return nil, fmt.Errorf("failed to create HelmRepository resource: %w", err)
+				}
+				objs = append(objs, helmRep)
+			}
+		case profilesv1.KustomizeKind:
+			kustomizeRes, err := p.makeKustomization(artifact)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create Kustomization resource: %w", err)
+			}
+			objs = append(objs, kustomizeRes)
+
+			if gitRes == nil {
+				// this resource is added at the end because it's generated once.
+				gitRes, err = p.makeGitRepository()
+				if err != nil {
+					return nil, fmt.Errorf("failed to create GitRepository resource: %w", err)
+				}
+			}
+		default:
+			return nil, fmt.Errorf("artifact kind %q not recognized", artifact.Kind)
+		}
 	}
 
-	objs = append(objs, gitRes)
-	for _, helmRes := range helmResources {
-		objs = append(objs, helmRes)
-	}
-	for _, kustomizeRes := range kustomizeResources {
-		objs = append(objs, kustomizeRes)
+	// Add the git res as the first object to be created.
+	if gitRes != nil {
+		objs = append([]runtime.Object{gitRes}, objs...)
 	}
 	return objs, nil
 }
 
-func (p *Profile) makeArtifacts() (*sourcev1.GitRepository, []*helmv2.HelmRelease, []*kustomizev1.Kustomization, error) {
-	var helmResources []*helmv2.HelmRelease
-	var kustomizeResources []*kustomizev1.Kustomization
+// MakeArtifacts creates and returns a slice of runtime.Object values, which if
+// applied to a cluster would deploy the profile as a HelmRelease.
+func (p *Profile) MakeArtifacts() ([]runtime.Object, error) {
+	objs, err := p.MakeOwnerlessArtifacts()
+	if err != nil {
+		return nil, err
+	}
 
-	for _, artifact := range p.definition.Spec.Artifacts {
-		switch artifact.Kind {
-		case "HelmChart":
-			helmRes, err := p.makeHelmRelease(artifact)
-			if err != nil {
-				return nil, nil, nil, fmt.Errorf("failed to create HelmRelease resource: %w", err)
-
-			}
-			helmResources = append(helmResources, helmRes)
-		case "Kustomize":
-			kustomizeRes, err := p.makeKustomization(artifact)
-			if err != nil {
-				return nil, nil, nil, fmt.Errorf("failed to create Kustomization resource: %w", err)
-			}
-			kustomizeResources = append(kustomizeResources, kustomizeRes)
-		default:
-			return nil, nil, nil, fmt.Errorf("artifact kind %q not recognized", artifact.Kind)
+	// setup ownership
+	for _, o := range objs {
+		obj, ok := o.(client.Object)
+		if !ok {
+			return nil, fmt.Errorf("object is not a client.Object %v", o)
+		}
+		if err := controllerutil.SetControllerReference(&p.subscription, obj, p.client.Scheme()); err != nil {
+			return nil, fmt.Errorf("failed to set resource ownership on %s: %w", obj.GetName(), err)
 		}
 	}
 
-	gitRes, err := p.makeGitRepository()
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to create GitRepository resource: %w", err)
-	}
-
-	return gitRes, helmResources, kustomizeResources, nil
+	return objs, nil
 }
 
 func (p *Profile) makeGitRepository() (*sourcev1.GitRepository, error) {
@@ -205,14 +228,39 @@ func (p *Profile) makeGitRepository() (*sourcev1.GitRepository, error) {
 			},
 		},
 	}
-	err := controllerutil.SetControllerReference(&p.subscription, gitRepo, p.client.Scheme())
-	if err != nil {
-		return nil, fmt.Errorf("failed to set resource ownership on %s: %w", gitRepo.ObjectMeta.Name, err)
-	}
 	return gitRepo, nil
 }
 
+func (p *Profile) makeHelmRepository(url string, name string) (*sourcev1.HelmRepository, error) {
+	helmRepo := &sourcev1.HelmRepository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      p.makeHelmRepoName(name),
+			Namespace: p.subscription.ObjectMeta.Namespace,
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL: url,
+		},
+	}
+	return helmRepo, nil
+}
+
+func (p *Profile) makeHelmRepoName(name string) string {
+	repoParts := strings.Split(p.subscription.Spec.ProfileURL, "/")
+	repoName := repoParts[len(repoParts)-1]
+	return join(p.subscription.Name, repoName, p.subscription.Spec.Branch, name)
+}
+
 func (p *Profile) makeHelmRelease(artifact profilesv1.Artifact) (*helmv2.HelmRelease, error) {
+	var helmChartSpec helmv2.HelmChartTemplateSpec
+	if artifact.Path != "" {
+		helmChartSpec = p.makeGitChartSpec(artifact.Path)
+	} else if artifact.Chart != nil {
+		helmChartSpec = p.makeHelmChartSpec(artifact.Chart.Name, artifact.Chart.Version)
+	}
 	helmRelease := &helmv2.HelmRelease{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      p.makeArtifactName(artifact.Name),
@@ -224,24 +272,36 @@ func (p *Profile) makeHelmRelease(artifact profilesv1.Artifact) (*helmv2.HelmRel
 		},
 		Spec: helmv2.HelmReleaseSpec{
 			Chart: helmv2.HelmChartTemplate{
-				Spec: helmv2.HelmChartTemplateSpec{
-					Chart: artifact.Path,
-					SourceRef: helmv2.CrossNamespaceObjectReference{
-						Kind:      sourcev1.GitRepositoryKind,
-						Name:      p.makeGitRepoName(),
-						Namespace: p.subscription.ObjectMeta.Namespace,
-					},
-				},
+				Spec: helmChartSpec,
 			},
 			Values:     p.subscription.Spec.Values,
 			ValuesFrom: p.subscription.Spec.ValuesFrom,
 		},
 	}
-	err := controllerutil.SetControllerReference(&p.subscription, helmRelease, p.client.Scheme())
-	if err != nil {
-		return nil, fmt.Errorf("failed to set resource ownership: %w", err)
-	}
 	return helmRelease, nil
+}
+
+func (p *Profile) makeGitChartSpec(path string) helmv2.HelmChartTemplateSpec {
+	return helmv2.HelmChartTemplateSpec{
+		Chart: path,
+		SourceRef: helmv2.CrossNamespaceObjectReference{
+			Kind:      sourcev1.GitRepositoryKind,
+			Name:      p.makeGitRepoName(),
+			Namespace: p.subscription.ObjectMeta.Namespace,
+		},
+	}
+}
+
+func (p *Profile) makeHelmChartSpec(chart string, version string) helmv2.HelmChartTemplateSpec {
+	return helmv2.HelmChartTemplateSpec{
+		Chart: chart,
+		SourceRef: helmv2.CrossNamespaceObjectReference{
+			Kind:      sourcev1.HelmRepositoryKind,
+			Name:      p.makeHelmRepoName(chart),
+			Namespace: p.subscription.ObjectMeta.Namespace,
+		},
+		Version: version,
+	}
 }
 
 func (p *Profile) makeKustomization(artifact profilesv1.Artifact) (*kustomizev1.Kustomization, error) {
@@ -265,10 +325,6 @@ func (p *Profile) makeKustomization(artifact profilesv1.Artifact) (*kustomizev1.
 				Namespace: p.subscription.ObjectMeta.Namespace,
 			},
 		},
-	}
-	err := controllerutil.SetControllerReference(&p.subscription, kustomization, p.client.Scheme())
-	if err != nil {
-		return nil, fmt.Errorf("failed to set resource ownership: %w", err)
 	}
 	return kustomization, nil
 }
