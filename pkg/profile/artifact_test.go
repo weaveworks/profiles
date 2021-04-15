@@ -27,7 +27,7 @@ import (
 const (
 	subscriptionName     = "mySub"
 	namespace            = "default"
-	branch               = "support-helm-urls"
+	branch               = "main"
 	profileName          = "profileName"
 	chartName1           = "chartOneArtifactName"
 	chartPath1           = "chart/artifact/path-one"
@@ -193,7 +193,7 @@ var _ = Describe("Profile", func() {
 			var (
 				gitRes                       *sourcev1.GitRepository
 				helmRep                      *sourcev1.HelmRepository
-				helmRes1, helmRes2, helmRes3 *helmv2.HelmRelease
+				helmRes1, helmRes2           *helmv2.HelmRelease
 				kustomizeRes1, kustomizeRes2 *kustomizev1.Kustomization
 				condition                    metav1.Condition
 			)
@@ -212,14 +212,12 @@ var _ = Describe("Profile", func() {
 				helmRes2 = res[2].(*helmv2.HelmRelease)
 				kustomizeRes1 = res[3].(*kustomizev1.Kustomization)
 				kustomizeRes2 = res[4].(*kustomizev1.Kustomization)
-				helmRes3 = res[5].(*helmv2.HelmRelease)
 				helmRep = res[6].(*sourcev1.HelmRepository)
 				Expect(fakeClient.Create(ctx, gitRes)).To(Succeed())
 				Expect(fakeClient.Create(ctx, helmRes1)).To(Succeed())
 				Expect(fakeClient.Create(ctx, helmRes2)).To(Succeed())
 				Expect(fakeClient.Create(ctx, kustomizeRes1)).To(Succeed())
 				Expect(fakeClient.Create(ctx, kustomizeRes2)).To(Succeed())
-				Expect(fakeClient.Create(ctx, helmRes3)).To(Succeed())
 				Expect(fakeClient.Create(ctx, helmRep)).To(Succeed())
 				condition = metav1.Condition{
 					Type:               "Ready",
@@ -227,6 +225,7 @@ var _ = Describe("Profile", func() {
 					Reason:             "foo",
 					LastTransitionTime: metav1.Now(),
 				}
+
 				conditions := []metav1.Condition{condition}
 				gitResNew := gitRes.DeepCopyObject().(*sourcev1.GitRepository)
 				gitResNew.Status.Conditions = conditions
@@ -244,9 +243,11 @@ var _ = Describe("Profile", func() {
 				helmResNew.Status.Conditions = conditions
 				Expect(fakeClient.Status().Patch(ctx, helmResNew, client.MergeFrom(helmRes2))).To(Succeed())
 
-				helmResNew = helmRes3.DeepCopyObject().(*helmv2.HelmRelease)
+				helmRes2 = res[5].(*helmv2.HelmRelease)
+				Expect(fakeClient.Create(ctx, helmRes2)).To(Succeed())
+				helmResNew = helmRes2.DeepCopyObject().(*helmv2.HelmRelease)
 				helmResNew.Status.Conditions = conditions
-				Expect(fakeClient.Status().Patch(ctx, helmResNew, client.MergeFrom(helmRes3))).To(Succeed())
+				Expect(fakeClient.Status().Patch(ctx, helmResNew, client.MergeFrom(helmRes2))).To(Succeed())
 
 				kustomizeResNew := kustomizeRes1.DeepCopyObject().(*kustomizev1.Kustomization)
 				kustomizeResNew.Status.Conditions = conditions

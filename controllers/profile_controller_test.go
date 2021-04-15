@@ -40,7 +40,7 @@ var _ = Describe("ProfileController", func() {
 	Context("Create with multiple artifacts", func() {
 		DescribeTable("Applying a Profile creates the correct resources", func(pSubSpec profilesv1.ProfileSubscriptionSpec) {
 			subscriptionName := "foo"
-			branch := "support-helm-urls"
+			branch := "main"
 
 			pSub := profilesv1.ProfileSubscription{
 				TypeMeta: metav1.TypeMeta{
@@ -174,14 +174,12 @@ var _ = Describe("ProfileController", func() {
 		},
 			Entry("a single Helm chart with no supplied values", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
-				Branch:     "support-helm-urls",
 			}),
 			Entry("a single Helm chart with supplied values", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
 				Values: &apiextensionsv1.JSON{
 					Raw: []byte(`{"replicaCount": 3,"service":{"port":8081}}`),
 				},
-				Branch: "support-helm-urls",
 			}),
 			Entry("a single Helm chart with values supplied via valuesFrom", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
@@ -192,7 +190,6 @@ var _ = Describe("ProfileController", func() {
 						Optional: true,
 					},
 				},
-				Branch: "support-helm-urls",
 			}),
 		)
 

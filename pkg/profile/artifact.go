@@ -27,7 +27,7 @@ type Status struct {
 // CreateArtifacts generate and creates the objects in the cluster to deploy the
 // profile
 func (p *Profile) CreateArtifacts(ctx context.Context) error {
-	objs, err := p.makeArtifacts()
+	objs, err := p.MakeArtifacts()
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func (p *Profile) checkResourcesReady(objs []runtime.Object) ([]metav1.Condition
 }
 
 func (p *Profile) getResources(ctx context.Context) (bool, []runtime.Object, error) {
-	objs, err := p.makeArtifacts()
+	objs, err := p.MakeArtifacts()
 	if err != nil {
 		return false, nil, err
 	}
@@ -128,16 +128,6 @@ func (p *Profile) getResourceIfExists(ctx context.Context, res client.Object) (b
 	}
 
 	return true, nil
-}
-
-// MakeArtifacts creates and returns a slice of runtime.Object values, which if
-// applied to a cluster would deploy the profile as a HelmRelease.
-func (p *Profile) MakeArtifacts() ([]runtime.Object, error) {
-	objs, err := p.makeArtifacts()
-	if err != nil {
-		return nil, err
-	}
-	return objs, nil
 }
 
 // MakeOwnerlessArtifacts generates artifacts without owners for manual applying to
@@ -199,7 +189,9 @@ func (p *Profile) MakeOwnerlessArtifacts() ([]runtime.Object, error) {
 	return objs, nil
 }
 
-func (p *Profile) makeArtifacts() ([]runtime.Object, error) {
+// MakeArtifacts creates and returns a slice of runtime.Object values, which if
+// applied to a cluster would deploy the profile as a HelmRelease.
+func (p *Profile) MakeArtifacts() ([]runtime.Object, error) {
 	objs, err := p.MakeOwnerlessArtifacts()
 	if err != nil {
 		return nil, err
