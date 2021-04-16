@@ -339,11 +339,10 @@ var _ = Describe("Acceptance", func() {
 		Context("delete", func() {
 			It("clears the in-memory cache when a ProfileCatalogSource is deleted", func() {
 				Expect(kClient.Delete(context.Background(), &pCatalog)).To(Succeed())
-				Eventually(func() profilesv1.ProfileDescription {
-					description, err := getProfile(profileName)
-					Expect(err).NotTo(HaveOccurred())
-					return description
-				}).Should(BeEmpty())
+				Eventually(func() error {
+					_, err := getProfile(profileName)
+					return err
+				}).Should(MatchError(ContainSubstring("got 404")))
 			})
 		})
 	})
