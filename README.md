@@ -10,17 +10,16 @@ Gitops native package management
 1. deploy an example catalog `kubectl apply -f examples/profile-catalog-source.yaml`
 
 1. To query the catalog API run `kubectl -n profiles-system port-forward <profiles-controller-pod-name> 8000:8000` to enable access to the API and use
-[pctl](https://github.com/weaveworks/pctl) to query, for example: `pctl --catalog-url http://localhost:8000 show <search-string>`
+[pctl](https://github.com/weaveworks/pctl) to query, for example: `pctl --catalog-url http://localhost:8000 search <search-string>`
 
 1. To see more details on a specific Profile in the catalog, use
-[pctl](https://github.com/weaveworks/pctl): `pctl --catalog-url http://localhost:8000 show <catalog-name>/<profile-name>`
+[pctl](https://github.com/weaveworks/pctl) `show`: `pctl --catalog-url http://localhost:8000 show <catalog-source-name>/<profile-name>`
 
 1. Currently `pctl` does not support creating the profile subscription resource from the catalog for you, use the example resource `examples/profile-subscription.yaml` to
 subscribe to the example [nginx-profile](https://github.com/weaveworks/nginx-profile): `kubectl apply -f examples/profile-subscription.yaml`
 
 1. The following resources will be created as part of a Helm-based Profile install:
     - ProfileSubscription (the parent object)
-    - Profile (the definition as pulled from the upstream target profile)
     - HelmRelease (wrapper resource around the chart)
     - GitRepository (reference to the location of the chart)
 
