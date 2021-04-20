@@ -230,26 +230,6 @@ var _ = Describe("ProfileController", func() {
 			It("updates the status", func() {
 				subscriptionName := "git-resource-already-exists-error"
 				profileURL := nginxProfileURL
-
-				gitRefName := fmt.Sprintf("%s-%s-%s", subscriptionName, "nginx-profile", "main")
-				gitRepo := sourcev1.GitRepository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      gitRefName,
-						Namespace: namespace,
-					},
-					TypeMeta: metav1.TypeMeta{
-						Kind:       "GitRepository",
-						APIVersion: "source.toolkit.fluxcd.io/v1beta1",
-					},
-					Spec: sourcev1.GitRepositorySpec{
-						URL: profileURL,
-						Reference: &sourcev1.GitRepositoryRef{
-							Branch: "main",
-						},
-					},
-				}
-				Expect(k8sClient.Create(ctx, &gitRepo)).Should(Succeed())
-
 				pSub := profilesv1.ProfileSubscription{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ProfileSubscription",
@@ -261,6 +241,7 @@ var _ = Describe("ProfileController", func() {
 					},
 					Spec: profilesv1.ProfileSubscriptionSpec{
 						ProfileURL: profileURL,
+						Branch:     "invalid-artifact",
 					},
 				}
 				Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())
@@ -271,7 +252,7 @@ var _ = Describe("ProfileController", func() {
 					return err == nil && len(profile.Status.Conditions) > 0
 				}, 10*time.Second, 1*time.Second).Should(BeTrue())
 
-				Expect(profile.Status.Conditions[0].Message).To(Equal("error when creating profile artifacts"))
+				Expect(profile.Status.Conditions[0].Message).To(Equal("error when reconciling profile artifacts"))
 				Expect(profile.Status.Conditions[0].Type).To(Equal("Ready"))
 				Expect(profile.Status.Conditions[0].Status).To(Equal(metav1.ConditionStatus("False")))
 				Expect(profile.Status.Conditions[0].Reason).To(Equal("CreateFailed"))

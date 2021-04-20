@@ -72,6 +72,7 @@ func (r *ProfileSubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error
 		)). // Owns ensures that changes to resources owned by the pSub cause the pSub to get requeued
 		Owns(&sourcev1.GitRepository{}).
 		Owns(&helmv2.HelmRelease{}).
+		Owns(&sourcev1.HelmRepository{}).
 		Owns(&kustomizev1.Kustomization{}).
 		Complete(r)
 }
@@ -103,26 +104,21 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	instance := profile.New(pDef, pSub, r.Client, logger)
+
+	err = instance.ReconcileArtifacts(ctx)
+	if err != nil {
+		if err := r.patchStatus(ctx, &pSub, logger, readyFalse, "CreateFailed", "error when reconciling profile artifacts"); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, err
+	}
+
 	artifactStatus, err := instance.ArtifactStatus(ctx)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if !artifactStatus.ResourcesExist {
-		err = instance.CreateArtifacts(ctx)
-		if err != nil {
-			if err := r.patchStatus(ctx, &pSub, logger, readyFalse, "CreateFailed", "error when creating profile artifacts"); err != nil {
-				return ctrl.Result{}, err
-			}
-			return ctrl.Result{}, err
-		}
-		artifactStatus, err = instance.ArtifactStatus(ctx)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-	}
-
-	if len(artifactStatus.NotReadyConditions) == 0 {
+	if artifactStatus.ResourcesExist && len(artifactStatus.NotReadyConditions) == 0 {
 		return ctrl.Result{}, r.patchStatus(ctx, &pSub, logger, readyTrue, "ArtifactsReady", "all artifact resources ready")
 	}
 
