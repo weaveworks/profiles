@@ -7,20 +7,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// GitRepoRequiresUpdate checks if the git repository resource requires updating
-func GitRepoRequiresUpdate(oldRes, newRes *sourcev1.GitRepository) bool {
+// gitRepoRequiresUpdate checks if the git repository resource requires updating
+func gitRepoRequiresUpdate(existingRes, newRes *sourcev1.GitRepository) bool {
 	switch {
-	case oldRes.Spec.URL != newRes.Spec.URL:
+	case existingRes.Spec.URL != newRes.Spec.URL:
 		return true
-	case oldRes.Spec.Reference.Branch != newRes.Spec.Reference.Branch:
+	case existingRes.Spec.Reference.Branch != newRes.Spec.Reference.Branch:
 		return true
 	default:
 		return false
 	}
 }
 
-func (p *Profile) makeGitRepository() (*sourcev1.GitRepository, error) {
-	gitRepo := &sourcev1.GitRepository{
+func (p *Profile) makeGitRepository() *sourcev1.GitRepository {
+	return &sourcev1.GitRepository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      p.makeGitRepoName(),
 			Namespace: p.subscription.ObjectMeta.Namespace,
@@ -36,7 +36,6 @@ func (p *Profile) makeGitRepository() (*sourcev1.GitRepository, error) {
 			},
 		},
 	}
-	return gitRepo, nil
 }
 
 func (p *Profile) makeGitRepoName() string {

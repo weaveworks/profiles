@@ -20,7 +20,7 @@ type Profile struct {
 }
 
 // New returns a new Profile object
-func New(def profilesv1.ProfileDefinition, sub profilesv1.ProfileSubscription, client client.Client, log logr.Logger, ctx context.Context) *Profile {
+func New(ctx context.Context, def profilesv1.ProfileDefinition, sub profilesv1.ProfileSubscription, client client.Client, log logr.Logger) *Profile {
 	return &Profile{
 		definition:   def,
 		subscription: sub,

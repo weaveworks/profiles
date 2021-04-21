@@ -1,10 +1,9 @@
-package profile_test
+package profile
 
 import (
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	. "github.com/onsi/ginkgo/extensions/table"
-	"github.com/weaveworks/profiles/pkg/profile"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -32,9 +31,9 @@ var _ = Describe("Helm", func() {
 			newRes = oldRes.DeepCopy()
 		})
 
-		DescribeTable("HelmReleaseResourceRequiresUpdate",
+		DescribeTable("helmReleaseResourceRequiresUpdate",
 			func(newRes func() *sourcev1.HelmRepository, updateExpected bool) {
-				Expect(profile.HelmRepoRequiresUpdate(oldRes, newRes())).To(Equal(updateExpected))
+				Expect(helmRepoRequiresUpdate(oldRes, newRes())).To(Equal(updateExpected))
 			},
 			Entry("spec is unchanged should return false", func() *sourcev1.HelmRepository {
 				return newRes
@@ -83,9 +82,9 @@ var _ = Describe("Helm", func() {
 			newRes = oldRes.DeepCopy()
 		})
 
-		DescribeTable("HelmReleaseResourceRequiresUpdate",
+		DescribeTable("helmReleaseResourceRequiresUpdate",
 			func(newRes func() *helmv2.HelmRelease, updateExpected bool) {
-				Expect(profile.HelmReleaseRequiresUpdate(oldRes, newRes())).To(Equal(updateExpected))
+				Expect(helmReleaseRequiresUpdate(oldRes, newRes())).To(Equal(updateExpected))
 			},
 			Entry("spec is unchanged should return false", func() *helmv2.HelmRelease {
 				return newRes

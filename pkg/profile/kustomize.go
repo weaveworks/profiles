@@ -10,26 +10,26 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// KustomizeRequiresUpdate checks if the git kustomization resource requires updating
-func KustomizeRequiresUpdate(oldRes, newRes *kustomizev1.Kustomization) bool {
+// kustomizeRequiresUpdate checks if the git kustomization resource requires updating
+func kustomizeRequiresUpdate(existingRes, desiredRes *kustomizev1.Kustomization) bool {
 	switch {
-	case oldRes.Spec.Path != newRes.Spec.Path:
+	case existingRes.Spec.Path != desiredRes.Spec.Path:
 		return true
-	case oldRes.Spec.Interval != newRes.Spec.Interval:
+	case existingRes.Spec.Interval != desiredRes.Spec.Interval:
 		return true
-	case oldRes.Spec.Prune != newRes.Spec.Prune:
+	case existingRes.Spec.Prune != desiredRes.Spec.Prune:
 		return true
-	case oldRes.Spec.TargetNamespace != newRes.Spec.TargetNamespace:
+	case existingRes.Spec.TargetNamespace != desiredRes.Spec.TargetNamespace:
 		return true
-	case !reflect.DeepEqual(oldRes.Spec.SourceRef, newRes.Spec.SourceRef):
+	case !reflect.DeepEqual(existingRes.Spec.SourceRef, desiredRes.Spec.SourceRef):
 		return true
 	default:
 		return false
 	}
 }
 
-func (p *Profile) makeKustomization(artifact profilesv1.Artifact) (*kustomizev1.Kustomization, error) {
-	kustomization := &kustomizev1.Kustomization{
+func (p *Profile) makeKustomization(artifact profilesv1.Artifact) *kustomizev1.Kustomization {
+	return &kustomizev1.Kustomization{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      p.makeArtifactName(artifact.Name),
 			Namespace: p.subscription.ObjectMeta.Namespace,
@@ -50,5 +50,4 @@ func (p *Profile) makeKustomization(artifact profilesv1.Artifact) (*kustomizev1.
 			},
 		},
 	}
-	return kustomization, nil
 }

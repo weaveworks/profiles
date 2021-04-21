@@ -1,4 +1,4 @@
-package profile_test
+package profile
 
 import (
 	"time"
@@ -6,7 +6,6 @@ import (
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	. "github.com/onsi/ginkgo/extensions/table"
-	"github.com/weaveworks/profiles/pkg/profile"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo"
@@ -40,9 +39,9 @@ var _ = Describe("kustomization", func() {
 		newRes = oldRes.DeepCopy()
 	})
 
-	DescribeTable("KustomizationResourceRequiresUpdate",
+	DescribeTable("kustomizationResourceRequiresUpdate",
 		func(newRes func() *kustomizev1.Kustomization, updateExpected bool) {
-			Expect(profile.KustomizeRequiresUpdate(oldRes, newRes())).To(Equal(updateExpected))
+			Expect(kustomizeRequiresUpdate(oldRes, newRes())).To(Equal(updateExpected))
 		},
 		Entry("spec is unchanged should return false", func() *kustomizev1.Kustomization {
 			return newRes

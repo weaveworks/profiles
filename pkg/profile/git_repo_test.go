@@ -1,9 +1,8 @@
-package profile_test
+package profile
 
 import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	. "github.com/onsi/ginkgo/extensions/table"
-	"github.com/weaveworks/profiles/pkg/profile"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo"
@@ -32,9 +31,9 @@ var _ = Describe("Git", func() {
 		newRes = oldRes.DeepCopy()
 	})
 
-	DescribeTable("GitResourceRequiresUpdate",
+	DescribeTable("gitResourceRequiresUpdate",
 		func(newRes func() *sourcev1.GitRepository, updateExpected bool) {
-			Expect(profile.GitRepoRequiresUpdate(oldRes, newRes())).To(Equal(updateExpected))
+			Expect(gitRepoRequiresUpdate(oldRes, newRes())).To(Equal(updateExpected))
 		},
 		Entry("spec is unchanged should return false", func() *sourcev1.GitRepository {
 			return newRes

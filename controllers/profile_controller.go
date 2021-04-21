@@ -103,10 +103,9 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, err
 	}
 
-	instance := profile.New(pDef, pSub, r.Client, logger, ctx)
+	instance := profile.New(ctx, pDef, pSub, r.Client, logger)
 
-	err = instance.ReconcileArtifacts()
-	if err != nil {
+	if err = instance.ReconcileArtifacts(); err != nil {
 		if err := r.patchStatus(ctx, &pSub, logger, readyFalse, "CreateFailed", "error when reconciling profile artifacts"); err != nil {
 			return ctrl.Result{}, err
 		}

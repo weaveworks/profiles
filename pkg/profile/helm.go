@@ -2,7 +2,6 @@ package profile
 
 import (
 	"reflect"
-	"strings"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
@@ -10,18 +9,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// HelmReleaseRequiresUpdate checks if the helm release resource requires updating
-func HelmReleaseRequiresUpdate(oldRes, newRes *helmv2.HelmRelease) bool {
+// helmReleaseRequiresUpdate checks if the helm release resource requires updating
+func helmReleaseRequiresUpdate(existingRes, newRes *helmv2.HelmRelease) bool {
 	switch {
-	case oldRes.Spec.Chart.Spec.Chart != newRes.Spec.Chart.Spec.Chart:
+	case existingRes.Spec.Chart.Spec.Chart != newRes.Spec.Chart.Spec.Chart:
 		return true
-	case oldRes.Spec.Chart.Spec.Version != newRes.Spec.Chart.Spec.Version:
+	case existingRes.Spec.Chart.Spec.Version != newRes.Spec.Chart.Spec.Version:
 		return true
-	case !reflect.DeepEqual(oldRes.Spec.Chart.Spec.SourceRef, newRes.Spec.Chart.Spec.SourceRef):
+	case !reflect.DeepEqual(existingRes.Spec.Chart.Spec.SourceRef, newRes.Spec.Chart.Spec.SourceRef):
 		return true
-	case !reflect.DeepEqual(oldRes.Spec.Values, newRes.Spec.Values):
+	case !reflect.DeepEqual(existingRes.Spec.Values, newRes.Spec.Values):
 		return true
-	case !reflect.DeepEqual(oldRes.Spec.ValuesFrom, newRes.Spec.ValuesFrom):
+	case !reflect.DeepEqual(existingRes.Spec.ValuesFrom, newRes.Spec.ValuesFrom):
 		return true
 	default:
 		return false
@@ -29,17 +28,17 @@ func HelmReleaseRequiresUpdate(oldRes, newRes *helmv2.HelmRelease) bool {
 }
 
 // HelmRepoRequiresUpdate checks if the helm repository resource requires updating
-func HelmRepoRequiresUpdate(oldRes, newRes *sourcev1.HelmRepository) bool {
+func helmRepoRequiresUpdate(existingRes, newRes *sourcev1.HelmRepository) bool {
 	switch {
-	case oldRes.Spec.URL != newRes.Spec.URL:
+	case existingRes.Spec.URL != newRes.Spec.URL:
 		return true
 	default:
 		return false
 	}
 }
 
-func (p *Profile) makeHelmRepository(url string, name string) (*sourcev1.HelmRepository, error) {
-	helmRepo := &sourcev1.HelmRepository{
+func (p *Profile) makeHelmRepository(url string, name string) *sourcev1.HelmRepository {
+	return &sourcev1.HelmRepository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      p.makeHelmRepoName(name),
 			Namespace: p.subscription.ObjectMeta.Namespace,
@@ -52,16 +51,13 @@ func (p *Profile) makeHelmRepository(url string, name string) (*sourcev1.HelmRep
 			URL: url,
 		},
 	}
-	return helmRepo, nil
 }
 
 func (p *Profile) makeHelmRepoName(name string) string {
-	repoParts := strings.Split(p.subscription.Spec.ProfileURL, "/")
-	repoName := repoParts[len(repoParts)-1]
-	return join(p.subscription.Name, repoName, p.subscription.Spec.Branch, name)
+	return join(p.makeGitRepoName(), name)
 }
 
-func (p *Profile) makeHelmRelease(artifact profilesv1.Artifact) (*helmv2.HelmRelease, error) {
+func (p *Profile) makeHelmRelease(artifact profilesv1.Artifact) *helmv2.HelmRelease {
 	var helmChartSpec helmv2.HelmChartTemplateSpec
 	if artifact.Path != "" {
 		helmChartSpec = p.makeGitChartSpec(artifact.Path)
@@ -85,7 +81,7 @@ func (p *Profile) makeHelmRelease(artifact profilesv1.Artifact) (*helmv2.HelmRel
 			ValuesFrom: p.subscription.Spec.ValuesFrom,
 		},
 	}
-	return helmRelease, nil
+	return helmRelease
 }
 
 func (p *Profile) makeGitChartSpec(path string) helmv2.HelmChartTemplateSpec {

@@ -42,50 +42,49 @@ func (p *Profile) ReconcileArtifacts() error {
 	p.log.Info("all artifacts created")
 	return nil
 }
-func (p *Profile) reconcileArtifact(obj client.Object) error {
-	oldObj := obj.DeepCopyObject().(client.Object)
-	err := p.client.Get(p.ctx, client.ObjectKeyFromObject(obj), oldObj)
+func (p *Profile) reconcileArtifact(desiredObj client.Object) error {
+	existingObj := desiredObj.DeepCopyObject().(client.Object)
+	err := p.client.Get(p.ctx, client.ObjectKeyFromObject(desiredObj), existingObj)
 	if err == nil {
-		return p.updateResource(oldObj, obj)
-	} else if apierrors.IsNotFound(err) {
-		p.log.Info("creating...", "kind", obj.GetObjectKind().GroupVersionKind().Kind, "resource", obj.GetName())
-		if err := p.client.Create(p.ctx, obj); err != nil {
-			return fmt.Errorf("failed to create %s: %w", obj.GetObjectKind().GroupVersionKind().Kind, err)
+		return p.updateResource(existingObj, desiredObj)
+	}
+	if apierrors.IsNotFound(err) {
+		p.log.Info("creating...", "kind", desiredObj.GetObjectKind().GroupVersionKind().Kind, "resource", desiredObj.GetName())
+		if err := p.client.Create(p.ctx, desiredObj); err != nil {
+			return fmt.Errorf("failed to create %s: %w", desiredObj.GetObjectKind().GroupVersionKind().Kind, err)
 		}
 		return nil
-	} else {
-		//todo update
-		return fmt.Errorf("failed to create %s: %w", obj.GetObjectKind().GroupVersionKind().Kind, err)
 	}
+	return fmt.Errorf("failed to get resource %s %s/%s: %w", desiredObj.GetObjectKind().GroupVersionKind().Kind, desiredObj.GetNamespace(), desiredObj.GetName(), err)
 }
 
-func (p *Profile) updateResource(oldRes, newRes client.Object) error {
-	switch newRes := newRes.(type) {
+func (p *Profile) updateResource(existingObj, desiredObj client.Object) error {
+	switch desiredObj := desiredObj.(type) {
 	case *sourcev1.GitRepository:
-		if !GitRepoRequiresUpdate(oldRes.(*sourcev1.GitRepository), newRes) {
+		if !gitRepoRequiresUpdate(existingObj.(*sourcev1.GitRepository), desiredObj) {
 			return nil
 		}
-		oldRes.(*sourcev1.GitRepository).Spec = newRes.Spec
+		existingObj.(*sourcev1.GitRepository).Spec = desiredObj.Spec
 	case *sourcev1.HelmRepository:
-		if !HelmRepoRequiresUpdate(oldRes.(*sourcev1.HelmRepository), newRes) {
+		if !helmRepoRequiresUpdate(existingObj.(*sourcev1.HelmRepository), desiredObj) {
 			return nil
 		}
-		oldRes.(*sourcev1.HelmRepository).Spec = newRes.Spec
+		existingObj.(*sourcev1.HelmRepository).Spec = desiredObj.Spec
 	case *helmv2.HelmRelease:
-		if !HelmReleaseRequiresUpdate(oldRes.(*helmv2.HelmRelease), newRes) {
+		if !helmReleaseRequiresUpdate(existingObj.(*helmv2.HelmRelease), desiredObj) {
 			return nil
 		}
-		oldRes.(*helmv2.HelmRelease).Spec = newRes.Spec
+		existingObj.(*helmv2.HelmRelease).Spec = desiredObj.Spec
 	case *kustomizev1.Kustomization:
-		if !KustomizeRequiresUpdate(oldRes.(*kustomizev1.Kustomization), newRes) {
+		if !kustomizeRequiresUpdate(existingObj.(*kustomizev1.Kustomization), desiredObj) {
 			return nil
 		}
-		oldRes.(*kustomizev1.Kustomization).Spec = newRes.Spec
+		existingObj.(*kustomizev1.Kustomization).Spec = desiredObj.Spec
 	default:
 		return nil
 	}
-	p.log.Info(fmt.Sprintf("updating %s, %s", oldRes.GetObjectKind(), oldRes.GetName()))
-	return p.client.Update(p.ctx, oldRes)
+	p.log.Info(fmt.Sprintf("updating %s, %s", existingObj.GetObjectKind(), existingObj.GetName()))
+	return p.client.Update(p.ctx, existingObj)
 }
 
 // ArtifactStatus checks if the artifacts exists and returns any ready!=true conditions on the artifacts.
@@ -185,38 +184,19 @@ func (p *Profile) MakeOwnerlessArtifacts() ([]runtime.Object, error) {
 		}
 		switch artifact.Kind {
 		case profilesv1.HelmChartKind:
-			helmRes, err := p.makeHelmRelease(artifact)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create HelmRelease resource: %w", err)
-			}
-			objs = append(objs, helmRes)
+			objs = append(objs, p.makeHelmRelease(artifact))
 			if artifact.Path != "" && gitRes == nil {
 				// this resource is added at the end because it's generated once.
-				gitRes, err = p.makeGitRepository()
-				if err != nil {
-					return nil, fmt.Errorf("failed to create GitRepository resource: %w", err)
-				}
+				gitRes = p.makeGitRepository()
 			}
 			if artifact.Chart != nil {
-				helmRep, err := p.makeHelmRepository(artifact.Chart.URL, artifact.Chart.Name)
-				if err != nil {
-					return nil, fmt.Errorf("failed to create HelmRepository resource: %w", err)
-				}
-				objs = append(objs, helmRep)
+				objs = append(objs, p.makeHelmRepository(artifact.Chart.URL, artifact.Chart.Name))
 			}
 		case profilesv1.KustomizeKind:
-			kustomizeRes, err := p.makeKustomization(artifact)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create Kustomization resource: %w", err)
-			}
-			objs = append(objs, kustomizeRes)
-
+			objs = append(objs, p.makeKustomization(artifact))
 			if gitRes == nil {
 				// this resource is added at the end because it's generated once.
-				gitRes, err = p.makeGitRepository()
-				if err != nil {
-					return nil, fmt.Errorf("failed to create GitRepository resource: %w", err)
-				}
+				gitRes = p.makeGitRepository()
 			}
 		default:
 			return nil, fmt.Errorf("artifact kind %q not recognized", artifact.Kind)
