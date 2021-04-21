@@ -140,7 +140,7 @@ var _ = Describe("Profile", func() {
 			Expect(helmv2.AddToScheme(scheme)).To(Succeed())
 			Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 
-			p = profile.New(pDef, pSub, fakeClient, logr.Discard())
+			p = profile.New(pDef, pSub, fakeClient, logr.Discard(), ctx)
 			o, err := p.MakeArtifacts()
 			Expect(err).NotTo(HaveOccurred())
 
@@ -162,7 +162,7 @@ var _ = Describe("Profile", func() {
 			Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 			Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
 
-			p = profile.New(pDef, pSub, fakeClient, logr.Discard())
+			p = profile.New(pDef, pSub, fakeClient, logr.Discard(), ctx)
 			o, err := p.MakeArtifacts()
 			Expect(err).NotTo(HaveOccurred())
 
@@ -187,7 +187,7 @@ var _ = Describe("Profile", func() {
 
 	Describe("ArtifactStatus", func() {
 		BeforeEach(func() {
-			p = profile.New(pDef, pSub, fakeClient, logr.Discard())
+			p = profile.New(pDef, pSub, fakeClient, logr.Discard(), ctx)
 		})
 
 		When("the artifact exists", func() {
@@ -261,7 +261,7 @@ var _ = Describe("Profile", func() {
 
 			When("the artifacts are all ready=true", func() {
 				It("returns empty condition", func() {
-					status, err := p.ArtifactStatus(ctx)
+					status, err := p.ArtifactStatus()
 					Expect(err).NotTo(HaveOccurred())
 					Expect(status.ResourcesExist).To(BeTrue())
 					Expect(status.NotReadyConditions).To(HaveLen(0))
@@ -282,7 +282,7 @@ var _ = Describe("Profile", func() {
 				})
 
 				It("returns the ready=false condition", func() {
-					status, err := p.ArtifactStatus(ctx)
+					status, err := p.ArtifactStatus()
 					Expect(err).NotTo(HaveOccurred())
 					Expect(status.ResourcesExist).To(BeTrue())
 					Expect(status.NotReadyConditions).To(HaveLen(1))
@@ -309,7 +309,7 @@ var _ = Describe("Profile", func() {
 				})
 
 				It("returns the ready=unknown condition", func() {
-					status, err := p.ArtifactStatus(ctx)
+					status, err := p.ArtifactStatus()
 					Expect(err).NotTo(HaveOccurred())
 					Expect(status.ResourcesExist).To(BeTrue())
 					//The GET returned from k8sclient mutatates the time format
@@ -328,7 +328,7 @@ var _ = Describe("Profile", func() {
 				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
 				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 
-				status, err := p.ArtifactStatus(ctx)
+				status, err := p.ArtifactStatus()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(status.ResourcesExist).To(BeFalse())
 			})
@@ -506,17 +506,17 @@ var _ = Describe("Profile", func() {
 				Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
 				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 
-				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
+				p = profile.New(pDef, pSub, fakeClient, logr.Discard(), ctx)
 
 				By("creating the resources when none exists")
-				err := p.ReconcileArtifacts(ctx)
+				err := p.ReconcileArtifacts()
 				Expect(err).NotTo(HaveOccurred())
 				assertResources()
 
 				By("updating the resources when they become out of sync or deleted")
 				modifyExistingResources()
 
-				err = p.ReconcileArtifacts(ctx)
+				err = p.ReconcileArtifacts()
 				Expect(err).NotTo(HaveOccurred())
 				assertResources()
 			},
@@ -565,8 +565,8 @@ var _ = Describe("Profile", func() {
 		When("setting the resource owner fails", func() {
 			It("errors", func() {
 				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
-				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
-				err := p.ReconcileArtifacts(ctx)
+				p = profile.New(pDef, pSub, fakeClient, logr.Discard(), ctx)
+				err := p.ReconcileArtifacts()
 				Expect(err).To(MatchError(ContainSubstring("failed to set resource ownership")))
 			})
 		})
@@ -578,8 +578,8 @@ var _ = Describe("Profile", func() {
 				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
 				Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
 				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
-				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
-				err := p.ReconcileArtifacts(ctx)
+				p = profile.New(pDef, pSub, fakeClient, logr.Discard(), ctx)
+				err := p.ReconcileArtifacts()
 				Expect(err).To(MatchError(ContainSubstring("failed to create GitRepository: no kind is registered for the type v1beta1.GitRepository in scheme")))
 			})
 		})
@@ -589,8 +589,8 @@ var _ = Describe("Profile", func() {
 				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
 				Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
 				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
-				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
-				err := p.ReconcileArtifacts(ctx)
+				p = profile.New(pDef, pSub, fakeClient, logr.Discard(), ctx)
+				err := p.ReconcileArtifacts()
 				Expect(err).To(MatchError(ContainSubstring("failed to create HelmRelease: no kind is registered for the type v2beta1.HelmRelease in scheme")))
 			})
 		})
@@ -600,8 +600,8 @@ var _ = Describe("Profile", func() {
 				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
 				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
-				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
-				err := p.ReconcileArtifacts(ctx)
+				p = profile.New(pDef, pSub, fakeClient, logr.Discard(), ctx)
+				err := p.ReconcileArtifacts()
 				Expect(err).To(MatchError(ContainSubstring("failed to create Kustomization: no kind is registered for the type v1beta1.Kustomization in scheme")))
 			})
 		})
@@ -614,8 +614,8 @@ var _ = Describe("Profile", func() {
 			It("errors", func() {
 				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
 				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
-				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
-				err := p.ReconcileArtifacts(ctx)
+				p = profile.New(pDef, pSub, fakeClient, logr.Discard(), ctx)
+				err := p.ReconcileArtifacts()
 				Expect(err).To(MatchError(ContainSubstring("artifact kind \"SomeUnknownKind\" not recognized")))
 			})
 		})
@@ -651,8 +651,8 @@ var _ = Describe("Profile", func() {
 						},
 					},
 				}
-				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
-				err := p.ReconcileArtifacts(ctx)
+				p = profile.New(pDef, pSub, fakeClient, logr.Discard(), ctx)
+				err := p.ReconcileArtifacts()
 				Expect(err).To(MatchError(ContainSubstring("validation failed for artifact helmChartArtifactName1: expected exactly one, got both: chart, path")))
 			})
 		})

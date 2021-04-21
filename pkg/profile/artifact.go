@@ -1,7 +1,6 @@
 package profile
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -24,7 +23,7 @@ type Status struct {
 }
 
 // ReconcileArtifacts ensures the artifact resources are applied to the cluster
-func (p *Profile) ReconcileArtifacts(ctx context.Context) error {
+func (p *Profile) ReconcileArtifacts() error {
 	objs, err := p.MakeArtifacts()
 	if err != nil {
 		return err
@@ -35,7 +34,7 @@ func (p *Profile) ReconcileArtifacts(ctx context.Context) error {
 		if !ok {
 			return fmt.Errorf("object %v cannot be asserted to client.Object", o)
 		}
-		if err := p.reconcileArtifact(ctx, obj); err != nil {
+		if err := p.reconcileArtifact(obj); err != nil {
 			return err
 		}
 	}
@@ -43,14 +42,14 @@ func (p *Profile) ReconcileArtifacts(ctx context.Context) error {
 	p.log.Info("all artifacts created")
 	return nil
 }
-func (p *Profile) reconcileArtifact(ctx context.Context, obj client.Object) error {
+func (p *Profile) reconcileArtifact(obj client.Object) error {
 	oldObj := obj.DeepCopyObject().(client.Object)
-	err := p.client.Get(ctx, client.ObjectKeyFromObject(obj), oldObj)
+	err := p.client.Get(p.ctx, client.ObjectKeyFromObject(obj), oldObj)
 	if err == nil {
-		return p.updateResource(ctx, oldObj, obj)
+		return p.updateResource(oldObj, obj)
 	} else if apierrors.IsNotFound(err) {
 		p.log.Info("creating...", "kind", obj.GetObjectKind().GroupVersionKind().Kind, "resource", obj.GetName())
-		if err := p.client.Create(ctx, obj); err != nil {
+		if err := p.client.Create(p.ctx, obj); err != nil {
 			return fmt.Errorf("failed to create %s: %w", obj.GetObjectKind().GroupVersionKind().Kind, err)
 		}
 		return nil
@@ -60,7 +59,7 @@ func (p *Profile) reconcileArtifact(ctx context.Context, obj client.Object) erro
 	}
 }
 
-func (p *Profile) updateResource(ctx context.Context, oldRes, newRes client.Object) error {
+func (p *Profile) updateResource(oldRes, newRes client.Object) error {
 	switch newRes := newRes.(type) {
 	case *sourcev1.GitRepository:
 		if !GitRepoRequiresUpdate(oldRes.(*sourcev1.GitRepository), newRes) {
@@ -86,12 +85,12 @@ func (p *Profile) updateResource(ctx context.Context, oldRes, newRes client.Obje
 		return nil
 	}
 	p.log.Info(fmt.Sprintf("updating %s, %s", oldRes.GetObjectKind(), oldRes.GetName()))
-	return p.client.Update(ctx, oldRes)
+	return p.client.Update(p.ctx, oldRes)
 }
 
 // ArtifactStatus checks if the artifacts exists and returns any ready!=true conditions on the artifacts.
-func (p *Profile) ArtifactStatus(ctx context.Context) (Status, error) {
-	resourcesExist, objs, err := p.getResources(ctx)
+func (p *Profile) ArtifactStatus() (Status, error) {
+	resourcesExist, objs, err := p.getResources()
 	if err != nil {
 		return Status{}, err
 	}
@@ -135,7 +134,7 @@ func (p *Profile) checkResourcesReady(objs []runtime.Object) ([]metav1.Condition
 	return notReadyConditions, nil
 }
 
-func (p *Profile) getResources(ctx context.Context) (bool, []runtime.Object, error) {
+func (p *Profile) getResources() (bool, []runtime.Object, error) {
 	objs, err := p.MakeArtifacts()
 	if err != nil {
 		return false, nil, err
@@ -145,7 +144,7 @@ func (p *Profile) getResources(ctx context.Context) (bool, []runtime.Object, err
 		if !ok {
 			return false, nil, fmt.Errorf("object is not a client.Object %v", o)
 		}
-		if exists, err := p.getResourceIfExists(ctx, obj); !exists || err != nil {
+		if exists, err := p.getResourceIfExists(obj); !exists || err != nil {
 			return false, nil, err
 		}
 	}
@@ -161,8 +160,8 @@ func getNotReadyCondition(conditions []metav1.Condition) metav1.Condition {
 	return metav1.Condition{}
 }
 
-func (p *Profile) getResourceIfExists(ctx context.Context, res client.Object) (bool, error) {
-	if err := p.client.Get(ctx, client.ObjectKey{Name: res.GetName(), Namespace: res.GetNamespace()}, res); err != nil {
+func (p *Profile) getResourceIfExists(res client.Object) (bool, error) {
+	if err := p.client.Get(p.ctx, client.ObjectKey{Name: res.GetName(), Namespace: res.GetNamespace()}, res); err != nil {
 		if apierrors.IsNotFound(err) {
 			return false, nil
 		}
