@@ -56,7 +56,7 @@ var _ = Describe("Acceptance", func() {
 		})
 
 		When("subscribing to a Profile with a Helm Chart", func() {
-			It("should deploy the Profile workload and cleanup on deletion", func() {
+			It("should deploy the Profile workload, reconcile when changes occur and cleanup on deletion", func() {
 				pSub := profilesv1.ProfileSubscription{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       profileSubscriptionKind,
@@ -128,6 +128,38 @@ var _ = Describe("Acceptance", func() {
 					client.InNamespace(namespace),
 					client.MatchingLabels{"app": "nginx"},
 				}
+				Eventually(func() v1.PodPhase {
+					podList = &v1.PodList{}
+					err := kClient.List(context.Background(), podList, kustomizeOpts...)
+					Expect(err).NotTo(HaveOccurred())
+					if len(podList.Items) == 0 {
+						return v1.PodPhase("no pods found")
+					}
+					return podList.Items[0].Status.Phase
+				}, 2*time.Minute, 5*time.Second).Should(Equal(v1.PodPhase("Running")))
+
+				Expect(podList.Items[0].Spec.Containers[0].Image).To(Equal("nginx:1.14.2"))
+
+				By("recreating deleted artifacts")
+				kustomize = &kustomizev1.Kustomization{}
+				err := kClient.Get(context.Background(), client.ObjectKey{Name: kustomizeName, Namespace: namespace}, kustomize)
+				Expect(err).NotTo(HaveOccurred())
+				err = kClient.Delete(context.Background(), kustomize)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(func() bool {
+					kustomize = &kustomizev1.Kustomization{}
+					err := kClient.Get(context.Background(), client.ObjectKey{Name: kustomizeName, Namespace: namespace}, kustomize)
+					if err != nil {
+						return false
+					}
+					for _, condition := range kustomize.Status.Conditions {
+						if condition.Type == "Ready" && condition.Status == "True" {
+							return true
+						}
+					}
+					return false
+				}, 2*time.Minute, 5*time.Second).Should(BeTrue())
+
 				Eventually(func() v1.PodPhase {
 					podList = &v1.PodList{}
 					err := kClient.List(context.Background(), podList, kustomizeOpts...)

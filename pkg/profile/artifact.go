@@ -1,10 +1,8 @@
 package profile
 
 import (
-	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
@@ -24,9 +22,8 @@ type Status struct {
 	NotReadyConditions []metav1.Condition
 }
 
-// CreateArtifacts generate and creates the objects in the cluster to deploy the
-// profile
-func (p *Profile) CreateArtifacts(ctx context.Context) error {
+// ReconcileArtifacts ensures the artifact resources are applied to the cluster
+func (p *Profile) ReconcileArtifacts() error {
 	objs, err := p.MakeArtifacts()
 	if err != nil {
 		return err
@@ -37,19 +34,62 @@ func (p *Profile) CreateArtifacts(ctx context.Context) error {
 		if !ok {
 			return fmt.Errorf("object %v cannot be asserted to client.Object", o)
 		}
-		p.log.Info("creating...", "kind", obj.GetObjectKind().GroupVersionKind().Kind, "resource", obj.GetName())
-		if err := p.client.Create(ctx, obj); err != nil {
-			return fmt.Errorf("failed to create %s: %w", obj.GetObjectKind().GroupVersionKind().Kind, err)
+		if err := p.reconcileArtifact(obj); err != nil {
+			return err
 		}
 	}
 
 	p.log.Info("all artifacts created")
 	return nil
 }
+func (p *Profile) reconcileArtifact(desiredObj client.Object) error {
+	existingObj := desiredObj.DeepCopyObject().(client.Object)
+	err := p.client.Get(p.ctx, client.ObjectKeyFromObject(desiredObj), existingObj)
+	if err == nil {
+		return p.updateResource(existingObj, desiredObj)
+	}
+	if apierrors.IsNotFound(err) {
+		p.log.Info("creating...", "kind", desiredObj.GetObjectKind().GroupVersionKind().Kind, "resource", desiredObj.GetName())
+		if err := p.client.Create(p.ctx, desiredObj); err != nil {
+			return fmt.Errorf("failed to create %s: %w", desiredObj.GetObjectKind().GroupVersionKind().Kind, err)
+		}
+		return nil
+	}
+	return fmt.Errorf("failed to get resource %s %s/%s: %w", desiredObj.GetObjectKind().GroupVersionKind().Kind, desiredObj.GetNamespace(), desiredObj.GetName(), err)
+}
+
+func (p *Profile) updateResource(existingObj, desiredObj client.Object) error {
+	switch desiredObj := desiredObj.(type) {
+	case *sourcev1.GitRepository:
+		if !gitRepoRequiresUpdate(existingObj.(*sourcev1.GitRepository), desiredObj) {
+			return nil
+		}
+		existingObj.(*sourcev1.GitRepository).Spec = desiredObj.Spec
+	case *sourcev1.HelmRepository:
+		if !helmRepoRequiresUpdate(existingObj.(*sourcev1.HelmRepository), desiredObj) {
+			return nil
+		}
+		existingObj.(*sourcev1.HelmRepository).Spec = desiredObj.Spec
+	case *helmv2.HelmRelease:
+		if !helmReleaseRequiresUpdate(existingObj.(*helmv2.HelmRelease), desiredObj) {
+			return nil
+		}
+		existingObj.(*helmv2.HelmRelease).Spec = desiredObj.Spec
+	case *kustomizev1.Kustomization:
+		if !kustomizeRequiresUpdate(existingObj.(*kustomizev1.Kustomization), desiredObj) {
+			return nil
+		}
+		existingObj.(*kustomizev1.Kustomization).Spec = desiredObj.Spec
+	default:
+		return nil
+	}
+	p.log.Info(fmt.Sprintf("updating %s, %s", existingObj.GetObjectKind(), existingObj.GetName()))
+	return p.client.Update(p.ctx, existingObj)
+}
 
 // ArtifactStatus checks if the artifacts exists and returns any ready!=true conditions on the artifacts.
-func (p *Profile) ArtifactStatus(ctx context.Context) (Status, error) {
-	resourcesExist, objs, err := p.getResources(ctx)
+func (p *Profile) ArtifactStatus() (Status, error) {
+	resourcesExist, objs, err := p.getResources()
 	if err != nil {
 		return Status{}, err
 	}
@@ -93,7 +133,7 @@ func (p *Profile) checkResourcesReady(objs []runtime.Object) ([]metav1.Condition
 	return notReadyConditions, nil
 }
 
-func (p *Profile) getResources(ctx context.Context) (bool, []runtime.Object, error) {
+func (p *Profile) getResources() (bool, []runtime.Object, error) {
 	objs, err := p.MakeArtifacts()
 	if err != nil {
 		return false, nil, err
@@ -103,7 +143,7 @@ func (p *Profile) getResources(ctx context.Context) (bool, []runtime.Object, err
 		if !ok {
 			return false, nil, fmt.Errorf("object is not a client.Object %v", o)
 		}
-		if exists, err := p.getResourceIfExists(ctx, obj); !exists || err != nil {
+		if exists, err := p.getResourceIfExists(obj); !exists || err != nil {
 			return false, nil, err
 		}
 	}
@@ -119,8 +159,8 @@ func getNotReadyCondition(conditions []metav1.Condition) metav1.Condition {
 	return metav1.Condition{}
 }
 
-func (p *Profile) getResourceIfExists(ctx context.Context, res client.Object) (bool, error) {
-	if err := p.client.Get(ctx, client.ObjectKey{Name: res.GetName(), Namespace: res.GetNamespace()}, res); err != nil {
+func (p *Profile) getResourceIfExists(res client.Object) (bool, error) {
+	if err := p.client.Get(p.ctx, client.ObjectKey{Name: res.GetName(), Namespace: res.GetNamespace()}, res); err != nil {
 		if apierrors.IsNotFound(err) {
 			return false, nil
 		}
@@ -144,38 +184,19 @@ func (p *Profile) MakeOwnerlessArtifacts() ([]runtime.Object, error) {
 		}
 		switch artifact.Kind {
 		case profilesv1.HelmChartKind:
-			helmRes, err := p.makeHelmRelease(artifact)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create HelmRelease resource: %w", err)
-			}
-			objs = append(objs, helmRes)
+			objs = append(objs, p.makeHelmRelease(artifact))
 			if artifact.Path != "" && gitRes == nil {
 				// this resource is added at the end because it's generated once.
-				gitRes, err = p.makeGitRepository()
-				if err != nil {
-					return nil, fmt.Errorf("failed to create GitRepository resource: %w", err)
-				}
+				gitRes = p.makeGitRepository()
 			}
 			if artifact.Chart != nil {
-				helmRep, err := p.makeHelmRepository(artifact.Chart.URL, artifact.Chart.Name)
-				if err != nil {
-					return nil, fmt.Errorf("failed to create HelmRepository resource: %w", err)
-				}
-				objs = append(objs, helmRep)
+				objs = append(objs, p.makeHelmRepository(artifact.Chart.URL, artifact.Chart.Name))
 			}
 		case profilesv1.KustomizeKind:
-			kustomizeRes, err := p.makeKustomization(artifact)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create Kustomization resource: %w", err)
-			}
-			objs = append(objs, kustomizeRes)
-
+			objs = append(objs, p.makeKustomization(artifact))
 			if gitRes == nil {
 				// this resource is added at the end because it's generated once.
-				gitRes, err = p.makeGitRepository()
-				if err != nil {
-					return nil, fmt.Errorf("failed to create GitRepository resource: %w", err)
-				}
+				gitRes = p.makeGitRepository()
 			}
 		default:
 			return nil, fmt.Errorf("artifact kind %q not recognized", artifact.Kind)
@@ -209,130 +230,6 @@ func (p *Profile) MakeArtifacts() ([]runtime.Object, error) {
 	}
 
 	return objs, nil
-}
-
-func (p *Profile) makeGitRepository() (*sourcev1.GitRepository, error) {
-	gitRepo := &sourcev1.GitRepository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      p.makeGitRepoName(),
-			Namespace: p.subscription.ObjectMeta.Namespace,
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.GitRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
-		},
-		Spec: sourcev1.GitRepositorySpec{
-			URL: p.subscription.Spec.ProfileURL,
-			Reference: &sourcev1.GitRepositoryRef{
-				Branch: p.subscription.Spec.Branch,
-			},
-		},
-	}
-	return gitRepo, nil
-}
-
-func (p *Profile) makeHelmRepository(url string, name string) (*sourcev1.HelmRepository, error) {
-	helmRepo := &sourcev1.HelmRepository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      p.makeHelmRepoName(name),
-			Namespace: p.subscription.ObjectMeta.Namespace,
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
-		},
-		Spec: sourcev1.HelmRepositorySpec{
-			URL: url,
-		},
-	}
-	return helmRepo, nil
-}
-
-func (p *Profile) makeHelmRepoName(name string) string {
-	repoParts := strings.Split(p.subscription.Spec.ProfileURL, "/")
-	repoName := repoParts[len(repoParts)-1]
-	return join(p.subscription.Name, repoName, p.subscription.Spec.Branch, name)
-}
-
-func (p *Profile) makeHelmRelease(artifact profilesv1.Artifact) (*helmv2.HelmRelease, error) {
-	var helmChartSpec helmv2.HelmChartTemplateSpec
-	if artifact.Path != "" {
-		helmChartSpec = p.makeGitChartSpec(artifact.Path)
-	} else if artifact.Chart != nil {
-		helmChartSpec = p.makeHelmChartSpec(artifact.Chart.Name, artifact.Chart.Version)
-	}
-	helmRelease := &helmv2.HelmRelease{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      p.makeArtifactName(artifact.Name),
-			Namespace: p.subscription.ObjectMeta.Namespace,
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       helmv2.HelmReleaseKind,
-			APIVersion: helmv2.GroupVersion.String(),
-		},
-		Spec: helmv2.HelmReleaseSpec{
-			Chart: helmv2.HelmChartTemplate{
-				Spec: helmChartSpec,
-			},
-			Values:     p.subscription.Spec.Values,
-			ValuesFrom: p.subscription.Spec.ValuesFrom,
-		},
-	}
-	return helmRelease, nil
-}
-
-func (p *Profile) makeGitChartSpec(path string) helmv2.HelmChartTemplateSpec {
-	return helmv2.HelmChartTemplateSpec{
-		Chart: path,
-		SourceRef: helmv2.CrossNamespaceObjectReference{
-			Kind:      sourcev1.GitRepositoryKind,
-			Name:      p.makeGitRepoName(),
-			Namespace: p.subscription.ObjectMeta.Namespace,
-		},
-	}
-}
-
-func (p *Profile) makeHelmChartSpec(chart string, version string) helmv2.HelmChartTemplateSpec {
-	return helmv2.HelmChartTemplateSpec{
-		Chart: chart,
-		SourceRef: helmv2.CrossNamespaceObjectReference{
-			Kind:      sourcev1.HelmRepositoryKind,
-			Name:      p.makeHelmRepoName(chart),
-			Namespace: p.subscription.ObjectMeta.Namespace,
-		},
-		Version: version,
-	}
-}
-
-func (p *Profile) makeKustomization(artifact profilesv1.Artifact) (*kustomizev1.Kustomization, error) {
-	kustomization := &kustomizev1.Kustomization{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      p.makeArtifactName(artifact.Name),
-			Namespace: p.subscription.ObjectMeta.Namespace,
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       kustomizev1.KustomizationKind,
-			APIVersion: kustomizev1.GroupVersion.String(),
-		},
-		Spec: kustomizev1.KustomizationSpec{
-			Path:            artifact.Path,
-			Interval:        metav1.Duration{Duration: time.Minute * 5},
-			Prune:           true,
-			TargetNamespace: p.subscription.ObjectMeta.Namespace,
-			SourceRef: kustomizev1.CrossNamespaceSourceReference{
-				Kind:      sourcev1.GitRepositoryKind,
-				Name:      p.makeGitRepoName(),
-				Namespace: p.subscription.ObjectMeta.Namespace,
-			},
-		},
-	}
-	return kustomization, nil
-}
-
-func (p *Profile) makeGitRepoName() string {
-	repoParts := strings.Split(p.subscription.Spec.ProfileURL, "/")
-	repoName := repoParts[len(repoParts)-1]
-	return join(p.subscription.Name, repoName, p.subscription.Spec.Branch)
 }
 
 func (p *Profile) makeArtifactName(name string) string {

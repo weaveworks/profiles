@@ -1,6 +1,8 @@
 package profile
 
 import (
+	"context"
+
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -14,14 +16,16 @@ type Profile struct {
 	subscription profilesv1.ProfileSubscription
 	client       client.Client
 	log          logr.Logger
+	ctx          context.Context
 }
 
 // New returns a new Profile object
-func New(def profilesv1.ProfileDefinition, sub profilesv1.ProfileSubscription, client client.Client, log logr.Logger) *Profile {
+func New(ctx context.Context, def profilesv1.ProfileDefinition, sub profilesv1.ProfileSubscription, client client.Client, log logr.Logger) *Profile {
 	return &Profile{
 		definition:   def,
 		subscription: sub,
 		client:       client,
 		log:          log,
+		ctx:          ctx,
 	}
 }

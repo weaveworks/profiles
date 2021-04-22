@@ -11,6 +11,7 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -139,7 +140,7 @@ var _ = Describe("Profile", func() {
 			Expect(helmv2.AddToScheme(scheme)).To(Succeed())
 			Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 
-			p = profile.New(pDef, pSub, fakeClient, logr.Discard())
+			p = profile.New(ctx, pDef, pSub, fakeClient, logr.Discard())
 			o, err := p.MakeArtifacts()
 			Expect(err).NotTo(HaveOccurred())
 
@@ -161,7 +162,7 @@ var _ = Describe("Profile", func() {
 			Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 			Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
 
-			p = profile.New(pDef, pSub, fakeClient, logr.Discard())
+			p = profile.New(ctx, pDef, pSub, fakeClient, logr.Discard())
 			o, err := p.MakeArtifacts()
 			Expect(err).NotTo(HaveOccurred())
 
@@ -186,7 +187,7 @@ var _ = Describe("Profile", func() {
 
 	Describe("ArtifactStatus", func() {
 		BeforeEach(func() {
-			p = profile.New(pDef, pSub, fakeClient, logr.Discard())
+			p = profile.New(ctx, pDef, pSub, fakeClient, logr.Discard())
 		})
 
 		When("the artifact exists", func() {
@@ -260,7 +261,7 @@ var _ = Describe("Profile", func() {
 
 			When("the artifacts are all ready=true", func() {
 				It("returns empty condition", func() {
-					status, err := p.ArtifactStatus(ctx)
+					status, err := p.ArtifactStatus()
 					Expect(err).NotTo(HaveOccurred())
 					Expect(status.ResourcesExist).To(BeTrue())
 					Expect(status.NotReadyConditions).To(HaveLen(0))
@@ -281,7 +282,7 @@ var _ = Describe("Profile", func() {
 				})
 
 				It("returns the ready=false condition", func() {
-					status, err := p.ArtifactStatus(ctx)
+					status, err := p.ArtifactStatus()
 					Expect(err).NotTo(HaveOccurred())
 					Expect(status.ResourcesExist).To(BeTrue())
 					Expect(status.NotReadyConditions).To(HaveLen(1))
@@ -308,7 +309,7 @@ var _ = Describe("Profile", func() {
 				})
 
 				It("returns the ready=unknown condition", func() {
-					status, err := p.ArtifactStatus(ctx)
+					status, err := p.ArtifactStatus()
 					Expect(err).NotTo(HaveOccurred())
 					Expect(status.ResourcesExist).To(BeTrue())
 					//The GET returned from k8sclient mutatates the time format
@@ -327,265 +328,259 @@ var _ = Describe("Profile", func() {
 				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
 				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 
-				status, err := p.ArtifactStatus(ctx)
+				status, err := p.ArtifactStatus()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(status.ResourcesExist).To(BeFalse())
 			})
 		})
 	})
 
-	Describe("CreateArtifacts", func() {
-		When("the profile consists of a HelmChart and Kustomize artifact", func() {
-			It("creates the helm, kustomize and gitrepo resources with the correct owner", func() {
+	Describe("ReconcileArtifacts", func() {
+		assertResources := func() {
+			gitRefName := fmt.Sprintf("%s-%s-%s", subscriptionName, "repo-name", branch)
+			gitRepo := sourcev1.GitRepository{}
+			err := fakeClient.Get(ctx, client.ObjectKey{Name: gitRefName, Namespace: namespace}, &gitRepo)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(gitRepo.Spec.URL).To(Equal("https://github.com/org/repo-name"))
+			Expect(gitRepo.Spec.Reference.Branch).To(Equal(branch))
+			Expect(gitRepo.OwnerReferences).To(HaveLen(1))
+			Expect(gitRepo.OwnerReferences[0].Name).To(Equal(subscriptionName))
+			Expect(gitRepo.OwnerReferences[0].Kind).To(Equal(profileSubKind))
+			Expect(gitRepo.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
+			Expect(*gitRepo.OwnerReferences[0].Controller).To(BeTrue())
+
+			helmReleaseName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, chartName1)
+			helmRelease := helmv2.HelmRelease{}
+			err = fakeClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(helmRelease.Spec.Chart.Spec.Chart).To(Equal(chartPath1))
+			Expect(helmRelease.Spec.Chart.Spec.SourceRef).To(Equal(
+				helmv2.CrossNamespaceObjectReference{
+					Kind:      "GitRepository",
+					Name:      gitRefName,
+					Namespace: namespace,
+				},
+			))
+			Expect(helmRelease.GetValues()).To(Equal(map[string]interface{}{
+				"replicaCount": float64(3),
+				"service": map[string]interface{}{
+					"port": float64(8081),
+				},
+			}))
+			Expect(helmRelease.Spec.ValuesFrom).To(Equal([]helmv2.ValuesReference{
+				{
+					Name:     "nginx-values",
+					Kind:     "Secret",
+					Optional: true,
+				},
+			}))
+			Expect(helmRelease.OwnerReferences).To(HaveLen(1))
+			Expect(helmRelease.OwnerReferences[0].Name).To(Equal(subscriptionName))
+			Expect(helmRelease.OwnerReferences[0].Kind).To(Equal(profileSubKind))
+			Expect(helmRelease.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
+			Expect(*helmRelease.OwnerReferences[0].Controller).To(BeTrue())
+
+			helmReleaseName = fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, chartName2)
+			helmRelease = helmv2.HelmRelease{}
+			err = fakeClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(helmRelease.Spec.Chart.Spec.Chart).To(Equal(chartPath2))
+			Expect(helmRelease.Spec.Chart.Spec.SourceRef).To(Equal(
+				helmv2.CrossNamespaceObjectReference{
+					Kind:      "GitRepository",
+					Name:      gitRefName,
+					Namespace: namespace,
+				},
+			))
+			Expect(helmRelease.GetValues()).To(Equal(map[string]interface{}{
+				"replicaCount": float64(3),
+				"service": map[string]interface{}{
+					"port": float64(8081),
+				},
+			}))
+			Expect(helmRelease.Spec.ValuesFrom).To(Equal([]helmv2.ValuesReference{
+				{
+					Name:     "nginx-values",
+					Kind:     "Secret",
+					Optional: true,
+				},
+			}))
+			Expect(helmRelease.OwnerReferences).To(HaveLen(1))
+			Expect(helmRelease.OwnerReferences[0].Name).To(Equal(subscriptionName))
+			Expect(helmRelease.OwnerReferences[0].Kind).To(Equal(profileSubKind))
+			Expect(helmRelease.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
+			Expect(*helmRelease.OwnerReferences[0].Controller).To(BeTrue())
+
+			kustomizeName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, kustomizeName1)
+			kustomize := kustomizev1.Kustomization{}
+			err = fakeClient.Get(ctx, client.ObjectKey{Name: kustomizeName, Namespace: namespace}, &kustomize)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(kustomize.Spec.Path).To(Equal(kustomizePath1))
+			Expect(kustomize.Spec.TargetNamespace).To(Equal(namespace))
+			Expect(kustomize.Spec.Prune).To(BeTrue())
+			Expect(kustomize.Spec.Interval).To(Equal(metav1.Duration{Duration: time.Minute * 5}))
+			Expect(kustomize.Spec.SourceRef).To(Equal(
+				kustomizev1.CrossNamespaceSourceReference{
+					Kind:      "GitRepository",
+					Name:      gitRefName,
+					Namespace: namespace,
+				},
+			))
+			Expect(kustomize.OwnerReferences).To(HaveLen(1))
+			Expect(kustomize.OwnerReferences[0].Name).To(Equal(subscriptionName))
+			Expect(kustomize.OwnerReferences[0].Kind).To(Equal(profileSubKind))
+			Expect(kustomize.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
+			Expect(*kustomize.OwnerReferences[0].Controller).To(BeTrue())
+
+			kustomizeName = fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, kustomizeName2)
+			kustomize = kustomizev1.Kustomization{}
+			err = fakeClient.Get(ctx, client.ObjectKey{Name: kustomizeName, Namespace: namespace}, &kustomize)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(kustomize.Spec.Path).To(Equal(kustomizePath2))
+			Expect(kustomize.Spec.TargetNamespace).To(Equal(namespace))
+			Expect(kustomize.Spec.Prune).To(BeTrue())
+			Expect(kustomize.Spec.Interval).To(Equal(metav1.Duration{Duration: time.Minute * 5}))
+			Expect(kustomize.Spec.SourceRef).To(Equal(
+				kustomizev1.CrossNamespaceSourceReference{
+					Kind:      "GitRepository",
+					Name:      gitRefName,
+					Namespace: namespace,
+				},
+			))
+			Expect(kustomize.OwnerReferences).To(HaveLen(1))
+			Expect(kustomize.OwnerReferences[0].Name).To(Equal(subscriptionName))
+			Expect(kustomize.OwnerReferences[0].Kind).To(Equal(profileSubKind))
+			Expect(kustomize.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
+			Expect(*kustomize.OwnerReferences[0].Controller).To(BeTrue())
+
+			helmRefName := fmt.Sprintf("%s-%s-%s-%s", subscriptionName, "repo-name", branch, helmChartChart1)
+			helmRepo := sourcev1.HelmRepository{}
+			err = fakeClient.Get(ctx, client.ObjectKey{Name: helmRefName, Namespace: namespace}, &helmRepo)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(helmRepo.Spec.URL).To(Equal(helmChartURL1))
+			Expect(helmRepo.OwnerReferences).To(HaveLen(1))
+			Expect(helmRepo.OwnerReferences[0].Name).To(Equal(subscriptionName))
+			Expect(helmRepo.OwnerReferences[0].Kind).To(Equal(profileSubKind))
+			Expect(helmRepo.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
+			Expect(*helmRepo.OwnerReferences[0].Controller).To(BeTrue())
+
+			helmReleaseName = fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, helmChartName1)
+			helmRelease = helmv2.HelmRelease{}
+			err = fakeClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(helmRelease.Spec.Chart.Spec.Chart).To(Equal(helmChartChart1))
+			Expect(helmRelease.Spec.Chart.Spec.Version).To(Equal(helmChartVersion1))
+			Expect(helmRelease.Spec.Chart.Spec.SourceRef).To(Equal(
+				helmv2.CrossNamespaceObjectReference{
+					Kind:      "HelmRepository",
+					Name:      helmRefName,
+					Namespace: namespace,
+				},
+			))
+			Expect(helmRelease.GetValues()).To(Equal(map[string]interface{}{
+				"replicaCount": float64(3),
+				"service": map[string]interface{}{
+					"port": float64(8081),
+				},
+			}))
+			Expect(helmRelease.Spec.ValuesFrom).To(Equal([]helmv2.ValuesReference{
+				{
+					Name:     "nginx-values",
+					Kind:     "Secret",
+					Optional: true,
+				},
+			}))
+			Expect(helmRelease.OwnerReferences).To(HaveLen(1))
+			Expect(helmRelease.OwnerReferences[0].Name).To(Equal(subscriptionName))
+			Expect(helmRelease.OwnerReferences[0].Kind).To(Equal(profileSubKind))
+			Expect(helmRelease.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
+			Expect(*helmRelease.OwnerReferences[0].Controller).To(BeTrue())
+
+			Expect(*helmRelease.OwnerReferences[0].Controller).To(BeTrue())
+		}
+
+		DescribeTable("ReconcileArtifacts",
+			func(modifyExistingResources func()) {
 				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
 				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
 				Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
 				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 
-				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
-				err := p.CreateArtifacts(ctx)
-				Expect(err).NotTo(HaveOccurred())
+				p = profile.New(ctx, pDef, pSub, fakeClient, logr.Discard())
 
+				By("creating the resources when none exists")
+				err := p.ReconcileArtifacts()
+				Expect(err).NotTo(HaveOccurred())
+				assertResources()
+
+				By("updating the resources when they become out of sync or deleted")
+				modifyExistingResources()
+
+				err = p.ReconcileArtifacts()
+				Expect(err).NotTo(HaveOccurred())
+				assertResources()
+			},
+			Entry("resource gets deleted", func() {
 				gitRefName := fmt.Sprintf("%s-%s-%s", subscriptionName, "repo-name", branch)
 				gitRepo := sourcev1.GitRepository{}
-				err = fakeClient.Get(ctx, client.ObjectKey{Name: gitRefName, Namespace: namespace}, &gitRepo)
+				err := fakeClient.Get(ctx, client.ObjectKey{Name: gitRefName, Namespace: namespace}, &gitRepo)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(gitRepo.Spec.URL).To(Equal("https://github.com/org/repo-name"))
-				Expect(gitRepo.Spec.Reference.Branch).To(Equal(branch))
-				Expect(gitRepo.OwnerReferences).To(HaveLen(1))
-				Expect(gitRepo.OwnerReferences[0].Name).To(Equal(subscriptionName))
-				Expect(gitRepo.OwnerReferences[0].Kind).To(Equal(profileSubKind))
-				Expect(gitRepo.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
-				Expect(*gitRepo.OwnerReferences[0].Controller).To(BeTrue())
-
+				err = fakeClient.Delete(ctx, &gitRepo)
+				Expect(err).NotTo(HaveOccurred())
+			}),
+			Entry("git resource gets out of sync", func() {
+				gitRefName := fmt.Sprintf("%s-%s-%s", subscriptionName, "repo-name", branch)
+				gitRepo := sourcev1.GitRepository{}
+				err := fakeClient.Get(ctx, client.ObjectKey{Name: gitRefName, Namespace: namespace}, &gitRepo)
+				Expect(err).NotTo(HaveOccurred())
+				gitRepo.Spec.URL = "example.com"
+				Expect(fakeClient.Update(ctx, &gitRepo)).To(Succeed())
+			}),
+			Entry("kustomize resource gets out of sync", func() {
+				kustomizeName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, kustomizeName2)
+				kustomize := kustomizev1.Kustomization{}
+				err := fakeClient.Get(ctx, client.ObjectKey{Name: kustomizeName, Namespace: namespace}, &kustomize)
+				Expect(err).NotTo(HaveOccurred())
+				kustomize.Spec.Path = "new/path"
+				Expect(fakeClient.Update(ctx, &kustomize)).To(Succeed())
+			}),
+			Entry("helmrelease resource gets out of sync", func() {
 				helmReleaseName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, chartName1)
 				helmRelease := helmv2.HelmRelease{}
-				err = fakeClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
+				err := fakeClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(helmRelease.Spec.Chart.Spec.Chart).To(Equal(chartPath1))
-				Expect(helmRelease.Spec.Chart.Spec.SourceRef).To(Equal(
-					helmv2.CrossNamespaceObjectReference{
-						Kind:      "GitRepository",
-						Name:      gitRefName,
-						Namespace: namespace,
-					},
-				))
-				Expect(helmRelease.GetValues()).To(Equal(map[string]interface{}{
-					"replicaCount": float64(3),
-					"service": map[string]interface{}{
-						"port": float64(8081),
-					},
-				}))
-				Expect(helmRelease.Spec.ValuesFrom).To(Equal([]helmv2.ValuesReference{
-					{
-						Name:     "nginx-values",
-						Kind:     "Secret",
-						Optional: true,
-					},
-				}))
-				Expect(helmRelease.OwnerReferences).To(HaveLen(1))
-				Expect(helmRelease.OwnerReferences[0].Name).To(Equal(subscriptionName))
-				Expect(helmRelease.OwnerReferences[0].Kind).To(Equal(profileSubKind))
-				Expect(helmRelease.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
-				Expect(*helmRelease.OwnerReferences[0].Controller).To(BeTrue())
-
-				helmReleaseName = fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, chartName2)
-				helmRelease = helmv2.HelmRelease{}
-				err = fakeClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(helmRelease.Spec.Chart.Spec.Chart).To(Equal(chartPath2))
-				Expect(helmRelease.Spec.Chart.Spec.SourceRef).To(Equal(
-					helmv2.CrossNamespaceObjectReference{
-						Kind:      "GitRepository",
-						Name:      gitRefName,
-						Namespace: namespace,
-					},
-				))
-				Expect(helmRelease.GetValues()).To(Equal(map[string]interface{}{
-					"replicaCount": float64(3),
-					"service": map[string]interface{}{
-						"port": float64(8081),
-					},
-				}))
-				Expect(helmRelease.Spec.ValuesFrom).To(Equal([]helmv2.ValuesReference{
-					{
-						Name:     "nginx-values",
-						Kind:     "Secret",
-						Optional: true,
-					},
-				}))
-				Expect(helmRelease.OwnerReferences).To(HaveLen(1))
-				Expect(helmRelease.OwnerReferences[0].Name).To(Equal(subscriptionName))
-				Expect(helmRelease.OwnerReferences[0].Kind).To(Equal(profileSubKind))
-				Expect(helmRelease.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
-				Expect(*helmRelease.OwnerReferences[0].Controller).To(BeTrue())
-
-				kustomizeName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, kustomizeName1)
-				kustomize := kustomizev1.Kustomization{}
-				err = fakeClient.Get(ctx, client.ObjectKey{Name: kustomizeName, Namespace: namespace}, &kustomize)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(kustomize.Spec.Path).To(Equal(kustomizePath1))
-				Expect(kustomize.Spec.TargetNamespace).To(Equal(namespace))
-				Expect(kustomize.Spec.Prune).To(BeTrue())
-				Expect(kustomize.Spec.Interval).To(Equal(metav1.Duration{Duration: time.Minute * 5}))
-				Expect(kustomize.Spec.SourceRef).To(Equal(
-					kustomizev1.CrossNamespaceSourceReference{
-						Kind:      "GitRepository",
-						Name:      gitRefName,
-						Namespace: namespace,
-					},
-				))
-				Expect(kustomize.OwnerReferences).To(HaveLen(1))
-				Expect(kustomize.OwnerReferences[0].Name).To(Equal(subscriptionName))
-				Expect(kustomize.OwnerReferences[0].Kind).To(Equal(profileSubKind))
-				Expect(kustomize.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
-				Expect(*kustomize.OwnerReferences[0].Controller).To(BeTrue())
-
-				kustomizeName = fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, kustomizeName2)
-				kustomize = kustomizev1.Kustomization{}
-				err = fakeClient.Get(ctx, client.ObjectKey{Name: kustomizeName, Namespace: namespace}, &kustomize)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(kustomize.Spec.Path).To(Equal(kustomizePath2))
-				Expect(kustomize.Spec.TargetNamespace).To(Equal(namespace))
-				Expect(kustomize.Spec.Prune).To(BeTrue())
-				Expect(kustomize.Spec.Interval).To(Equal(metav1.Duration{Duration: time.Minute * 5}))
-				Expect(kustomize.Spec.SourceRef).To(Equal(
-					kustomizev1.CrossNamespaceSourceReference{
-						Kind:      "GitRepository",
-						Name:      gitRefName,
-						Namespace: namespace,
-					},
-				))
-				Expect(kustomize.OwnerReferences).To(HaveLen(1))
-				Expect(kustomize.OwnerReferences[0].Name).To(Equal(subscriptionName))
-				Expect(kustomize.OwnerReferences[0].Kind).To(Equal(profileSubKind))
-				Expect(kustomize.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
-				Expect(*kustomize.OwnerReferences[0].Controller).To(BeTrue())
-			})
-		})
-
-		When("the profile consists of a HelmChart and HelmRepository artifact", func() {
-			It("creates the helmrelease and helmrepo resources with the correct owner", func() {
-				pDef = profilesv1.ProfileDefinition{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: profileName,
-					},
-					TypeMeta: metav1.TypeMeta{
-						Kind:       "Profile",
-						APIVersion: "profiles.fluxcd.io/profilesv1",
-					},
-					Spec: profilesv1.ProfileDefinitionSpec{
-						Description: "foo",
-						Artifacts: []profilesv1.Artifact{
-							{
-								Name: helmChartName1,
-								Chart: &profilesv1.Chart{
-									URL:     helmChartURL1,
-									Name:    helmChartChart1,
-									Version: helmChartVersion1,
-								},
-								Kind: profilesv1.HelmChartKind,
-							},
-						},
-					},
-				}
-
-				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
-				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
-				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
-
-				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
-				err := p.CreateArtifacts(ctx)
-				Expect(err).NotTo(HaveOccurred())
-
+				helmRelease.Spec.Chart.Spec.Chart = "new chart"
+				Expect(fakeClient.Update(ctx, &helmRelease)).To(Succeed())
+			}),
+			Entry("helmrepo resource gets out of sync", func() {
 				helmRefName := fmt.Sprintf("%s-%s-%s-%s", subscriptionName, "repo-name", branch, helmChartChart1)
 				helmRepo := sourcev1.HelmRepository{}
-				err = fakeClient.Get(ctx, client.ObjectKey{Name: helmRefName, Namespace: namespace}, &helmRepo)
+				err := fakeClient.Get(ctx, client.ObjectKey{Name: helmRefName, Namespace: namespace}, &helmRepo)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(helmRepo.Spec.URL).To(Equal(helmChartURL1))
-				Expect(helmRepo.OwnerReferences).To(HaveLen(1))
-				Expect(helmRepo.OwnerReferences[0].Name).To(Equal(subscriptionName))
-				Expect(helmRepo.OwnerReferences[0].Kind).To(Equal(profileSubKind))
-				Expect(helmRepo.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
-				Expect(*helmRepo.OwnerReferences[0].Controller).To(BeTrue())
-
-				helmReleaseName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, helmChartName1)
-				helmRelease := helmv2.HelmRelease{}
-				err = fakeClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(helmRelease.Spec.Chart.Spec.Chart).To(Equal(helmChartChart1))
-				Expect(helmRelease.Spec.Chart.Spec.Version).To(Equal(helmChartVersion1))
-				Expect(helmRelease.Spec.Chart.Spec.SourceRef).To(Equal(
-					helmv2.CrossNamespaceObjectReference{
-						Kind:      "HelmRepository",
-						Name:      helmRefName,
-						Namespace: namespace,
-					},
-				))
-				Expect(helmRelease.GetValues()).To(Equal(map[string]interface{}{
-					"replicaCount": float64(3),
-					"service": map[string]interface{}{
-						"port": float64(8081),
-					},
-				}))
-				Expect(helmRelease.Spec.ValuesFrom).To(Equal([]helmv2.ValuesReference{
-					{
-						Name:     "nginx-values",
-						Kind:     "Secret",
-						Optional: true,
-					},
-				}))
-				Expect(helmRelease.OwnerReferences).To(HaveLen(1))
-				Expect(helmRelease.OwnerReferences[0].Name).To(Equal(subscriptionName))
-				Expect(helmRelease.OwnerReferences[0].Kind).To(Equal(profileSubKind))
-				Expect(helmRelease.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
-				Expect(*helmRelease.OwnerReferences[0].Controller).To(BeTrue())
-
-				Expect(*helmRelease.OwnerReferences[0].Controller).To(BeTrue())
-			})
-		})
+				helmRepo.Spec.URL = "example.com/new"
+				Expect(fakeClient.Update(ctx, &helmRepo)).To(Succeed())
+			}),
+		)
 
 		When("setting the resource owner fails", func() {
 			It("errors", func() {
 				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
-				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
-				err := p.CreateArtifacts(ctx)
+				p = profile.New(ctx, pDef, pSub, fakeClient, logr.Discard())
+				err := p.ReconcileArtifacts()
 				Expect(err).To(MatchError(ContainSubstring("failed to set resource ownership")))
 			})
 		})
 
-		When("the GitRepository create fails", func() {
+		When("getting the resource fails", func() {
 			It("errors", func() {
 				// this is a bit of a hack, but by not adding this resource to the scheme
 				// we can force the Create call to fail
 				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
 				Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
 				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
-				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
-				err := p.CreateArtifacts(ctx)
-				Expect(err).To(MatchError(ContainSubstring("failed to create GitRepository: no kind is registered for the type v1beta1.GitRepository in scheme")))
-			})
-		})
-
-		When("the HelmRelease create fails", func() {
-			It("errors", func() {
-				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
-				Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
-				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
-				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
-				err := p.CreateArtifacts(ctx)
-				Expect(err).To(MatchError(ContainSubstring("failed to create HelmRelease: no kind is registered for the type v2beta1.HelmRelease in scheme")))
-			})
-		})
-
-		When("the Kustomization create fails", func() {
-			It("errors", func() {
-				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
-				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
-				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
-				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
-				err := p.CreateArtifacts(ctx)
-				Expect(err).To(MatchError(ContainSubstring("failed to create Kustomization: no kind is registered for the type v1beta1.Kustomization in scheme")))
+				p = profile.New(ctx, pDef, pSub, fakeClient, logr.Discard())
+				err := p.ReconcileArtifacts()
+				Expect(err).To(MatchError(ContainSubstring("failed to get resource")))
 			})
 		})
 
@@ -597,8 +592,8 @@ var _ = Describe("Profile", func() {
 			It("errors", func() {
 				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
 				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
-				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
-				err := p.CreateArtifacts(ctx)
+				p = profile.New(ctx, pDef, pSub, fakeClient, logr.Discard())
+				err := p.ReconcileArtifacts()
 				Expect(err).To(MatchError(ContainSubstring("artifact kind \"SomeUnknownKind\" not recognized")))
 			})
 		})
@@ -634,8 +629,8 @@ var _ = Describe("Profile", func() {
 						},
 					},
 				}
-				p = profile.New(pDef, pSub, fakeClient, logr.Discard())
-				err := p.CreateArtifacts(ctx)
+				p = profile.New(ctx, pDef, pSub, fakeClient, logr.Discard())
+				err := p.ReconcileArtifacts()
 				Expect(err).To(MatchError(ContainSubstring("validation failed for artifact helmChartArtifactName1: expected exactly one, got both: chart, path")))
 			})
 		})
