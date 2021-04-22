@@ -338,6 +338,10 @@ var _ = Describe("Acceptance", func() {
 
 		Context("delete", func() {
 			It("clears the in-memory cache when a ProfileCatalogSource is deleted", func() {
+				description, err := getProfile(profileName)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(description).To(Equal(expectedNginx1))
+
 				Expect(kClient.Delete(context.Background(), &pCatalog)).To(Succeed())
 				Eventually(func() error {
 					_, err := getProfile(profileName)
