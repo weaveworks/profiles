@@ -40,7 +40,7 @@ var _ = Describe("Acceptance", func() {
 
 		BeforeEach(func() {
 			profileURL = "https://github.com/weaveworks/nginx-profile"
-			branch = "main"
+			branch = "move-helm-to-nested"
 
 			namespace = uuid.New().String()
 			nsp = v1.Namespace{

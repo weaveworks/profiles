@@ -5,4 +5,4 @@ metadata:
   namespace: default
 spec:
   profileURL: https://github.com/weaveworks/nginx-profile
-  branch: main
+  branch: move-helm-to-nested

@@ -27,6 +27,9 @@ const HelmChartKind = "HelmChart"
 // KustomizeKind defines a kind containing kustomize yaml files for an artifact.
 const KustomizeKind = "Kustomize"
 
+// ProfileKind defines the kind of a profile artifact
+const ProfileKind = "Profile"
+
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 // NOTE: Run "make" to regenerate code after modifying this file
 
@@ -53,12 +56,21 @@ type Artifact struct {
 	// This is an optional value. It is ignored in case Path is defined.
 	// +optional
 	Chart *Chart `json:"chart,omitempty"`
+	// Profiles defines properties to access a remote profile.
+	// +optional
+	Profile *Profile `json:"profile,omitempty"`
 }
 
 // Validate will validate Artifacts properties.
 func (in Artifact) Validate() error {
 	if in.Chart != nil && in.Path != "" {
 		return apis.ErrMultipleOneOf("chart", "path")
+	}
+	if in.Chart != nil && in.Profile != nil {
+		return apis.ErrMultipleOneOf("chart", "profile")
+	}
+	if in.Profile != nil && in.Path != "" {
+		return apis.ErrMultipleOneOf("profile", "path")
 	}
 	return nil
 }
@@ -71,6 +83,14 @@ type Chart struct {
 	Name string `json:"name,omitempty"`
 	// Version defines the version of the chart at the remote repository
 	Version string `json:"version,omitempty"`
+}
+
+// Chart defines properties to access remote helm charts.
+type Profile struct {
+	// URL is the URL of the profile
+	URL string `json:"url,omitempty"`
+	// Branch is the branch in the git repository the profile lives in
+	Branch string `json:"branch,omitempty"`
 }
 
 // ProfileDefinitionStatus defines the observed state of ProfileDefinition
