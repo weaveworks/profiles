@@ -15,16 +15,16 @@ func New() Catalog {
 }
 
 // Update updates the catalog by replacing existing profiles with new profiles
-func (c Catalog) Update(catalogName string, profiles ...profilesv1.ProfileDescription) {
+func (c Catalog) Update(sourceName string, profiles ...profilesv1.ProfileDescription) {
 	for i := range profiles {
-		profiles[i].CatalogSource = catalogName
+		profiles[i].Catalog = sourceName
 	}
-	c[catalogName] = profiles
+	c[sourceName] = profiles
 }
 
 // Remove removes the specified catalog.
-func (c Catalog) Remove(catalogName string) {
-	delete(c, catalogName)
+func (c Catalog) Remove(sourceName string) {
+	delete(c, sourceName)
 }
 
 // Search returns profile descriptions that contain `name` in their names.
@@ -42,10 +42,10 @@ func (c Catalog) Search(name string) []profilesv1.ProfileDescription {
 }
 
 // Get returns the profile description `profileName`.
-func (c Catalog) Get(catalogName, profileName string) profilesv1.ProfileDescription {
-	profiles := c[catalogName]
+func (c Catalog) Get(sourceName, profileName string) profilesv1.ProfileDescription {
+	profiles := c[sourceName]
 	for _, p := range profiles {
-		if p.Name == profileName && p.CatalogSource == catalogName {
+		if p.Name == profileName && p.Catalog == sourceName {
 			return p
 		}
 	}

@@ -51,20 +51,20 @@ var _ = Describe("Api", func() {
 
 	Context("/profiles/catalog/profile-name", func() {
 		var (
-			catalogName, profileName string
+			sourceName, profileName string
 		)
 
 		BeforeEach(func() {
-			catalogName, profileName = "catalog", "nginx-1"
+			sourceName, profileName = "catalog", "nginx-1"
 			profileCatalog = catalog.New()
-			profileCatalog.Update(catalogName, profilesv1.ProfileDescription{Name: profileName, Description: "nginx 1"})
+			profileCatalog.Update(sourceName, profilesv1.ProfileDescription{Name: profileName, Description: "nginx 1"})
 			catalogAPI = api.New(profileCatalog)
 		})
 
 		When("the requested profile exists", func() {
 			It("returns the profile summary from the catalog", func() {
 				req, err := http.NewRequest("GET", "/profiles", nil)
-				req = mux.SetURLVars(req, map[string]string{"catalog": catalogName, "profile": profileName})
+				req = mux.SetURLVars(req, map[string]string{"catalog": sourceName, "profile": profileName})
 				Expect(err).NotTo(HaveOccurred())
 
 				rr := httptest.NewRecorder()

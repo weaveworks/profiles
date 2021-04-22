@@ -38,8 +38,8 @@ func (a *API) ProfilesHandler(w http.ResponseWriter, r *http.Request) {
 
 // ProfileHandler is the handler for /profiles/{catalog}/{profile} requests.
 func (a *API) ProfileHandler(w http.ResponseWriter, r *http.Request) {
-	catalogName, profileName := mux.Vars(r)["catalog"], mux.Vars(r)["profile"]
-	marshalResponse(w, a.profileCatalog.Get(catalogName, profileName))
+	sourceName, profileName := mux.Vars(r)["catalog"], mux.Vars(r)["profile"]
+	marshalResponse(w, a.profileCatalog.Get(sourceName, profileName))
 }
 
 func marshalResponse(w http.ResponseWriter, v interface{}) {

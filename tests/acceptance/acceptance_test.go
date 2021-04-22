@@ -207,20 +207,20 @@ var _ = Describe("Acceptance", func() {
 
 	Context("ProfileCatalog", func() {
 		var (
-			pCatalog                 profilesv1.ProfileCatalogSource
-			expectedNginx1           profilesv1.ProfileDescription
-			catalogName, profileName string
+			pCatalog                profilesv1.ProfileCatalogSource
+			expectedNginx1          profilesv1.ProfileDescription
+			sourceName, profileName string
 		)
 
 		BeforeEach(func() {
-			catalogName, profileName = "catalog", "nginx-1"
+			sourceName, profileName = "catalog", "nginx-1"
 			pCatalog = profilesv1.ProfileCatalogSource{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ProfileCatalogSource",
 					APIVersion: profileSubscriptionAPIVersion,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      catalogName,
+					Name:      sourceName,
 					Namespace: "default",
 				},
 				Spec: profilesv1.ProfileCatalogSourceSpec{
@@ -249,7 +249,7 @@ var _ = Describe("Acceptance", func() {
 			expectedNginx1 = profilesv1.ProfileDescription{
 				Name:          profileName,
 				Description:   "nginx 1",
-				CatalogSource: catalogName,
+				Catalog:       sourceName,
 				Version:       "0.0.1",
 				URL:           "foo.com/bar",
 				Maintainer:    "my aunt ethel",
@@ -281,16 +281,16 @@ var _ = Describe("Acceptance", func() {
 				}).Should(ConsistOf(
 					expectedNginx1,
 					profilesv1.ProfileDescription{
-						Name:          "nginx-2",
-						Description:   "nginx 1",
-						CatalogSource: catalogName,
+						Name:        "nginx-2",
+						Description: "nginx 1",
+						Catalog:     sourceName,
 					},
 				))
 			})
 		})
 
 		getProfile := func(profileName string) (profilesv1.ProfileDescription, error) {
-			resp, err := http.Get(fmt.Sprintf("http://localhost:8000/profiles/%s/%s", catalogName, profileName))
+			resp, err := http.Get(fmt.Sprintf("http://localhost:8000/profiles/%s/%s", sourceName, profileName))
 			if err != nil {
 				return profilesv1.ProfileDescription{}, err
 			}
@@ -331,7 +331,7 @@ var _ = Describe("Acceptance", func() {
 				}).Should(Equal(profilesv1.ProfileDescription{
 					Name:        "new-profile",
 					Description: "I am new here",
-					Catalog:     catalogName,
+					Catalog:     sourceName,
 				}))
 			})
 		})
