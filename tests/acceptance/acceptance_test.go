@@ -249,7 +249,7 @@ var _ = Describe("Acceptance", func() {
 			expectedNginx1 = profilesv1.ProfileDescription{
 				Name:          profileName,
 				Description:   "nginx 1",
-				Catalog:       catalogName,
+				CatalogSource: catalogName,
 				Version:       "0.0.1",
 				URL:           "foo.com/bar",
 				Maintainer:    "my aunt ethel",
@@ -281,9 +281,9 @@ var _ = Describe("Acceptance", func() {
 				}).Should(ConsistOf(
 					expectedNginx1,
 					profilesv1.ProfileDescription{
-						Name:        "nginx-2",
-						Description: "nginx 1",
-						Catalog:     catalogName,
+						Name:          "nginx-2",
+						Description:   "nginx 1",
+						CatalogSource: catalogName,
 					},
 				))
 			})
