@@ -43,7 +43,7 @@ spec:
                   description: ProfileDescription defines details about a given profile.
                   properties:
                     catalog:
-                      description: Catalog is the name of the catalog the profile
+                      description: CatalogSource is the name of the catalog the profile
                         is listed in
                       type: string
                     description:

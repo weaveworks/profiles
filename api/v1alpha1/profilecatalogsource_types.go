@@ -35,9 +35,9 @@ type ProfileDescription struct {
 	// Version
 	// +optional
 	Version string `json:"version,omitempty"`
-	// Catalog is the name of the catalog the profile is listed in
+	// CatalogSource is the name of the catalog the profile is listed in
 	// +optional
-	Catalog string `json:"catalog,omitempty"`
+	CatalogSource string `json:"catalog,omitempty"`
 	// URL is the full URL path to the profile.yaml
 	// +optional
 	URL string `json:"url,omitempty"`
