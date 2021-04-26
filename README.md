@@ -37,8 +37,6 @@ and run: mdtoc -inplace README.md
 
 1. Deploy an example catalog source `kubectl apply -f examples/profile-catalog-source.yaml`
 
-1. Expose the catalog API: `kubectl -n profiles-system port-forward $(kubectl get pods -A | awk '/profiles-controller-manager/ {print $2}') 8000:8000`
-
 ### Local development
 
 1. Tests can be run with `make test`.
