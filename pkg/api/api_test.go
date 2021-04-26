@@ -52,7 +52,6 @@ var _ = Describe("Api", func() {
 
 				handler.ServeHTTP(rr, req)
 
-				// Check the status code is what we expect.
 				Expect(rr.Code).To(Equal(http.StatusOK))
 				Expect(rr.Body.String()).To(ContainSubstring(`[{"name":"nginx-1","description":"nginx 1","catalog":"foo"}]`))
 			})
@@ -78,7 +77,6 @@ var _ = Describe("Api", func() {
 
 				handler.ServeHTTP(rr, req)
 
-				// Check the status code is what we expect.
 				Expect(rr.Code).To(Equal(http.StatusOK))
 				Expect(rr.Body.String()).To(ContainSubstring(`[]`))
 			})
@@ -113,7 +111,6 @@ var _ = Describe("Api", func() {
 
 				handler.ServeHTTP(rr, req)
 
-				// Check the status code is what we expect.
 				Expect(rr.Code).To(Equal(http.StatusOK))
 				Expect(rr.Body.String()).To(ContainSubstring(`{"name":"nginx-1","description":"nginx 1","catalog":"catalog"}`))
 			})
@@ -134,7 +131,6 @@ var _ = Describe("Api", func() {
 
 				handler.ServeHTTP(rr, req)
 
-				// Check the status code is what we expect.
 				Expect(rr.Code).To(Equal(http.StatusNotFound))
 			})
 		})
