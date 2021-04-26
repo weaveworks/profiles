@@ -249,7 +249,7 @@ var _ = Describe("Acceptance", func() {
 			expectedNginx1 = profilesv1.ProfileDescription{
 				Name:          profileName,
 				Description:   "nginx 1",
-				Catalog:       sourceName,
+				CatalogSource: sourceName,
 				Version:       "0.0.1",
 				URL:           "foo.com/bar",
 				Maintainer:    "my aunt ethel",
@@ -258,7 +258,7 @@ var _ = Describe("Acceptance", func() {
 		})
 
 		AfterEach(func() {
-			Expect(kClient.Delete(context.Background(), &pCatalog)).To(Succeed())
+			_ = kClient.Delete(context.Background(), &pCatalog)
 		})
 
 		Context("search", func() {
@@ -281,39 +281,20 @@ var _ = Describe("Acceptance", func() {
 				}).Should(ConsistOf(
 					expectedNginx1,
 					profilesv1.ProfileDescription{
-						Name:        "nginx-2",
-						Description: "nginx 1",
-						Catalog:     sourceName,
+						Name:          "nginx-2",
+						Description:   "nginx 1",
+						CatalogSource: sourceName,
 					},
 				))
 			})
 		})
 
-		getProfile := func(profileName string) (profilesv1.ProfileDescription, error) {
-			resp, err := http.Get(fmt.Sprintf("http://localhost:8000/profiles/%s/%s", sourceName, profileName))
-			if err != nil {
-				return profilesv1.ProfileDescription{}, err
-			}
-			defer func() {
-				_ = resp.Body.Close()
-			}()
-			if resp.StatusCode != http.StatusOK {
-				return profilesv1.ProfileDescription{}, fmt.Errorf("expected status code 200; got %d", resp.StatusCode)
-			}
-			var p profilesv1.ProfileDescription
-			if err := json.NewDecoder(resp.Body).Decode(&p); err != nil {
-				return profilesv1.ProfileDescription{}, err
-			}
-			return p, nil
-		}
-
 		Context("get", func() {
 			It("returns details of the requested catalog entry", func() {
 				Eventually(func() profilesv1.ProfileDescription {
-					description, err := getProfile(profileName)
-					Expect(err).NotTo(HaveOccurred())
+					description, _ := getProfile(profileName, sourceName)
 					return description
-				}).Should(Equal(expectedNginx1))
+				}, "10s").Should(Equal(expectedNginx1))
 			})
 		})
 
@@ -325,29 +306,47 @@ var _ = Describe("Acceptance", func() {
 				})
 				Expect(kClient.Update(context.Background(), &pCatalog)).To(Succeed())
 				Eventually(func() profilesv1.ProfileDescription {
-					description, err := getProfile("new-profile")
+					description, err := getProfile("new-profile", sourceName)
 					Expect(err).NotTo(HaveOccurred())
 					return description
 				}).Should(Equal(profilesv1.ProfileDescription{
-					Name:        "new-profile",
-					Description: "I am new here",
-					Catalog:     sourceName,
+					Name:          "new-profile",
+					Description:   "I am new here",
+					CatalogSource: sourceName,
 				}))
 			})
 		})
 
 		Context("delete", func() {
 			It("clears the in-memory cache when a ProfileCatalogSource is deleted", func() {
-				description, err := getProfile(profileName)
+				description, err := getProfile(profileName, sourceName)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(description).To(Equal(expectedNginx1))
 
 				Expect(kClient.Delete(context.Background(), &pCatalog)).To(Succeed())
 				Eventually(func() error {
-					_, err := getProfile(profileName)
+					_, err := getProfile(profileName, sourceName)
 					return err
-				}).Should(MatchError(ContainSubstring("got 404")))
+				}, "5s").Should(MatchError(ContainSubstring("got 404")))
 			})
 		})
 	})
 })
+
+func getProfile(profileName, sourceName string) (profilesv1.ProfileDescription, error) {
+	resp, err := http.Get(fmt.Sprintf("http://localhost:8000/profiles/%s/%s", sourceName, profileName))
+	if err != nil {
+		return profilesv1.ProfileDescription{}, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	if resp.StatusCode != http.StatusOK {
+		return profilesv1.ProfileDescription{}, fmt.Errorf("expected status code 200; got %d", resp.StatusCode)
+	}
+	var p profilesv1.ProfileDescription
+	if err := json.NewDecoder(resp.Body).Decode(&p); err != nil {
+		return profilesv1.ProfileDescription{}, err
+	}
+	return p, nil
+}

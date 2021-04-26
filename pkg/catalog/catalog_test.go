@@ -32,8 +32,13 @@ var _ = Describe("Catalog", func() {
 
 		By("getting details for a specific named profile in a catalog")
 		Expect(c.Get(catName, "foo")).To(Equal(
-			profilesv1.ProfileDescription{Name: "foo", CatalogSource: catName},
+			&profilesv1.ProfileDescription{Name: "foo", CatalogSource: catName},
 		))
+
+		By("updating profiles in a catalog source")
+		profiles = []profilesv1.ProfileDescription{{Name: "foo"}, {Name: "bar"}}
+		c.Update(catName, profiles...)
+		Expect(c.Search("foo")).To(ConsistOf(profilesv1.ProfileDescription{Name: "foo", CatalogSource: catName}))
 
 		By("removing a catalog source")
 		c.Remove(catName)

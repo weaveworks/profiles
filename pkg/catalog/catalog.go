@@ -17,7 +17,7 @@ func New() Catalog {
 // Update updates the catalog by replacing existing profiles with new profiles
 func (c Catalog) Update(sourceName string, profiles ...profilesv1.ProfileDescription) {
 	for i := range profiles {
-		profiles[i].Catalog = sourceName
+		profiles[i].CatalogSource = sourceName
 	}
 	c[sourceName] = profiles
 }
@@ -42,13 +42,13 @@ func (c Catalog) Search(name string) []profilesv1.ProfileDescription {
 }
 
 // Get returns the profile description `profileName`.
-func (c Catalog) Get(sourceName, profileName string) profilesv1.ProfileDescription {
+func (c Catalog) Get(sourceName, profileName string) *profilesv1.ProfileDescription {
 	profiles := c[sourceName]
 	for _, p := range profiles {
-		if p.Name == profileName && p.Catalog == sourceName {
-			return p
+		if p.Name == profileName && p.CatalogSource == sourceName {
+			return p.DeepCopy()
 		}
 	}
 
-	return profilesv1.ProfileDescription{}
+	return nil
 }
