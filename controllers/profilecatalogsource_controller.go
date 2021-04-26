@@ -34,7 +34,7 @@ type ProfileCatalogSourceReconciler struct {
 	client.Client
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
-	Profiles *catalog.Catalog
+	Profiles catalog.Catalog
 }
 
 // +kubebuilder:rbac:groups=weave.works,resources=profilecatalogsources,verbs=get;list;watch;create;update;patch;delete
@@ -49,13 +49,14 @@ func (r *ProfileCatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("resource has been deleted")
+			r.Profiles.Remove(req.Name)
 			return ctrl.Result{}, nil
 		}
 		logger.Error(err, "failed to get resource")
 		return ctrl.Result{}, err
 	}
 
-	r.Profiles.Add(pCatalog.Name, pCatalog.Spec.Profiles...)
+	r.Profiles.Update(pCatalog.Name, pCatalog.Spec.Profiles...)
 
 	return ctrl.Result{}, nil
 }

@@ -7,42 +7,48 @@ import (
 )
 
 // Catalog provides an in-memory cache of profiles from the cluster which can be queried easily.
-type Catalog struct {
-	profiles []profilesv1.ProfileDescription
-}
+type Catalog map[string][]profilesv1.ProfileDescription
 
 // New creates a new, empty catalog.
-func New() *Catalog {
-	return &Catalog{profiles: []profilesv1.ProfileDescription{}}
+func New() Catalog {
+	return map[string][]profilesv1.ProfileDescription{}
 }
 
-// Add adds p profiles to the catalog.
-func (c *Catalog) Add(catalogName string, profiles ...profilesv1.ProfileDescription) {
-	for _, p := range profiles {
-		p.CatalogSource = catalogName
-		c.profiles = append(c.profiles, p)
+// Update updates the catalog by replacing existing profiles with new profiles
+func (c Catalog) Update(sourceName string, profiles ...profilesv1.ProfileDescription) {
+	for i := range profiles {
+		profiles[i].CatalogSource = sourceName
 	}
+	c[sourceName] = profiles
+}
+
+// Remove removes the specified catalog.
+func (c Catalog) Remove(sourceName string) {
+	delete(c, sourceName)
 }
 
 // Search returns profile descriptions that contain `name` in their names.
-func (c *Catalog) Search(name string) []profilesv1.ProfileDescription {
-	var profiles []profilesv1.ProfileDescription
-	for _, p := range c.profiles {
-		if strings.Contains(p.Name, name) {
-			profiles = append(profiles, p)
+func (c Catalog) Search(name string) []profilesv1.ProfileDescription {
+	var ret []profilesv1.ProfileDescription
+	for _, profiles := range c {
+		for _, p := range profiles {
+			if strings.Contains(p.Name, name) {
+				ret = append(ret, p)
+			}
 		}
 	}
 
-	return profiles
+	return ret
 }
 
 // Get returns the profile description `profileName`.
-func (c *Catalog) Get(catalogName, profileName string) profilesv1.ProfileDescription {
-	for _, p := range c.profiles {
-		if p.Name == profileName && p.CatalogSource == catalogName {
-			return p
+func (c Catalog) Get(sourceName, profileName string) *profilesv1.ProfileDescription {
+	profiles := c[sourceName]
+	for _, p := range profiles {
+		if p.Name == profileName && p.CatalogSource == sourceName {
+			return p.DeepCopy()
 		}
 	}
 
-	return profilesv1.ProfileDescription{}
+	return nil
 }

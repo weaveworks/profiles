@@ -67,7 +67,7 @@ test: generate fmt vet manifests test_deps ## Run unit and integration tests
 
 acceptance: local-env ## Run acceptance tests
 	kubectl -n profiles-system port-forward $(shell kubectl -n profiles-system get pods -l control-plane=controller-manager -o jsonpath={.items[0].metadata.name}) 8000:8000 &
-	ginkgo -r tests/acceptance/ || kubectl -n profiles-system logs -f $(shell kubectl -n profiles-system get pods -l control-plane=controller-manager -o jsonpath={.items[0].metadata.name}) manager
+	ginkgo -r tests/acceptance/ || echo "to see logs run: kubectl -n profiles-system logs -f $(shell kubectl -n profiles-system get pods -l control-plane=controller-manager -o jsonpath={.items[0].metadata.name}) manager"
 
 # Running the tests requires the some .toolkit.fluxcd.io CRDs
 SOURCE_VER ?= v0.9.0

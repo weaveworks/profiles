@@ -207,20 +207,20 @@ var _ = Describe("Acceptance", func() {
 
 	Context("ProfileCatalog", func() {
 		var (
-			pCatalog                 profilesv1.ProfileCatalogSource
-			expectedNginx1           profilesv1.ProfileDescription
-			catalogName, profileName string
+			pCatalog                profilesv1.ProfileCatalogSource
+			expectedNginx1          profilesv1.ProfileDescription
+			sourceName, profileName string
 		)
 
 		BeforeEach(func() {
-			catalogName, profileName = "catalog", "nginx-1"
+			sourceName, profileName = "catalog", "nginx-1"
 			pCatalog = profilesv1.ProfileCatalogSource{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ProfileCatalogSource",
 					APIVersion: profileSubscriptionAPIVersion,
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      catalogName,
+					Name:      sourceName,
 					Namespace: "default",
 				},
 				Spec: profilesv1.ProfileCatalogSourceSpec{
@@ -249,7 +249,7 @@ var _ = Describe("Acceptance", func() {
 			expectedNginx1 = profilesv1.ProfileDescription{
 				Name:          profileName,
 				Description:   "nginx 1",
-				CatalogSource: catalogName,
+				CatalogSource: sourceName,
 				Version:       "0.0.1",
 				URL:           "foo.com/bar",
 				Maintainer:    "my aunt ethel",
@@ -258,7 +258,7 @@ var _ = Describe("Acceptance", func() {
 		})
 
 		AfterEach(func() {
-			Expect(kClient.Delete(context.Background(), &pCatalog)).To(Succeed())
+			_ = kClient.Delete(context.Background(), &pCatalog)
 		})
 
 		Context("search", func() {
@@ -283,7 +283,7 @@ var _ = Describe("Acceptance", func() {
 					profilesv1.ProfileDescription{
 						Name:          "nginx-2",
 						Description:   "nginx 1",
-						CatalogSource: catalogName,
+						CatalogSource: sourceName,
 					},
 				))
 			})
@@ -292,16 +292,61 @@ var _ = Describe("Acceptance", func() {
 		Context("get", func() {
 			It("returns details of the requested catalog entry", func() {
 				Eventually(func() profilesv1.ProfileDescription {
-					req, err := http.NewRequest("GET", fmt.Sprintf("http://localhost:8000/profiles/%s/%s", catalogName, profileName), nil)
-					Expect(err).NotTo(HaveOccurred())
-					resp, err := http.DefaultClient.Do(req)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(resp.StatusCode).To(Equal(http.StatusOK))
-					description := profilesv1.ProfileDescription{}
-					_ = json.NewDecoder(resp.Body).Decode(&description)
+					description, _ := getProfile(profileName, sourceName)
 					return description
-				}).Should(Equal(expectedNginx1))
+				}, "10s").Should(Equal(expectedNginx1))
+			})
+		})
+
+		Context("update", func() {
+			It("updates a ProfileCatalogSource with new profiles", func() {
+				pCatalog.Spec.Profiles = append(pCatalog.Spec.Profiles, profilesv1.ProfileDescription{
+					Name:        "new-profile",
+					Description: "I am new here",
+				})
+				Expect(kClient.Update(context.Background(), &pCatalog)).To(Succeed())
+				Eventually(func() profilesv1.ProfileDescription {
+					description, err := getProfile("new-profile", sourceName)
+					Expect(err).NotTo(HaveOccurred())
+					return description
+				}).Should(Equal(profilesv1.ProfileDescription{
+					Name:          "new-profile",
+					Description:   "I am new here",
+					CatalogSource: sourceName,
+				}))
+			})
+		})
+
+		Context("delete", func() {
+			It("clears the in-memory cache when a ProfileCatalogSource is deleted", func() {
+				description, err := getProfile(profileName, sourceName)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(description).To(Equal(expectedNginx1))
+
+				Expect(kClient.Delete(context.Background(), &pCatalog)).To(Succeed())
+				Eventually(func() error {
+					_, err := getProfile(profileName, sourceName)
+					return err
+				}, "5s").Should(MatchError(ContainSubstring("got 404")))
 			})
 		})
 	})
 })
+
+func getProfile(profileName, sourceName string) (profilesv1.ProfileDescription, error) {
+	resp, err := http.Get(fmt.Sprintf("http://localhost:8000/profiles/%s/%s", sourceName, profileName))
+	if err != nil {
+		return profilesv1.ProfileDescription{}, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	if resp.StatusCode != http.StatusOK {
+		return profilesv1.ProfileDescription{}, fmt.Errorf("expected status code 200; got %d", resp.StatusCode)
+	}
+	var p profilesv1.ProfileDescription
+	if err := json.NewDecoder(resp.Body).Decode(&p); err != nil {
+		return profilesv1.ProfileDescription{}, err
+	}
+	return p, nil
+}
