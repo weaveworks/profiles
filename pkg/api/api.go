@@ -33,13 +33,23 @@ func New(profileCatalog *catalog.Catalog) API {
 // ProfilesHandler is the handler for /profiles requests.
 func (a *API) ProfilesHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("name")
-	marshalResponse(w, a.profileCatalog.Search(query))
+	profiles := a.profileCatalog.Search(query)
+	if len(profiles) == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	marshalResponse(w, profiles)
 }
 
 // ProfileHandler is the handler for /profiles/{catalog}/{profile} requests.
 func (a *API) ProfileHandler(w http.ResponseWriter, r *http.Request) {
 	catalogName, profileName := mux.Vars(r)["catalog"], mux.Vars(r)["profile"]
-	marshalResponse(w, a.profileCatalog.Get(catalogName, profileName))
+	exists, profile := a.profileCatalog.Get(catalogName, profileName)
+	if !exists {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	marshalResponse(w, profile)
 }
 
 func marshalResponse(w http.ResponseWriter, v interface{}) {

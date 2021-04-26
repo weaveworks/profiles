@@ -37,12 +37,12 @@ func (c *Catalog) Search(name string) []profilesv1.ProfileDescription {
 }
 
 // Get returns the profile description `profileName`.
-func (c *Catalog) Get(catalogName, profileName string) profilesv1.ProfileDescription {
+func (c *Catalog) Get(catalogName, profileName string) (bool, profilesv1.ProfileDescription) {
 	for _, p := range c.profiles {
 		if p.Name == profileName && p.Catalog == catalogName {
-			return p
+			return true, p
 		}
 	}
 
-	return profilesv1.ProfileDescription{}
+	return false, profilesv1.ProfileDescription{}
 }

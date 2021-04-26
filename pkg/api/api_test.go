@@ -47,6 +47,27 @@ var _ = Describe("Api", func() {
 				Expect(rr.Body.String()).To(ContainSubstring(`[{"name":"nginx-1","description":"nginx 1","catalog":"foo"}]`))
 			})
 		})
+
+		When("no matching profile exists", func() {
+			It("returns 404", func() {
+				req, err := http.NewRequest("GET", "/profiles", nil)
+				Expect(err).NotTo(HaveOccurred())
+				u, err := url.Parse("http://example.com")
+				Expect(err).NotTo(HaveOccurred())
+				q := u.Query()
+				q.Add("name", "dontexist")
+				req.URL.RawQuery = q.Encode()
+				Expect(err).NotTo(HaveOccurred())
+
+				rr := httptest.NewRecorder()
+				handler := http.HandlerFunc(catalogAPI.ProfilesHandler)
+
+				handler.ServeHTTP(rr, req)
+
+				// Check the status code is what we expect.
+				Expect(rr.Code).To(Equal(http.StatusNotFound))
+			})
+		})
 	})
 
 	Context("/profiles/catalog/profile-name", func() {
@@ -75,6 +96,22 @@ var _ = Describe("Api", func() {
 				// Check the status code is what we expect.
 				Expect(rr.Code).To(Equal(http.StatusOK))
 				Expect(rr.Body.String()).To(ContainSubstring(`{"name":"nginx-1","description":"nginx 1","catalog":"catalog"}`))
+			})
+		})
+
+		When("the requested profile doesn't exist", func() {
+			It("returns 404", func() {
+				req, err := http.NewRequest("GET", "/profiles", nil)
+				req = mux.SetURLVars(req, map[string]string{"catalog": catalogName, "profile": "dontexist"})
+				Expect(err).NotTo(HaveOccurred())
+
+				rr := httptest.NewRecorder()
+				handler := http.HandlerFunc(catalogAPI.ProfileHandler)
+
+				handler.ServeHTTP(rr, req)
+
+				// Check the status code is what we expect.
+				Expect(rr.Code).To(Equal(http.StatusNotFound))
 			})
 		})
 	})

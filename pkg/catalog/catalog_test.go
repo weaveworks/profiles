@@ -31,8 +31,17 @@ var _ = Describe("Catalog", func() {
 		))
 
 		By("getting details for a specific named profile in a catalog")
-		Expect(c.Get(catName, "foo")).To(Equal(
+		exists, profile := c.Get(catName, "foo")
+		Expect(exists).To(BeTrue())
+		Expect(profile).To(Equal(
 			profilesv1.ProfileDescription{Name: "foo", Catalog: catName},
 		))
+
+		By("returns empty list when no matching profile exist")
+		Expect(c.Search("dontexist")).To(HaveLen(0))
+
+		By("returns false when the profile doesn't exist")
+		exists, _ = c.Get(catName, "dontexist")
+		Expect(exists).To(BeFalse())
 	})
 })
