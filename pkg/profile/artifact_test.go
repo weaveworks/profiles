@@ -43,6 +43,7 @@ const (
 	kustomizePath1       = "kustomize/artifact/path-one"
 	profileSubKind       = "ProfileSubscription"
 	profileSubAPIVersion = "weave.works/v1alpha1"
+	profileURL           = "https://github.com/org/repo-name"
 )
 
 var (
@@ -82,7 +83,7 @@ var _ = Describe("Profile", func() {
 				Namespace: namespace,
 			},
 			Spec: profilesv1.ProfileSubscriptionSpec{
-				ProfileURL: "https://github.com/org/repo-name",
+				ProfileURL: profileURL,
 				Branch:     branch,
 				Values: &apiextensionsv1.JSON{
 					Raw: []byte(`{"replicaCount": 3,"service":{"port":8081}}`),
@@ -762,6 +763,31 @@ var _ = Describe("Profile", func() {
 
 					err := p.ReconcileArtifacts()
 					Expect(err).To(MatchError(ContainSubstring("validation failed for artifact helmChartArtifactName1: expected exactly one, got both: chart, profile")))
+				})
+			})
+
+			When("profile artifact pointing to itself", func() {
+				BeforeEach(func() {
+					pNestedDef.Spec.Artifacts = []profilesv1.Artifact{
+						{
+							Name: profileName2,
+							Kind: profilesv1.ProfileKind,
+							Profile: &profilesv1.Profile{
+								URL:    profileURL,
+								Branch: "main",
+							},
+						},
+					}
+				})
+
+				It("errors", func() {
+					Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
+					Expect(helmv2.AddToScheme(scheme)).To(Succeed())
+					Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
+					Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
+
+					err := p.ReconcileArtifacts()
+					Expect(err).To(MatchError(ContainSubstring("profile cannot contain profile artifact pointing to itself")))
 				})
 			})
 		})

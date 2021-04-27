@@ -184,7 +184,10 @@ func (p *Profile) MakeOwnerlessArtifacts() ([]runtime.Object, error) {
 		}
 		switch artifact.Kind {
 		case profilesv1.ProfileKind:
-			nestedProfileDef, err := p.getProfileDefinition(artifact.Profile.URL, artifact.Profile.Branch, p.log)
+			if artifact.Profile.URL == p.subscription.Spec.ProfileURL && artifact.Profile.Branch == p.subscription.Spec.Branch {
+				return nil, fmt.Errorf("profile cannot contain profile artifact pointing to itself")
+			}
+			nestedProfileDef, err := getProfileDefinition(artifact.Profile.URL, artifact.Profile.Branch, p.log)
 			if err != nil {
 				return nil, fmt.Errorf("failed to fetch profile %q: %w", artifact.Name, err)
 			}

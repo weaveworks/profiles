@@ -85,7 +85,7 @@ type Chart struct {
 	Version string `json:"version,omitempty"`
 }
 
-// Chart defines properties to access remote helm charts.
+// Profile defines properties for accessing a profile
 type Profile struct {
 	// URL is the URL of the profile
 	URL string `json:"url,omitempty"`
