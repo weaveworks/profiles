@@ -37,16 +37,41 @@ spec:
             description: ProfileDefinitionSpec defines the desired state of ProfileDefinition
             properties:
               artifacts:
-                description: Artifacts is a list of Profile artifacts can be one of
-                  HelmChart, TODO
+                description: Artifacts is a list of Profile artifacts
                 items:
+                  description: Artifact defines a bundled resource of the components
+                    for this profile.
                   properties:
+                    chart:
+                      description: Chart defines properties to access a remote chart.
+                        This is an optional value. It is ignored in case Path is defined.
+                      properties:
+                        name:
+                          description: Name defines the name of the chart at the remote
+                            repository
+                          type: string
+                        url:
+                          description: URL is the URL of the Helm repository containing
+                            a Helm chart and possible values
+                          type: string
+                        version:
+                          description: Version defines the version of the chart at
+                            the remote repository
+                          type: string
+                      type: object
+                    kind:
+                      description: 'Kind is the kind of artifact: HelmChart or Kustomize'
+                      enum:
+                      - HelmChart
+                      - Kustomize
+                      type: string
                     name:
                       description: Name is the name of the Artifact
                       type: string
                     path:
                       description: Path is the local path to the Artifact in the Profile
-                        repo
+                        repo. This is an optional value. If defined, it takes precedence
+                        over Chart.
                       type: string
                   type: object
                 type: array

@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -31,19 +33,28 @@ type ProfileSubscriptionSpec struct {
 	// +kubebuilder:default:=main
 	// +optional
 	Branch string `json:"branch,omitempty"`
+
+	// Values holds the values for the Helm chart specified in the first artifact
+	// +optional
+	Values *apiextensionsv1.JSON `json:"values,omitempty"`
+
+	// ValuesFrom holds references to resources containing values for the Helm chart specified in the first artifact
+	// +optional
+	ValuesFrom []helmv2.ValuesReference `json:"valuesFrom,omitempty"`
 }
 
 // ProfileSubscriptionStatus defines the observed state of ProfileSubscription
 type ProfileSubscriptionStatus struct {
-	// State is the current state of the ProfileSubscription
-	// Can be "running" or "failing"
-	State string `json:"state,omitempty"`
-	// Message is the reason for the "failing" state
-	Message string `json:"message,omitempty"`
+	// Conditions holds the conditions for the ProfileSubscription
+	// +optional
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].status",description=""
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].message",description=""
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 
 // ProfileSubscription is the Schema for the profilesubscriptions API
 type ProfileSubscription struct {

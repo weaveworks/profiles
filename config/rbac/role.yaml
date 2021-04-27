@@ -25,6 +25,24 @@ rules:
   verbs:
   - get
 - apiGroups:
+  - kustomize.toolkit.fluxcd.io
+  resources:
+  - kustomizations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kustomize.toolkit.fluxcd.io
+  resources:
+  - kustomizations/status
+  verbs:
+  - get
+- apiGroups:
   - source.toolkit.fluxcd.io
   resources:
   - gitrepositories
@@ -42,6 +60,50 @@ rules:
   - gitrepositories/status
   verbs:
   - get
+- apiGroups:
+  - source.toolkit.fluxcd.io
+  resources:
+  - helmrepositories
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - source.toolkit.fluxcd.io
+  resources:
+  - helmrepositories/status
+  verbs:
+  - get
+- apiGroups:
+  - weave.works
+  resources:
+  - profilecatalogsources
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - weave.works
+  resources:
+  - profilecatalogsources/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - weave.works
+  resources:
+  - profilecatalogsources/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - weave.works
   resources:

@@ -43,29 +43,12 @@ endif
 
 .DEFAULT_GOAL := help
 
-all: manager ## Build the controller
-
-##@ Tests
-
-ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
-test: generate fmt vet manifests test_deps ## Run unit and integration tests
-	source hack/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); ginkgo -r --skipPackage acceptance
-
-acceptance: local-env ## Run acceptance tests
-	ginkgo -r tests/acceptance/ || kubectl -n profiles-system logs -f $(shell kubectl -n profiles-system get pods -l control-plane=controller-manager -o jsonpath={.items[0].metadata.name}) manager
-
-# Running the tests requires the some .toolkit.fluxcd.io CRDs
-SOURCE_VER ?= v0.9.0
-HELM_VER ?= v0.8.1
-TEST_CRDS:=controllers/testdata/crds
-test_deps: ## Fetch test dependencies
-	mkdir -p ${TEST_CRDS}
-	curl -s --fail https://raw.githubusercontent.com/fluxcd/source-controller/${SOURCE_VER}/config/crd/bases/source.toolkit.fluxcd.io_gitrepositories.yaml \
-		-o ${TEST_CRDS}/gitrepositories.yaml
-	curl -s --fail https://raw.githubusercontent.com/fluxcd/helm-controller/${HELM_VER}/config/crd/bases/helm.toolkit.fluxcd.io_helmreleases.yaml \
-		-o ${TEST_CRDS}/helmreleases.yaml
+all: manager ## Build the manager binary
 
 ##@ Build
+
+manager: generate fmt vet ## Build manager binary
+	go build -o bin/manager main.go
 
 fmt: ## Run go fmt against code
 	go fmt ./...
@@ -74,24 +57,44 @@ vet: ## Run go vet against code
 	go vet ./...
 
 lint: ## Run lint against code
-	golangci-lint run --timeout=5m0s
+	golangci-lint run --exclude-use-default=false --timeout=5m0s
 
-manager: generate fmt vet lint ## Build manager binary
-	go build -o bin/manager main.go
+##@ Tests
+
+ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
+test: generate fmt vet manifests test_deps ## Run unit and integration tests
+	source hack/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); ginkgo -r --skipPackage acceptance
+
+acceptance: local-env ## Run acceptance tests
+	kubectl -n profiles-system port-forward $(shell kubectl -n profiles-system get pods -l control-plane=controller-manager -o jsonpath={.items[0].metadata.name}) 8000:8000 &
+	ginkgo -r tests/acceptance/ || echo "to see logs run: kubectl -n profiles-system logs -f $(shell kubectl -n profiles-system get pods -l control-plane=controller-manager -o jsonpath={.items[0].metadata.name}) manager"
+
+# Running the tests requires the some .toolkit.fluxcd.io CRDs
+SOURCE_VER ?= v0.9.0
+HELM_VER ?= v0.8.1
+KUSTOMIZE_VER ?= v0.10.0
+TEST_CRDS:=controllers/testdata/crds
+test_deps: ## Fetch test dependencies
+	mkdir -p ${TEST_CRDS}
+	curl -s --fail https://raw.githubusercontent.com/fluxcd/source-controller/${SOURCE_VER}/config/crd/bases/source.toolkit.fluxcd.io_gitrepositories.yaml \
+		-o ${TEST_CRDS}/gitrepositories.yaml
+	curl -s --fail https://raw.githubusercontent.com/fluxcd/source-controller/${SOURCE_VER}/config/crd/bases/source.toolkit.fluxcd.io_helmrepositories.yaml \
+		-o ${TEST_CRDS}/helmrepositories.yaml
+	curl -s --fail https://raw.githubusercontent.com/fluxcd/helm-controller/${HELM_VER}/config/crd/bases/helm.toolkit.fluxcd.io_helmreleases.yaml \
+		-o ${TEST_CRDS}/helmreleases.yaml
+	curl -s --fail https://raw.githubusercontent.com/fluxcd/kustomize-controller/${KUSTOMIZE_VER}/config/crd/bases/kustomize.toolkit.fluxcd.io_kustomizations.yaml \
+		-o ${TEST_CRDS}/kustomize.yaml
 
 ##@ Development
 
 local-env: docker-build-local kind-up docker-push-local install undeploy deploy ## Create local kind env and deploy controllers
-	flux install --components="source-controller,helm-controller"
+	flux install --components="source-controller,helm-controller,kustomize-controller"
 
 kind-up: ## Create local kind cluster
 	./hack/load-kind.sh
 
 kind-down: ## Tear down local kind cluster
 	kind delete cluster --name profiles
-
-run: generate fmt vet manifests ## Run against the configured Kubernetes cluster in ~/.kube/config
-	go run ./main.go
 
 install: manifests kustomize ## Install CRDs into a cluster
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
@@ -103,26 +106,15 @@ deploy: manifests kustomize ## Deploy controller in the configured Kubernetes cl
 	cd config/manager && $(KUSTOMIZE) edit set image controller=localhost:5000/${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 	echo "waiting for controller to be ready"
-	kubectl -n profiles-system wait --for=condition=available deployment profiles-controller-manager
-	kubectl -n profiles-system wait --for=condition=Ready --all pods
+	kubectl -n profiles-system wait --for=condition=available deployment profiles-controller-manager --timeout 5m
+	kubectl -n profiles-system wait --for=condition=Ready --all pods --timeout 5m
 
-undeploy: ## UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
+# UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
+undeploy:
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=true -f -
 
-##@ Generation
-
-generate: manifests ## Generate code
-	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
-
-manifests: controller-gen ## Generate manifests e.g. CRD, RBAC etc.
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-
-.PHONY: bundle
-bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
-	operator-sdk generate kustomize manifests -q
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
-	operator-sdk bundle validate ./bundle
+run: generate fmt vet manifests ## Run against the configured Kubernetes cluster in ~/.kube/config
+	go run ./main.go
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary
@@ -132,25 +124,49 @@ KUSTOMIZE = $(shell pwd)/bin/kustomize
 kustomize: ## Download kustomize locally if necessary
 	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
 
+##@ Generation
+
+manifests: controller-gen ## Generate manifests e.g. CRD, RBAC etc.
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+
+generate: manifests ## Generate code
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+.PHONY: bundle
+bundle: manifests kustomize ## Generate bundle manifests and metadata, then validate generated files.
+	operator-sdk generate kustomize manifests -q
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
+	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	operator-sdk bundle validate ./bundle
+
 ##@ Docker
 
 docker-build-local: ## Builds the local docker image
 	docker build -t localhost:5000/${IMG} .
 
-docker-push-local: ## Push the local docker image to local image registry
+docker-push-local: ## Builds the local docker image
 	docker push localhost:5000/${IMG}
 
 # TODO publish image on release
-docker-build: ## Build the docker image
+docker-build: test ## Build the docker image
 	docker build -t ${IMG} .
 
 docker-push: ## Push the docker image
 	docker push ${IMG}
 
-# Build the bundle image.
 .PHONY: bundle-build
-bundle-build:
+bundle-build: ## Build the bundle image.
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+
+##@ Utilities
+
+.PHONY: help
+help:  ## Display this help. Thanks to https://www.thapaliya.com/en/writings/well-documented-makefiles/
+ifeq ($(OS),Windows_NT)
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make <target>\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  %-40s %s\n", $$1, $$2 } /^##@/ { printf "\n%s\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+else
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-40s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+endif
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
@@ -166,14 +182,4 @@ GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
 endef
-
-##@ Utilities
-
-.PHONY: help
-help:  ## Display this help. Thanks to https://www.thapaliya.com/en/writings/well-documented-makefiles/
-ifeq ($(OS),Windows_NT)
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make <target>\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  %-40s %s\n", $$1, $$2 } /^##@/ { printf "\n%s\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
-else
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-40s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
-endif
 

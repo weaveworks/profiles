@@ -1,0 +1,87 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: profilecatalogsources.weave.works
+spec:
+  group: weave.works
+  names:
+    kind: ProfileCatalogSource
+    listKind: ProfileCatalogSourceList
+    plural: profilecatalogsources
+    singular: profilecatalogsource
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: ProfileCatalogSource is the Schema for the profilecatalogsources
+          API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ProfileCatalogSourceSpec defines the desired state of ProfileCatalogSource
+            properties:
+              profiles:
+                description: Profiles is the list of profiles exposed by the catalog
+                items:
+                  description: ProfileDescription defines details about a given profile.
+                  properties:
+                    catalog:
+                      description: CatalogSource is the name of the catalog the profile
+                        is listed in
+                      type: string
+                    description:
+                      description: Profile description
+                      type: string
+                    maintainer:
+                      description: Maintainer is the name of the author(s)
+                      type: string
+                    name:
+                      description: Profile name
+                      type: string
+                    prerequisites:
+                      description: Prerequisites are a list of dependencies required
+                        by the profile
+                      items:
+                        type: string
+                      type: array
+                    url:
+                      description: URL is the full URL path to the profile.yaml
+                      type: string
+                    version:
+                      description: Version
+                      type: string
+                  type: object
+                type: array
+            type: object
+          status:
+            description: ProfileCatalogSourceStatus defines the observed state of
+              ProfileCatalogSource
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
