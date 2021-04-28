@@ -70,7 +70,7 @@ jobs:
       - name: Do release
         uses: softprops/action-gh-release@v1
         with:
-          bodyPath: "docs/release_notes/${{ VERSION }}.md"
+          bodyPath: "docs/release_notes/${{ steps.prep.outputs.VERSION }}.md"
           files: "config/release/*.yaml"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
