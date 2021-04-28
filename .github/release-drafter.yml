@@ -1,0 +1,20 @@
+name-template: 'profiles-controller $NEXT_MINOR_VERSION'
+tag-template: '$NEXT_MINOR_VERSION'
+categories:
+  - title: 'Features'
+    labels:
+      - 'kind/feature'
+  - title: 'Improvements'
+    labels:
+      - 'kind/improvement'
+  - title: 'Bug Fixes'
+    labels:
+      - 'kind/bug'
+change-template: '- $TITLE (#$NUMBER)'
+template: |
+  # Release $NEXT_MINOR_VERSION
+
+  $CHANGES
+
+exclude-labels:
+  - 'skip-release-notes'
