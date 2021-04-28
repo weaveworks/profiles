@@ -2,6 +2,7 @@ package profile
 
 import (
 	"reflect"
+	"strings"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
@@ -54,7 +55,9 @@ func (p *Profile) makeHelmRepository(url string, name string) *sourcev1.HelmRepo
 }
 
 func (p *Profile) makeHelmRepoName(name string) string {
-	return join(p.makeGitRepoName(), name)
+	repoParts := strings.Split(p.subscription.Spec.ProfileURL, "/")
+	repoName := repoParts[len(repoParts)-1]
+	return join(p.subscription.Name, repoName, name)
 }
 
 func (p *Profile) makeHelmRelease(artifact profilesv1.Artifact) *helmv2.HelmRelease {

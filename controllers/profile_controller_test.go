@@ -93,7 +93,7 @@ var _ = Describe("ProfileController", func() {
 			))
 
 			By("creating a HelmRepository resource")
-			helmRepoName := fmt.Sprintf("%s-%s-%s-%s", subscriptionName, profileRepoName, branch, "dokuwiki")
+			helmRepoName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileRepoName, "dokuwiki")
 			helmRepo := sourcev1.HelmRepository{}
 			Eventually(func() error {
 				return k8sClient.Get(ctx, client.ObjectKey{Name: helmRepoName, Namespace: namespace}, &helmRepo)
