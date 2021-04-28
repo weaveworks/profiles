@@ -183,6 +183,22 @@ func (p *Profile) MakeOwnerlessArtifacts() ([]runtime.Object, error) {
 			return nil, fmt.Errorf("validation failed for artifact %s: %w", artifact.Name, err)
 		}
 		switch artifact.Kind {
+		case profilesv1.ProfileKind:
+			if artifact.Profile.URL == p.subscription.Spec.ProfileURL && artifact.Profile.Branch == p.subscription.Spec.Branch {
+				return nil, fmt.Errorf("profile cannot contain profile artifact pointing to itself")
+			}
+			nestedProfileDef, err := getProfileDefinition(artifact.Profile.URL, artifact.Profile.Branch, p.log)
+			if err != nil {
+				return nil, fmt.Errorf("failed to fetch profile %q: %w", artifact.Name, err)
+			}
+			nestedProfile := p.subscription.DeepCopyObject().(*profilesv1.ProfileSubscription)
+			nestedProfile.Spec.ProfileURL = artifact.Profile.URL
+			nestedProfile.Spec.Branch = artifact.Profile.Branch
+			nestedObjs, err := New(p.ctx, nestedProfileDef, *nestedProfile, p.client, p.log).MakeOwnerlessArtifacts()
+			if err != nil {
+				return nil, fmt.Errorf("failed to generate resources for nested profile %q: %w", artifact.Name, err)
+			}
+			objs = append(objs, nestedObjs...)
 		case profilesv1.HelmChartKind:
 			objs = append(objs, p.makeHelmRelease(artifact))
 			if artifact.Path != "" && gitRes == nil {

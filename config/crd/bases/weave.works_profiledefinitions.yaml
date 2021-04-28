@@ -73,6 +73,18 @@ spec:
                         repo. This is an optional value. If defined, it takes precedence
                         over Chart.
                       type: string
+                    profile:
+                      description: Profiles defines properties to access a remote
+                        profile.
+                      properties:
+                        branch:
+                          description: Branch is the branch in the git repository
+                            the profile lives in
+                          type: string
+                        url:
+                          description: URL is the URL of the profile
+                          type: string
+                      type: object
                   type: object
                 type: array
               description:

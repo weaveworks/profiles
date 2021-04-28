@@ -23,8 +23,10 @@ var _ = Describe("ProfileController", func() {
 	const helmChartURL = "https://charts.bitnami.com/bitnami"
 
 	var (
-		namespace string
-		ctx       = context.Background()
+		namespace            string
+		branch               = "main"
+		nestedArtifactBranch = "helm-artifact"
+		ctx                  = context.Background()
 	)
 
 	BeforeEach(func() {
@@ -40,7 +42,6 @@ var _ = Describe("ProfileController", func() {
 	Context("Create with multiple artifacts", func() {
 		DescribeTable("Applying a Profile creates the correct resources", func(pSubSpec profilesv1.ProfileSubscriptionSpec) {
 			subscriptionName := "foo"
-			branch := "main"
 
 			pSub := profilesv1.ProfileSubscription{
 				TypeMeta: metav1.TypeMeta{
@@ -55,7 +56,7 @@ var _ = Describe("ProfileController", func() {
 			pSub.Spec = pSubSpec
 			Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())
 
-			By("creating a GitRepository resource")
+			By("creating a GitRepository resource for the profile")
 			profileRepoName := "nginx-profile"
 			gitRepoName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileRepoName, branch)
 			gitRepo := sourcev1.GitRepository{}
@@ -64,6 +65,15 @@ var _ = Describe("ProfileController", func() {
 			}, 10*time.Second).ShouldNot(HaveOccurred())
 			Expect(gitRepo.Spec.URL).To(Equal(nginxProfileURL))
 			Expect(gitRepo.Spec.Reference.Branch).To(Equal(branch))
+
+			By("creating a GitRepository resource for the nested profile")
+			gitRepoName = fmt.Sprintf("%s-%s-%s", subscriptionName, profileRepoName, nestedArtifactBranch)
+			gitRepo = sourcev1.GitRepository{}
+			Eventually(func() error {
+				return k8sClient.Get(ctx, client.ObjectKey{Name: gitRepoName, Namespace: namespace}, &gitRepo)
+			}, 10*time.Second).ShouldNot(HaveOccurred())
+			Expect(gitRepo.Spec.URL).To(Equal(nginxProfileURL))
+			Expect(gitRepo.Spec.Reference.Branch).To(Equal(nestedArtifactBranch))
 
 			By("creating a HelmRelease resource")
 			profileName := "nginx"
@@ -174,15 +184,18 @@ var _ = Describe("ProfileController", func() {
 		},
 			Entry("a single Helm chart with no supplied values", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
+				Branch:     branch,
 			}),
 			Entry("a single Helm chart with supplied values", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
+				Branch:     branch,
 				Values: &apiextensionsv1.JSON{
 					Raw: []byte(`{"replicaCount": 3,"service":{"port":8081}}`),
 				},
 			}),
 			Entry("a single Helm chart with values supplied via valuesFrom", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
+				Branch:     branch,
 				ValuesFrom: []helmv2.ValuesReference{
 					{
 						Name:     "nginx-values",
