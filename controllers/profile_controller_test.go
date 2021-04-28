@@ -24,7 +24,7 @@ var _ = Describe("ProfileController", func() {
 
 	var (
 		namespace            string
-		branch               = "move-helm-to-nested"
+		branch               = "main"
 		nestedArtifactBranch = "helm-artifact"
 		ctx                  = context.Background()
 	)
