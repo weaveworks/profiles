@@ -9,8 +9,10 @@ and run: mdtoc -inplace README.md
  <!-- toc -->
 - [Getting started](#getting-started)
   - [Local environment using <a href="https://kind.sigs.k8s.io/">Kind</a>](#local-environment-using-kind)
-  - [Local development](#local-development)
   - [Installing Profiles](#installing-profiles)
+- [Development](#development)
+  - [Tests](#tests)
+  - [Release process](#release-process)
 - [Terminology](#terminology)
   - [Profile](#profile)
   - [Catalog](#catalog)
@@ -37,17 +39,48 @@ and run: mdtoc -inplace README.md
 
 1. Deploy an example catalog source `kubectl apply -f examples/profile-catalog-source.yaml`
 
-### Local development
+### Installing Profiles
 
-1. Tests can be run with `make test`.
+1. Profiles can be installed using [pctl](https://github.com/weaveworks/pctl).
+
+## Development
+
+### Tests
+
+1. All tests can be run with `make test`.
 
 1. Acceptance tests can be run with `make acceptance`.
 
 1. For further commands, run `make help`.
 
-### Installing Profiles
+### Release process
+There are some manual steps right now, should be streamlined soon.
 
-1. Profiles can be installed using [pctl](https://github.com/weaveworks/pctl).
+Steps:
+
+1. Create a new release notes file:
+	```sh
+	touch docs/release_notes/<version>.md
+	```
+
+1. Copy-and paste the release notes from the draft on the releases page into this file.
+    _Note: sometimes the release drafter is a bit of a pain, verify that the notes are
+    correct by doing something like: `git log --first-parent tag1..tag2`._
+
+1. PR the release notes into main.
+
+1. Create and push a tag with the new version:
+	```sh
+	git tag <version>
+	git push origin <version>
+	```
+
+1. The `Create release` action should run. Verify that:
+	1. The release has been created in Github
+		1. With the correct assets
+		1. With the correct release notes
+	1. The image has been pushed to docker
+	1. The image can be pulled and used in a deployment
 
 ## Terminology
 
@@ -232,32 +265,3 @@ Catalog management:
 API:
 - [x] Search for profiles in the catalog
 - [x] Get more information about a profile in the catalog
-
-## Release process
-There are some manual steps right now, should be streamlined soon.
-
-Steps:
-
-1. Create a new release notes file:
-	```sh
-	touch docs/release_notes/<version>.md
-	```
-
-1. Copy-and paste the release notes from the draft on the releases page into this file.
-    _Note: sometimes the release drafter is a bit of a pain, verify that the notes are
-    correct by doing something like: `git log --first-parent tag1..tag2`._
-
-1. PR the release notes into main.
-
-1. Create and push a tag with the new version:
-	```sh
-	git tag <version>
-	git push origin <version>
-	```
-
-1. The `Create release` action should run. Verify that:
-	1. The release has been created in Github
-		1. With the correct assets
-		1. With the correct release notes
-	1. The image has been pushed to docker
-	1. The image can be pulled and used in a deployment
