@@ -476,7 +476,7 @@ var _ = Describe("Profile", func() {
 			Expect(kustomize.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
 			Expect(*kustomize.OwnerReferences[0].Controller).To(BeTrue())
 
-			helmRefName := fmt.Sprintf("%s-%s-%s-%s", subscriptionName, "repo-name", branch, helmChartChart1)
+			helmRefName := fmt.Sprintf("%s-%s-%s", subscriptionName, "repo-name", helmChartChart1)
 			helmRepo := sourcev1.HelmRepository{}
 			err = fakeClient.Get(ctx, client.ObjectKey{Name: helmRefName, Namespace: namespace}, &helmRepo)
 			Expect(err).NotTo(HaveOccurred())
@@ -579,9 +579,9 @@ var _ = Describe("Profile", func() {
 				Expect(fakeClient.Update(ctx, &helmRelease)).To(Succeed())
 			}),
 			Entry("helmrepo resource gets out of sync", func() {
-				helmRefName := fmt.Sprintf("%s-%s-%s-%s", subscriptionName, "repo-name", branch, helmChartChart1)
+				helmReoName := fmt.Sprintf("%s-%s-%s", subscriptionName, "repo-name", helmChartChart1)
 				helmRepo := sourcev1.HelmRepository{}
-				err := fakeClient.Get(ctx, client.ObjectKey{Name: helmRefName, Namespace: namespace}, &helmRepo)
+				err := fakeClient.Get(ctx, client.ObjectKey{Name: helmReoName, Namespace: namespace}, &helmRepo)
 				Expect(err).NotTo(HaveOccurred())
 				helmRepo.Spec.URL = "example.com/new"
 				Expect(fakeClient.Update(ctx, &helmRepo)).To(Succeed())
