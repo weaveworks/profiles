@@ -40,7 +40,7 @@ jobs:
         uses: docker/login-action@v1
         with:
           username: weaveworksprofilesci
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD_WEAVEWORKSPROFILESCI }}
       - name: Publish multi-arch container image
         uses: docker/build-push-action@v2
         with:
