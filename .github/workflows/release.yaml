@@ -67,10 +67,11 @@ jobs:
           mkdir -p config/release
           kustomize build ./config/crd > ./config/release/${{ env.CONTROLLER }}.crds.yaml
           kustomize build ./config/manager > ./config/release/${{ env.CONTROLLER }}.deployment.yaml
+          tar -czvf ./config/release/manifests.tar.gz ./config/release/*.yaml
       - name: Do release
         uses: softprops/action-gh-release@v1
         with:
           bodyPath: "docs/release_notes/${{ steps.prep.outputs.VERSION }}.md"
-          files: "config/release/*.yaml"
+          files: "config/release/manifests.tar.gz"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
