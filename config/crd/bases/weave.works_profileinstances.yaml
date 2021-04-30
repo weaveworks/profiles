@@ -29,8 +29,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ProfileInstance is the Schema for the profileinstances
-          API
+        description: ProfileInstance is the Schema for the profileinstances API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation

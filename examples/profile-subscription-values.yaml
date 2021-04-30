@@ -1,5 +1,5 @@
 apiVersion: weave.works/v1alpha1
-kind: ProfileSubscription
+kind: ProfileInstance
 metadata:
   name: nginx-profile-test
   namespace: default

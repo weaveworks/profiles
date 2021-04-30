@@ -23,23 +23,23 @@ func (p *Profile) makeGitRepository() *sourcev1.GitRepository {
 	return &sourcev1.GitRepository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      p.makeGitRepoName(),
-			Namespace: p.subscription.ObjectMeta.Namespace,
+			Namespace: p.instance.ObjectMeta.Namespace,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       sourcev1.GitRepositoryKind,
 			APIVersion: sourcev1.GroupVersion.String(),
 		},
 		Spec: sourcev1.GitRepositorySpec{
-			URL: p.subscription.Spec.ProfileURL,
+			URL: p.instance.Spec.ProfileURL,
 			Reference: &sourcev1.GitRepositoryRef{
-				Branch: p.subscription.Spec.Branch,
+				Branch: p.instance.Spec.Branch,
 			},
 		},
 	}
 }
 
 func (p *Profile) makeGitRepoName() string {
-	repoParts := strings.Split(p.subscription.Spec.ProfileURL, "/")
+	repoParts := strings.Split(p.instance.Spec.ProfileURL, "/")
 	repoName := repoParts[len(repoParts)-1]
-	return join(p.subscription.Name, repoName, p.subscription.Spec.Branch)
+	return join(p.instance.Name, repoName, p.instance.Spec.Branch)
 }

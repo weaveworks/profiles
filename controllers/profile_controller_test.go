@@ -40,16 +40,16 @@ var _ = Describe("ProfileController", func() {
 	})
 
 	Context("Create with multiple artifacts", func() {
-		DescribeTable("Applying a Profile creates the correct resources", func(pSubSpec profilesv1.ProfileSubscriptionSpec) {
-			subscriptionName := "foo"
+		DescribeTable("Applying a Profile creates the correct resources", func(pSubSpec profilesv1.ProfileInstanceSpec) {
+			instanceName := "foo"
 
-			pSub := profilesv1.ProfileSubscription{
+			pSub := profilesv1.ProfileInstance{
 				TypeMeta: metav1.TypeMeta{
-					Kind:       "ProfileSubscription",
-					APIVersion: "profilesubscriptions.weave.works/v1alpha1",
+					Kind:       "ProfileInstance",
+					APIVersion: "profileinstances.weave.works/v1alpha1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      subscriptionName,
+					Name:      instanceName,
 					Namespace: namespace,
 				},
 			}
@@ -58,7 +58,7 @@ var _ = Describe("ProfileController", func() {
 
 			By("creating a GitRepository resource for the profile")
 			profileRepoName := "nginx-profile"
-			gitRepoName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileRepoName, branch)
+			gitRepoName := fmt.Sprintf("%s-%s-%s", instanceName, profileRepoName, branch)
 			gitRepo := sourcev1.GitRepository{}
 			Eventually(func() error {
 				return k8sClient.Get(ctx, client.ObjectKey{Name: gitRepoName, Namespace: namespace}, &gitRepo)
@@ -67,7 +67,7 @@ var _ = Describe("ProfileController", func() {
 			Expect(gitRepo.Spec.Reference.Branch).To(Equal(branch))
 
 			By("creating a GitRepository resource for the nested profile")
-			gitRepoName = fmt.Sprintf("%s-%s-%s", subscriptionName, profileRepoName, nestedArtifactBranch)
+			gitRepoName = fmt.Sprintf("%s-%s-%s", instanceName, profileRepoName, nestedArtifactBranch)
 			gitRepo = sourcev1.GitRepository{}
 			Eventually(func() error {
 				return k8sClient.Get(ctx, client.ObjectKey{Name: gitRepoName, Namespace: namespace}, &gitRepo)
@@ -78,7 +78,7 @@ var _ = Describe("ProfileController", func() {
 			By("creating a HelmRelease resource")
 			profileName := "nginx"
 			chartName := "nginx-server"
-			helmReleaseName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, chartName)
+			helmReleaseName := fmt.Sprintf("%s-%s-%s", instanceName, profileName, chartName)
 			helmRelease := helmv2.HelmRelease{}
 			Eventually(func() error {
 				return k8sClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
@@ -93,7 +93,7 @@ var _ = Describe("ProfileController", func() {
 			))
 
 			By("creating a HelmRepository resource")
-			helmRepoName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileRepoName, "dokuwiki")
+			helmRepoName := fmt.Sprintf("%s-%s-%s", instanceName, profileRepoName, "dokuwiki")
 			helmRepo := sourcev1.HelmRepository{}
 			Eventually(func() error {
 				return k8sClient.Get(ctx, client.ObjectKey{Name: helmRepoName, Namespace: namespace}, &helmRepo)
@@ -102,7 +102,7 @@ var _ = Describe("ProfileController", func() {
 
 			By("and creating a HelmRelease resource for the HelmRepository")
 			secondProfileChartName := "dokuwiki"
-			secondHelmReleaseName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, secondProfileChartName)
+			secondHelmReleaseName := fmt.Sprintf("%s-%s-%s", instanceName, profileName, secondProfileChartName)
 			secondHelmRelease := helmv2.HelmRelease{}
 			Eventually(func() error {
 				return k8sClient.Get(ctx, client.ObjectKey{Name: secondHelmReleaseName, Namespace: namespace}, &secondHelmRelease)
@@ -143,9 +143,9 @@ var _ = Describe("ProfileController", func() {
 			Expect(k8sClient.Status().Patch(ctx, helmRepNew, client.MergeFrom(&helmRepo))).To(Succeed())
 
 			By("updating the status to Ready Unknown if the artifact resource reports it")
-			profile := profilesv1.ProfileSubscription{}
+			profile := profilesv1.ProfileInstance{}
 			Eventually(func() bool {
-				Expect(k8sClient.Get(ctx, client.ObjectKey{Name: subscriptionName, Namespace: namespace}, &profile)).To(Succeed())
+				Expect(k8sClient.Get(ctx, client.ObjectKey{Name: instanceName, Namespace: namespace}, &profile)).To(Succeed())
 				return len(profile.Status.Conditions) > 0 &&
 					profile.Status.Conditions[0].Type == "Ready" &&
 					profile.Status.Conditions[0].Status == "Unknown" &&
@@ -173,27 +173,27 @@ var _ = Describe("ProfileController", func() {
 			Expect(k8sClient.Status().Patch(ctx, helmResNew, client.MergeFrom(&helmRelease))).To(Succeed())
 
 			By("updating the status to Ready True when the resources are reporting Ready")
-			profile = profilesv1.ProfileSubscription{}
+			profile = profilesv1.ProfileInstance{}
 			Eventually(func() bool {
-				Expect(k8sClient.Get(ctx, client.ObjectKey{Name: subscriptionName, Namespace: namespace}, &profile)).To(Succeed())
+				Expect(k8sClient.Get(ctx, client.ObjectKey{Name: instanceName, Namespace: namespace}, &profile)).To(Succeed())
 				return len(profile.Status.Conditions) > 0 &&
 					profile.Status.Conditions[0].Type == "Ready" &&
 					profile.Status.Conditions[0].Status == "True" &&
 					profile.Status.Conditions[0].Message == "all artifact resources ready"
 			}, 10*time.Second).Should(BeTrue())
 		},
-			Entry("a single Helm chart with no supplied values", profilesv1.ProfileSubscriptionSpec{
+			Entry("a single Helm chart with no supplied values", profilesv1.ProfileInstanceSpec{
 				ProfileURL: nginxProfileURL,
 				Branch:     branch,
 			}),
-			Entry("a single Helm chart with supplied values", profilesv1.ProfileSubscriptionSpec{
+			Entry("a single Helm chart with supplied values", profilesv1.ProfileInstanceSpec{
 				ProfileURL: nginxProfileURL,
 				Branch:     branch,
 				Values: &apiextensionsv1.JSON{
 					Raw: []byte(`{"replicaCount": 3,"service":{"port":8081}}`),
 				},
 			}),
-			Entry("a single Helm chart with values supplied via valuesFrom", profilesv1.ProfileSubscriptionSpec{
+			Entry("a single Helm chart with values supplied via valuesFrom", profilesv1.ProfileInstanceSpec{
 				ProfileURL: nginxProfileURL,
 				Branch:     branch,
 				ValuesFrom: []helmv2.ValuesReference{
@@ -208,27 +208,27 @@ var _ = Describe("ProfileController", func() {
 
 		When("retrieving the Profile Definition fails", func() {
 			It("updates the status", func() {
-				subscriptionName := "fetch-definition-error"
+				instanceName := "fetch-definition-error"
 				profileURL := "https://github.com/does-not/exist"
 
-				pSub := profilesv1.ProfileSubscription{
+				pSub := profilesv1.ProfileInstance{
 					TypeMeta: metav1.TypeMeta{
-						Kind:       "ProfileSubscription",
-						APIVersion: "profilesubscriptions.weave.works/v1alpha1",
+						Kind:       "ProfileInstance",
+						APIVersion: "profileinstances.weave.works/v1alpha1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      subscriptionName,
+						Name:      instanceName,
 						Namespace: namespace,
 					},
-					Spec: profilesv1.ProfileSubscriptionSpec{
+					Spec: profilesv1.ProfileInstanceSpec{
 						ProfileURL: profileURL,
 					},
 				}
 				Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())
 
-				profile := profilesv1.ProfileSubscription{}
+				profile := profilesv1.ProfileInstance{}
 				Eventually(func() bool {
-					err := k8sClient.Get(ctx, client.ObjectKey{Name: subscriptionName, Namespace: namespace}, &profile)
+					err := k8sClient.Get(ctx, client.ObjectKey{Name: instanceName, Namespace: namespace}, &profile)
 					return err == nil && len(profile.Status.Conditions) > 0
 				}, 10*time.Second, 1*time.Second).Should(BeTrue())
 
@@ -241,27 +241,27 @@ var _ = Describe("ProfileController", func() {
 
 		When("creating Profile artifacts fail", func() {
 			It("updates the status", func() {
-				subscriptionName := "git-resource-already-exists-error"
+				instanceName := "git-resource-already-exists-error"
 				profileURL := nginxProfileURL
-				pSub := profilesv1.ProfileSubscription{
+				pSub := profilesv1.ProfileInstance{
 					TypeMeta: metav1.TypeMeta{
-						Kind:       "ProfileSubscription",
-						APIVersion: "profilesubscriptions.weave.works/v1alpha1",
+						Kind:       "ProfileInstance",
+						APIVersion: "profileinstances.weave.works/v1alpha1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      subscriptionName,
+						Name:      instanceName,
 						Namespace: namespace,
 					},
-					Spec: profilesv1.ProfileSubscriptionSpec{
+					Spec: profilesv1.ProfileInstanceSpec{
 						ProfileURL: profileURL,
 						Branch:     "invalid-artifact",
 					},
 				}
 				Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())
 
-				profile := profilesv1.ProfileSubscription{}
+				profile := profilesv1.ProfileInstance{}
 				Eventually(func() bool {
-					err := k8sClient.Get(ctx, client.ObjectKey{Name: subscriptionName, Namespace: namespace}, &profile)
+					err := k8sClient.Get(ctx, client.ObjectKey{Name: instanceName, Namespace: namespace}, &profile)
 					return err == nil && len(profile.Status.Conditions) > 0
 				}, 10*time.Second, 1*time.Second).Should(BeTrue())
 

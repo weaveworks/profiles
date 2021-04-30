@@ -45,16 +45,16 @@ const (
 	readyUnknown = "Unknown"
 )
 
-// ProfileSubscriptionReconciler reconciles a ProfileSubscription object
-type ProfileSubscriptionReconciler struct {
+// ProfileInstanceReconciler reconciles a ProfileInstance object
+type ProfileInstanceReconciler struct {
 	Client client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=weave.works,resources=profilesubscriptions,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=weave.works,resources=profilesubscriptions/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=weave.works,resources=profilesubscriptions/finalizers,verbs=update
+// +kubebuilder:rbac:groups=weave.works,resources=profileinstances,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=weave.works,resources=profileinstances/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=weave.works,resources=profileinstances/finalizers,verbs=update
 // +kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=gitrepositories,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=gitrepositories/status,verbs=get
 // +kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=helmrepositories,verbs=get;list;watch;create;update;patch;delete
@@ -65,9 +65,9 @@ type ProfileSubscriptionReconciler struct {
 // +kubebuilder:rbac:groups=kustomize.toolkit.fluxcd.io,resources=kustomizations/status,verbs=get
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ProfileSubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *ProfileInstanceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&profilesv1.ProfileSubscription{}, builder.WithPredicates(
+		For(&profilesv1.ProfileInstance{}, builder.WithPredicates(
 			predicate.GenerationChangedPredicate{},
 		)). // Owns ensures that changes to resources owned by the pSub cause the pSub to get requeued
 		Owns(&sourcev1.GitRepository{}).
@@ -81,10 +81,10 @@ func (r *ProfileSubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error
 // move the current state of the cluster closer to the desired state.
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
-func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *ProfileInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := r.Log.WithValues("resource", req.NamespacedName)
 
-	pSub := profilesv1.ProfileSubscription{}
+	pSub := profilesv1.ProfileInstance{}
 	err := r.Client.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, &pSub)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -136,7 +136,7 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *ProfileSubscriptionReconciler) patchStatus(ctx context.Context, pSub *profilesv1.ProfileSubscription, logger logr.Logger, readyStatus, reason, message string) error {
+func (r *ProfileInstanceReconciler) patchStatus(ctx context.Context, pSub *profilesv1.ProfileInstance, logger logr.Logger, readyStatus, reason, message string) error {
 	pSub.Status.Conditions = []metav1.Condition{
 		{
 			Type:               "Ready",
@@ -148,7 +148,7 @@ func (r *ProfileSubscriptionReconciler) patchStatus(ctx context.Context, pSub *p
 	}
 
 	key := client.ObjectKeyFromObject(pSub)
-	latest := &profilesv1.ProfileSubscription{}
+	latest := &profilesv1.ProfileInstance{}
 	if err := r.Client.Get(ctx, key, latest); err != nil {
 		logger.Error(err, "failed to get latest resource during patch")
 		return err

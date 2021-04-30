@@ -107,7 +107,7 @@ rules:
 - apiGroups:
   - weave.works
   resources:
-  - profilesubscriptions
+  - profileinstances
   verbs:
   - create
   - delete
@@ -119,13 +119,13 @@ rules:
 - apiGroups:
   - weave.works
   resources:
-  - profilesubscriptions/finalizers
+  - profileinstances/finalizers
   verbs:
   - update
 - apiGroups:
   - weave.works
   resources:
-  - profilesubscriptions/status
+  - profileinstances/status
   verbs:
   - get
   - patch

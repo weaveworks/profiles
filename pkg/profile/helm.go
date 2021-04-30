@@ -42,7 +42,7 @@ func (p *Profile) makeHelmRepository(url string, name string) *sourcev1.HelmRepo
 	return &sourcev1.HelmRepository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      p.makeHelmRepoName(name),
-			Namespace: p.subscription.ObjectMeta.Namespace,
+			Namespace: p.instance.ObjectMeta.Namespace,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       sourcev1.HelmRepositoryKind,
@@ -55,9 +55,9 @@ func (p *Profile) makeHelmRepository(url string, name string) *sourcev1.HelmRepo
 }
 
 func (p *Profile) makeHelmRepoName(name string) string {
-	repoParts := strings.Split(p.subscription.Spec.ProfileURL, "/")
+	repoParts := strings.Split(p.instance.Spec.ProfileURL, "/")
 	repoName := repoParts[len(repoParts)-1]
-	return join(p.subscription.Name, repoName, name)
+	return join(p.instance.Name, repoName, name)
 }
 
 func (p *Profile) makeHelmRelease(artifact profilesv1.Artifact) *helmv2.HelmRelease {
@@ -70,7 +70,7 @@ func (p *Profile) makeHelmRelease(artifact profilesv1.Artifact) *helmv2.HelmRele
 	helmRelease := &helmv2.HelmRelease{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      p.makeArtifactName(artifact.Name),
-			Namespace: p.subscription.ObjectMeta.Namespace,
+			Namespace: p.instance.ObjectMeta.Namespace,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       helmv2.HelmReleaseKind,
@@ -80,8 +80,8 @@ func (p *Profile) makeHelmRelease(artifact profilesv1.Artifact) *helmv2.HelmRele
 			Chart: helmv2.HelmChartTemplate{
 				Spec: helmChartSpec,
 			},
-			Values:     p.subscription.Spec.Values,
-			ValuesFrom: p.subscription.Spec.ValuesFrom,
+			Values:     p.instance.Spec.Values,
+			ValuesFrom: p.instance.Spec.ValuesFrom,
 		},
 	}
 	return helmRelease
@@ -93,7 +93,7 @@ func (p *Profile) makeGitChartSpec(path string) helmv2.HelmChartTemplateSpec {
 		SourceRef: helmv2.CrossNamespaceObjectReference{
 			Kind:      sourcev1.GitRepositoryKind,
 			Name:      p.makeGitRepoName(),
-			Namespace: p.subscription.ObjectMeta.Namespace,
+			Namespace: p.instance.ObjectMeta.Namespace,
 		},
 	}
 }
@@ -104,7 +104,7 @@ func (p *Profile) makeHelmChartSpec(chart string, version string) helmv2.HelmCha
 		SourceRef: helmv2.CrossNamespaceObjectReference{
 			Kind:      sourcev1.HelmRepositoryKind,
 			Name:      p.makeHelmRepoName(chart),
-			Namespace: p.subscription.ObjectMeta.Namespace,
+			Namespace: p.instance.ObjectMeta.Namespace,
 		},
 		Version: version,
 	}

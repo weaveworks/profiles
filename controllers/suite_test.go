@@ -87,9 +87,9 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	err = (&controllers.ProfileSubscriptionReconciler{
+	err = (&controllers.ProfileInstanceReconciler{
 		Client: k8sManager.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("profilesubscription"),
+		Log:    ctrl.Log.WithName("controllers").WithName("profileinstance"),
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 

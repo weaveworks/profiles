@@ -184,14 +184,14 @@ func (p *Profile) MakeOwnerlessArtifacts() ([]runtime.Object, error) {
 		}
 		switch artifact.Kind {
 		case profilesv1.ProfileKind:
-			if artifact.Profile.URL == p.subscription.Spec.ProfileURL && artifact.Profile.Branch == p.subscription.Spec.Branch {
+			if artifact.Profile.URL == p.instance.Spec.ProfileURL && artifact.Profile.Branch == p.instance.Spec.Branch {
 				return nil, fmt.Errorf("profile cannot contain profile artifact pointing to itself")
 			}
 			nestedProfileDef, err := getProfileDefinition(artifact.Profile.URL, artifact.Profile.Branch, p.log)
 			if err != nil {
 				return nil, fmt.Errorf("failed to fetch profile %q: %w", artifact.Name, err)
 			}
-			nestedProfile := p.subscription.DeepCopyObject().(*profilesv1.ProfileSubscription)
+			nestedProfile := p.instance.DeepCopyObject().(*profilesv1.ProfileInstance)
 			nestedProfile.Spec.ProfileURL = artifact.Profile.URL
 			nestedProfile.Spec.Branch = artifact.Profile.Branch
 			nestedObjs, err := New(p.ctx, nestedProfileDef, *nestedProfile, p.client, p.log).MakeOwnerlessArtifacts()
@@ -240,7 +240,7 @@ func (p *Profile) MakeArtifacts() ([]runtime.Object, error) {
 		if !ok {
 			return nil, fmt.Errorf("object is not a client.Object %v", o)
 		}
-		if err := controllerutil.SetControllerReference(&p.subscription, obj, p.client.Scheme()); err != nil {
+		if err := controllerutil.SetControllerReference(&p.instance, obj, p.client.Scheme()); err != nil {
 			return nil, fmt.Errorf("failed to set resource ownership on %s: %w", obj.GetName(), err)
 		}
 	}
@@ -249,7 +249,7 @@ func (p *Profile) MakeArtifacts() ([]runtime.Object, error) {
 }
 
 func (p *Profile) makeArtifactName(name string) string {
-	return join(p.subscription.Name, p.definition.Name, name)
+	return join(p.instance.Name, p.definition.Name, name)
 }
 
 func join(s ...string) string {

@@ -90,12 +90,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.ProfileSubscriptionReconciler{
+	if err = (&controllers.ProfileInstanceReconciler{
 		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("ProfileSubscription"),
+		Log:    ctrl.Log.WithName("controllers").WithName("ProfileInstance"),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ProfileSubscription")
+		setupLog.Error(err, "unable to create controller", "controller", "ProfileInstance")
 		os.Exit(1)
 	}
 

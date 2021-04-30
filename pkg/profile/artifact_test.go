@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	subscriptionName     = "mySub"
+	instanceName         = "mySub"
 	namespace            = "default"
 	branch               = "main"
 	profileName1         = "profileName"
@@ -41,7 +41,7 @@ const (
 	helmChartVersion1    = "8.8.1"
 	kustomizeName1       = "kustomizeOneArtifactName"
 	kustomizePath1       = "kustomize/artifact/path-one"
-	profileSubKind       = "ProfileSubscription"
+	profileSubKind       = "ProfileInstance"
 	profileSubAPIVersion = "weave.works/v1alpha1"
 	profileURL           = "https://github.com/org/repo-name"
 )
@@ -69,20 +69,20 @@ var _ = Describe("Profile", func() {
 		p          *profile.Profile
 		fakeClient client.Client
 		scheme     *runtime.Scheme
-		pSub       profilesv1.ProfileSubscription
+		pSub       profilesv1.ProfileInstance
 		pDef       profilesv1.ProfileDefinition
 		pNestedDef profilesv1.ProfileDefinition
 	)
 
 	BeforeEach(func() {
 		scheme = runtime.NewScheme()
-		pSub = profilesv1.ProfileSubscription{
+		pSub = profilesv1.ProfileInstance{
 			TypeMeta: profileTypeMeta,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      subscriptionName,
+				Name:      instanceName,
 				Namespace: namespace,
 			},
-			Spec: profilesv1.ProfileSubscriptionSpec{
+			Spec: profilesv1.ProfileInstanceSpec{
 				ProfileURL: profileURL,
 				Branch:     branch,
 				Values: &apiextensionsv1.JSON{
@@ -368,19 +368,19 @@ var _ = Describe("Profile", func() {
 
 	Describe("ReconcileArtifacts", func() {
 		assertResources := func() {
-			gitRefName := fmt.Sprintf("%s-%s-%s", subscriptionName, "repo-name-nested", branch)
+			gitRefName := fmt.Sprintf("%s-%s-%s", instanceName, "repo-name-nested", branch)
 			gitRepo := sourcev1.GitRepository{}
 			err := fakeClient.Get(ctx, client.ObjectKey{Name: gitRefName, Namespace: namespace}, &gitRepo)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(gitRepo.Spec.URL).To(Equal("https://github.com/org/repo-name-nested"))
 			Expect(gitRepo.Spec.Reference.Branch).To(Equal(branch))
 			Expect(gitRepo.OwnerReferences).To(HaveLen(1))
-			Expect(gitRepo.OwnerReferences[0].Name).To(Equal(subscriptionName))
+			Expect(gitRepo.OwnerReferences[0].Name).To(Equal(instanceName))
 			Expect(gitRepo.OwnerReferences[0].Kind).To(Equal(profileSubKind))
 			Expect(gitRepo.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
 			Expect(*gitRepo.OwnerReferences[0].Controller).To(BeTrue())
 
-			helmReleaseName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName2, chartName1)
+			helmReleaseName := fmt.Sprintf("%s-%s-%s", instanceName, profileName2, chartName1)
 			helmRelease := helmv2.HelmRelease{}
 			err = fakeClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
 			Expect(err).NotTo(HaveOccurred())
@@ -407,24 +407,24 @@ var _ = Describe("Profile", func() {
 				},
 			}))
 			Expect(helmRelease.OwnerReferences).To(HaveLen(1))
-			Expect(helmRelease.OwnerReferences[0].Name).To(Equal(subscriptionName))
+			Expect(helmRelease.OwnerReferences[0].Name).To(Equal(instanceName))
 			Expect(helmRelease.OwnerReferences[0].Kind).To(Equal(profileSubKind))
 			Expect(helmRelease.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
 			Expect(*helmRelease.OwnerReferences[0].Controller).To(BeTrue())
 
-			gitRefName = fmt.Sprintf("%s-%s-%s", subscriptionName, "repo-name", branch)
+			gitRefName = fmt.Sprintf("%s-%s-%s", instanceName, "repo-name", branch)
 			gitRepo = sourcev1.GitRepository{}
 			err = fakeClient.Get(ctx, client.ObjectKey{Name: gitRefName, Namespace: namespace}, &gitRepo)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(gitRepo.Spec.URL).To(Equal("https://github.com/org/repo-name"))
 			Expect(gitRepo.Spec.Reference.Branch).To(Equal(branch))
 			Expect(gitRepo.OwnerReferences).To(HaveLen(1))
-			Expect(gitRepo.OwnerReferences[0].Name).To(Equal(subscriptionName))
+			Expect(gitRepo.OwnerReferences[0].Name).To(Equal(instanceName))
 			Expect(gitRepo.OwnerReferences[0].Kind).To(Equal(profileSubKind))
 			Expect(gitRepo.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
 			Expect(*gitRepo.OwnerReferences[0].Controller).To(BeTrue())
 
-			helmReleaseName = fmt.Sprintf("%s-%s-%s", subscriptionName, profileName1, chartName2)
+			helmReleaseName = fmt.Sprintf("%s-%s-%s", instanceName, profileName1, chartName2)
 			helmRelease = helmv2.HelmRelease{}
 			err = fakeClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
 			Expect(err).NotTo(HaveOccurred())
@@ -450,12 +450,12 @@ var _ = Describe("Profile", func() {
 				},
 			}))
 			Expect(helmRelease.OwnerReferences).To(HaveLen(1))
-			Expect(helmRelease.OwnerReferences[0].Name).To(Equal(subscriptionName))
+			Expect(helmRelease.OwnerReferences[0].Name).To(Equal(instanceName))
 			Expect(helmRelease.OwnerReferences[0].Kind).To(Equal(profileSubKind))
 			Expect(helmRelease.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
 			Expect(*helmRelease.OwnerReferences[0].Controller).To(BeTrue())
 
-			kustomizeName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName1, kustomizeName1)
+			kustomizeName := fmt.Sprintf("%s-%s-%s", instanceName, profileName1, kustomizeName1)
 			kustomize := kustomizev1.Kustomization{}
 			err = fakeClient.Get(ctx, client.ObjectKey{Name: kustomizeName, Namespace: namespace}, &kustomize)
 			Expect(err).NotTo(HaveOccurred())
@@ -471,23 +471,23 @@ var _ = Describe("Profile", func() {
 				},
 			))
 			Expect(kustomize.OwnerReferences).To(HaveLen(1))
-			Expect(kustomize.OwnerReferences[0].Name).To(Equal(subscriptionName))
+			Expect(kustomize.OwnerReferences[0].Name).To(Equal(instanceName))
 			Expect(kustomize.OwnerReferences[0].Kind).To(Equal(profileSubKind))
 			Expect(kustomize.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
 			Expect(*kustomize.OwnerReferences[0].Controller).To(BeTrue())
 
-			helmRefName := fmt.Sprintf("%s-%s-%s", subscriptionName, "repo-name", helmChartChart1)
+			helmRefName := fmt.Sprintf("%s-%s-%s", instanceName, "repo-name", helmChartChart1)
 			helmRepo := sourcev1.HelmRepository{}
 			err = fakeClient.Get(ctx, client.ObjectKey{Name: helmRefName, Namespace: namespace}, &helmRepo)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(helmRepo.Spec.URL).To(Equal(helmChartURL1))
 			Expect(helmRepo.OwnerReferences).To(HaveLen(1))
-			Expect(helmRepo.OwnerReferences[0].Name).To(Equal(subscriptionName))
+			Expect(helmRepo.OwnerReferences[0].Name).To(Equal(instanceName))
 			Expect(helmRepo.OwnerReferences[0].Kind).To(Equal(profileSubKind))
 			Expect(helmRepo.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
 			Expect(*helmRepo.OwnerReferences[0].Controller).To(BeTrue())
 
-			helmReleaseName = fmt.Sprintf("%s-%s-%s", subscriptionName, profileName1, helmChartName1)
+			helmReleaseName = fmt.Sprintf("%s-%s-%s", instanceName, profileName1, helmChartName1)
 			helmRelease = helmv2.HelmRelease{}
 			err = fakeClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
 			Expect(err).NotTo(HaveOccurred())
@@ -514,7 +514,7 @@ var _ = Describe("Profile", func() {
 				},
 			}))
 			Expect(helmRelease.OwnerReferences).To(HaveLen(1))
-			Expect(helmRelease.OwnerReferences[0].Name).To(Equal(subscriptionName))
+			Expect(helmRelease.OwnerReferences[0].Name).To(Equal(instanceName))
 			Expect(helmRelease.OwnerReferences[0].Kind).To(Equal(profileSubKind))
 			Expect(helmRelease.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
 			Expect(*helmRelease.OwnerReferences[0].Controller).To(BeTrue())
@@ -547,7 +547,7 @@ var _ = Describe("Profile", func() {
 				assertResources()
 			},
 			Entry("resource gets deleted", func() {
-				gitRefName := fmt.Sprintf("%s-%s-%s", subscriptionName, "repo-name", branch)
+				gitRefName := fmt.Sprintf("%s-%s-%s", instanceName, "repo-name", branch)
 				gitRepo := sourcev1.GitRepository{}
 				err := fakeClient.Get(ctx, client.ObjectKey{Name: gitRefName, Namespace: namespace}, &gitRepo)
 				Expect(err).NotTo(HaveOccurred())
@@ -555,7 +555,7 @@ var _ = Describe("Profile", func() {
 				Expect(err).NotTo(HaveOccurred())
 			}),
 			Entry("git resource gets out of sync", func() {
-				gitRefName := fmt.Sprintf("%s-%s-%s", subscriptionName, "repo-name", branch)
+				gitRefName := fmt.Sprintf("%s-%s-%s", instanceName, "repo-name", branch)
 				gitRepo := sourcev1.GitRepository{}
 				err := fakeClient.Get(ctx, client.ObjectKey{Name: gitRefName, Namespace: namespace}, &gitRepo)
 				Expect(err).NotTo(HaveOccurred())
@@ -563,7 +563,7 @@ var _ = Describe("Profile", func() {
 				Expect(fakeClient.Update(ctx, &gitRepo)).To(Succeed())
 			}),
 			Entry("kustomize resource gets out of sync", func() {
-				kustomizeName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName1, kustomizeName1)
+				kustomizeName := fmt.Sprintf("%s-%s-%s", instanceName, profileName1, kustomizeName1)
 				kustomize := kustomizev1.Kustomization{}
 				err := fakeClient.Get(ctx, client.ObjectKey{Name: kustomizeName, Namespace: namespace}, &kustomize)
 				Expect(err).NotTo(HaveOccurred())
@@ -571,7 +571,7 @@ var _ = Describe("Profile", func() {
 				Expect(fakeClient.Update(ctx, &kustomize)).To(Succeed())
 			}),
 			Entry("helmrelease resource gets out of sync", func() {
-				helmReleaseName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName2, chartName1)
+				helmReleaseName := fmt.Sprintf("%s-%s-%s", instanceName, profileName2, chartName1)
 				helmRelease := helmv2.HelmRelease{}
 				err := fakeClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
 				Expect(err).NotTo(HaveOccurred())
@@ -579,7 +579,7 @@ var _ = Describe("Profile", func() {
 				Expect(fakeClient.Update(ctx, &helmRelease)).To(Succeed())
 			}),
 			Entry("helmrepo resource gets out of sync", func() {
-				helmReoName := fmt.Sprintf("%s-%s-%s", subscriptionName, "repo-name", helmChartChart1)
+				helmReoName := fmt.Sprintf("%s-%s-%s", instanceName, "repo-name", helmChartChart1)
 				helmRepo := sourcev1.HelmRepository{}
 				err := fakeClient.Get(ctx, client.ObjectKey{Name: helmReoName, Namespace: namespace}, &helmRepo)
 				Expect(err).NotTo(HaveOccurred())

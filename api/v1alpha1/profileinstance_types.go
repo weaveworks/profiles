@@ -25,8 +25,8 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 // NOTE: Run "make" to regenerate code after modifying this file
 
-// ProfileSubscriptionSpec defines the desired state of a ProfileSubscription
-type ProfileSubscriptionSpec struct {
+// ProfileInstanceSpec defines the desired state of a ProfileInstance
+type ProfileInstanceSpec struct {
 	// ProfileURL is a fully qualified URL to a profile repo
 	ProfileURL string `json:"profileURL,omitempty"`
 	// Branch is the git repo branch containing the profile definition (default: main)
@@ -43,9 +43,9 @@ type ProfileSubscriptionSpec struct {
 	ValuesFrom []helmv2.ValuesReference `json:"valuesFrom,omitempty"`
 }
 
-// ProfileSubscriptionStatus defines the observed state of ProfileSubscription
-type ProfileSubscriptionStatus struct {
-	// Conditions holds the conditions for the ProfileSubscription
+// ProfileInstanceStatus defines the observed state of ProfileInstance
+type ProfileInstanceStatus struct {
+	// Conditions holds the conditions for the ProfileInstance
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
@@ -56,24 +56,24 @@ type ProfileSubscriptionStatus struct {
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].message",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 
-// ProfileSubscription is the Schema for the profilesubscriptions API
-type ProfileSubscription struct {
+// ProfileInstance is the Schema for the profileinstances API
+type ProfileInstance struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ProfileSubscriptionSpec   `json:"spec,omitempty"`
-	Status ProfileSubscriptionStatus `json:"status,omitempty"`
+	Spec   ProfileInstanceSpec   `json:"spec,omitempty"`
+	Status ProfileInstanceStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// ProfileSubscriptionList contains a list of ProfileSubscription
-type ProfileSubscriptionList struct {
+// ProfileInstanceList contains a list of ProfileInstance
+type ProfileInstanceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []ProfileSubscription `json:"items"`
+	Items           []ProfileInstance `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&ProfileSubscription{}, &ProfileSubscriptionList{})
+	SchemeBuilder.Register(&ProfileInstance{}, &ProfileInstanceList{})
 }

@@ -17,12 +17,12 @@ and run: mdtoc -inplace README.md
   - [Profile](#profile)
   - [Catalog](#catalog)
   - [Profile Catalog Source](#profile-catalog-source)
-  - [Profile Subscription](#profile-subscription)
+  - [Profile Instance](#profile-instance)
   - [Profile Controller](#profile-controller)
   - [Profile Catalog Source Controller](#profile-catalog-source-controller)
 - [Current Architecture](#current-architecture)
   - [Catalogs and Sources](#catalogs-and-sources)
-  - [Profile Subscriptions](#profile-subscriptions)
+  - [Profile Instances](#profile-instances)
 - [Roadmap](#roadmap)
   - [Profiles](#profiles)
   - [Catalogs](#catalogs)
@@ -135,17 +135,17 @@ type ProfileDescription struct {
 
 Profiles can therefore be grouped and namespaced within the Catalog.
 
-### Profile Subscription
+### Profile Instance
 
-A `ProfileSubscription` is the top-level Profile installation object. Once a Subscription is
+A `ProfileInstance` is the top-level Profile installation object. Once a Instance is
 applied to the cluster, the requested Profile is parsed and child artifact objects are created.
 
-Artifact objects are processed by Flux components, with the health of Subscription children
-reflected in the `ProfileSubscriptionStatus`.
+Artifact objects are processed by Flux components, with the health of Instance children
+reflected in the `ProfileInstanceStatus`.
 
 ```go
-// ProfileSubscriptionSpec defines the desired state of a ProfileSubscription
-type ProfileSubscriptionSpec struct {
+// ProfileInstanceSpec defines the desired state of a ProfileInstance
+type ProfileInstanceSpec struct {
 	// ProfileURL is a fully qualified URL to a profile repo
 	ProfileURL string `json:"profileURL,omitempty"`
 	// Branch is the git repo branch containing the profile definition (default: main)
@@ -162,9 +162,9 @@ type ProfileSubscriptionSpec struct {
 	ValuesFrom []helmv2.ValuesReference `json:"valuesFrom,omitempty"`
 }
 
-// ProfileSubscriptionStatus defines the observed state of ProfileSubscription
-type ProfileSubscriptionStatus struct {
-	// Conditions holds the conditions for the ProfileSubscription
+// ProfileInstanceStatus defines the observed state of ProfileInstance
+type ProfileInstanceStatus struct {
+	// Conditions holds the conditions for the ProfileInstance
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
@@ -174,7 +174,7 @@ If using `pctl`, Profiles can only be installed if they are listed in a [Catalog
 
 ### Profile Controller
 
-The Profile Controller reconciles `ProfileSubscription` resources.
+The Profile Controller reconciles `ProfileInstance` resources.
 See architecture diagrams below for what the reconciliation process does.
 
 ### Profile Catalog Source Controller
@@ -194,9 +194,9 @@ Illustration of how Profiles are added to the Catalog and how they can then be q
 
 ![](/docs/assets/catalog.jpg)
 
-### Profile Subscriptions
+### Profile Instances
 
-Illustration of a basic profile install (aka subscription), using `kubectl` and a hand-written `ProfileSubscription`:
+Illustration of a basic profile install (aka instance), using `kubectl` and a hand-written `ProfileInstance`:
 
 <!--
 To update this diagram go to https://miro.com/app/board/o9J_lI2seIg=/
@@ -221,7 +221,7 @@ edit, export, download image and commit. Easy.
 ![](/docs/assets/pctl_install_ladder.png)
 
 Successful installations can be verified by running: `kubectl describe pod [-n <namespace>] <pod-name>`.
-The pod name will be comprised of `profileSubscriptionName-profileDefinitionName-artifactName-xxxx`
+The pod name will be comprised of `profileInstanceName-profileDefinitionName-artifactName-xxxx`
 
 ## Roadmap
 

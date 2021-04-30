@@ -1,13 +1,13 @@
-# permissions for end users to edit profilesubscriptions.
+# permissions for end users to edit profileinstances.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: profilesubscription-editor-role
+  name: profileinstance-editor-role
 rules:
 - apiGroups:
   - weave.works
   resources:
-  - profilesubscriptions
+  - profileinstances
   verbs:
   - create
   - delete
@@ -19,6 +19,6 @@ rules:
 - apiGroups:
   - weave.works
   resources:
-  - profilesubscriptions/status
+  - profileinstances/status
   verbs:
   - get

@@ -22,14 +22,14 @@ import (
 )
 
 const (
-	profileSubscriptionKind       = "ProfileSubscription"
-	profileSubscriptionAPIVersion = "profilesubscriptions.weave.works/v1alpha1"
+	profileInstanceKind       = "ProfileInstance"
+	profileInstanceAPIVersion = "profileinstances.weave.works/v1alpha1"
 
 	nginxImage = "docker.io/bitnami/nginx:1.19.8-debian-10-r0"
 )
 
 var _ = Describe("Acceptance", func() {
-	Context("ProfileSubscription", func() {
+	Context("ProfileInstance", func() {
 		var (
 			profileURL string
 			namespace  string
@@ -57,16 +57,16 @@ var _ = Describe("Acceptance", func() {
 
 		When("subscribing to a Profile with a Helm Chart", func() {
 			It("should deploy the Profile workload, reconcile when changes occur and cleanup on deletion", func() {
-				pSub := profilesv1.ProfileSubscription{
+				pSub := profilesv1.ProfileInstance{
 					TypeMeta: metav1.TypeMeta{
-						Kind:       profileSubscriptionKind,
-						APIVersion: profileSubscriptionAPIVersion,
+						Kind:       profileInstanceKind,
+						APIVersion: profileInstanceAPIVersion,
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      subName,
 						Namespace: namespace,
 					},
-					Spec: profilesv1.ProfileSubscriptionSpec{
+					Spec: profilesv1.ProfileInstanceSpec{
 						ProfileURL: profileURL,
 						Branch:     branch,
 					},
@@ -217,7 +217,7 @@ var _ = Describe("Acceptance", func() {
 			pCatalog = profilesv1.ProfileCatalogSource{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ProfileCatalogSource",
-					APIVersion: profileSubscriptionAPIVersion,
+					APIVersion: profileInstanceAPIVersion,
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      sourceName,

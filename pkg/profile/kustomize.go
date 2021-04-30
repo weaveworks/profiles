@@ -32,7 +32,7 @@ func (p *Profile) makeKustomization(artifact profilesv1.Artifact) *kustomizev1.K
 	return &kustomizev1.Kustomization{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      p.makeArtifactName(artifact.Name),
-			Namespace: p.subscription.ObjectMeta.Namespace,
+			Namespace: p.instance.ObjectMeta.Namespace,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       kustomizev1.KustomizationKind,
@@ -42,11 +42,11 @@ func (p *Profile) makeKustomization(artifact profilesv1.Artifact) *kustomizev1.K
 			Path:            artifact.Path,
 			Interval:        metav1.Duration{Duration: time.Minute * 5},
 			Prune:           true,
-			TargetNamespace: p.subscription.ObjectMeta.Namespace,
+			TargetNamespace: p.instance.ObjectMeta.Namespace,
 			SourceRef: kustomizev1.CrossNamespaceSourceReference{
 				Kind:      sourcev1.GitRepositoryKind,
 				Name:      p.makeGitRepoName(),
-				Namespace: p.subscription.ObjectMeta.Namespace,
+				Namespace: p.instance.ObjectMeta.Namespace,
 			},
 		},
 	}

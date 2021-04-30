@@ -4,7 +4,7 @@ projectName: profiles
 repo: github.com/weaveworks/profiles
 resources:
 - crdVersion: v1
-  kind: ProfileSubscription
+  kind: ProfileInstance
   version: v1alpha1
 - crdVersion: v1
   kind: Profile

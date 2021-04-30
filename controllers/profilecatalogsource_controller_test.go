@@ -36,7 +36,7 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 			pSub := &profilesv1.ProfileCatalogSource{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ProfileCatalogSource",
-					APIVersion: "profilesubscriptions.weave.works/v1alpha1",
+					APIVersion: "profileinstances.weave.works/v1alpha1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "catalog",
