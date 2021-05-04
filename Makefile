@@ -103,7 +103,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from a cluster
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
 deploy: manifests kustomize ## Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-	cd config/manager && $(KUSTOMIZE) edit set image controller=localhost:5000/${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image weaveworks/profiles-controller=localhost:5000/${IMG}
 	$(KUSTOMIZE) build config/prepare | kubectl apply -f -
 	echo "waiting for controller to be ready"
 	kubectl -n profiles-system wait --for=condition=available deployment profiles-controller-manager --timeout 5m
