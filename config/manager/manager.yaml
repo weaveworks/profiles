@@ -22,7 +22,7 @@ spec:
         - /manager
         args:
         - --leader-elect
-        image: controller:latest
+        image: weaveworks/profiles-controller:latest
         name: manager
         securityContext:
           allowPrivilegeEscalation: false
