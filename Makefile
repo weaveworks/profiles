@@ -104,14 +104,14 @@ uninstall: manifests kustomize ## Uninstall CRDs from a cluster
 
 deploy: manifests kustomize ## Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 	cd config/manager && $(KUSTOMIZE) edit set image controller=localhost:5000/${IMG}
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	$(KUSTOMIZE) build config/prepare | kubectl apply -f -
 	echo "waiting for controller to be ready"
 	kubectl -n profiles-system wait --for=condition=available deployment profiles-controller-manager --timeout 5m
 	kubectl -n profiles-system wait --for=condition=Ready --all pods --timeout 5m
 
 # UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
 undeploy:
-	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=true -f -
+	$(KUSTOMIZE) build config/prepare | kubectl delete --ignore-not-found=true -f -
 
 run: generate fmt vet manifests ## Run against the configured Kubernetes cluster in ~/.kube/config
 	go run ./main.go
