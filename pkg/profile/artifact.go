@@ -173,6 +173,14 @@ func (p *Profile) getResourceIfExists(res client.Object) (bool, error) {
 // MakeOwnerlessArtifacts generates artifacts without owners for manual applying to
 // a personal cluster.
 func (p *Profile) MakeOwnerlessArtifacts() ([]runtime.Object, error) {
+	return p.makeOwnerlessArtifacts([]string{p.profileRepo()})
+}
+
+func (p *Profile) profileRepo() string {
+	return p.subscription.Spec.ProfileURL + ":" + p.subscription.Spec.Branch
+}
+
+func (p *Profile) makeOwnerlessArtifacts(profileRepos []string) ([]runtime.Object, error) {
 	var (
 		objs   []runtime.Object
 		gitRes *sourcev1.GitRepository
@@ -184,9 +192,6 @@ func (p *Profile) MakeOwnerlessArtifacts() ([]runtime.Object, error) {
 		}
 		switch artifact.Kind {
 		case profilesv1.ProfileKind:
-			if artifact.Profile.URL == p.subscription.Spec.ProfileURL && artifact.Profile.Branch == p.subscription.Spec.Branch {
-				return nil, fmt.Errorf("profile cannot contain profile artifact pointing to itself")
-			}
 			nestedProfileDef, err := getProfileDefinition(artifact.Profile.URL, artifact.Profile.Branch, p.log)
 			if err != nil {
 				return nil, fmt.Errorf("failed to fetch profile %q: %w", artifact.Name, err)
@@ -194,7 +199,14 @@ func (p *Profile) MakeOwnerlessArtifacts() ([]runtime.Object, error) {
 			nestedProfile := p.subscription.DeepCopyObject().(*profilesv1.ProfileSubscription)
 			nestedProfile.Spec.ProfileURL = artifact.Profile.URL
 			nestedProfile.Spec.Branch = artifact.Profile.Branch
-			nestedObjs, err := New(p.ctx, nestedProfileDef, *nestedProfile, p.client, p.log).MakeOwnerlessArtifacts()
+
+			nestedSub := New(p.ctx, nestedProfileDef, *nestedProfile, p.client, p.log)
+			profileRepoName := nestedSub.profileRepo()
+			if containsKey(profileRepos, profileRepoName) {
+				return nil, fmt.Errorf("profile cannot contain profile artifact pointing to itself")
+			}
+			profileRepos = append(profileRepos, profileRepoName)
+			nestedObjs, err := nestedSub.makeOwnerlessArtifacts(profileRepos)
 			if err != nil {
 				return nil, fmt.Errorf("failed to generate resources for nested profile %q: %w", artifact.Name, err)
 			}
@@ -224,6 +236,15 @@ func (p *Profile) MakeOwnerlessArtifacts() ([]runtime.Object, error) {
 		objs = append([]runtime.Object{gitRes}, objs...)
 	}
 	return objs, nil
+}
+
+func containsKey(list []string, key string) bool {
+	for _, value := range list {
+		if value == key {
+			return true
+		}
+	}
+	return false
 }
 
 // MakeArtifacts creates and returns a slice of runtime.Object values, which if
