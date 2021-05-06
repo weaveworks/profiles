@@ -78,7 +78,7 @@ $ tree weaveworks-profile/foo
 
 ```
 The `profile.yaml` would contain a reference to the artifacts relative to profile directory, for example:
-```bash
+```yaml
 $ cat foo/profile.yaml
 apiVersion: profiles.fluxcd.io/v1alpha1
 kind: Profile
@@ -146,7 +146,7 @@ We want to maintain support for `branch` workflows as its useful for development
 
 #### Approach 1
 
-```
+```yaml
 apiVersion: weave.works/v1alpha1
 kind: ProfileSubscription
 metadata:
@@ -158,7 +158,7 @@ spec:
   profile: foo
 ```
 
-```
+```yaml
 apiVersion: weave.works/v1alpha1
 kind: ProfileSubscription
 metadata:
@@ -175,7 +175,7 @@ This introduces a common `profile` (or `profileName`) field that is shared acros
 
 #### Approach 2
 
-```
+```yaml
 apiVersion: weave.works/v1alpha1
 kind: ProfileSubscription
 metadata:
@@ -186,7 +186,7 @@ spec:
   tag: foo/v0.1.2
 ```
 
-```
+```yaml
 apiVersion: weave.works/v1alpha1
 kind: ProfileSubscription
 metadata:
@@ -243,7 +243,7 @@ sub/path/foo/v1.0.0
 
 Here we have to different profiles, both called `foo` who are only distinguishable by there paths. If we were to write automation to parse profile repositories we might find it awkward
 to handle such scenarios. It would also result in more obscure subscription definitions, for example to adapt approach 1 would look like:
-```
+```yaml
 apiVersion: weave.works/v1alpha1
 kind: ProfileSubscription
 metadata:
@@ -258,7 +258,7 @@ spec:
 
 or
 
-```
+```yaml
 apiVersion: weave.works/v1alpha1
 kind: ProfileSubscription
 metadata:
