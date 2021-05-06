@@ -142,7 +142,7 @@ spec:
   branch: main
 ```
 
-We want to maintain support for `branch` workflows as its useful for development, while also introducing a new `tags` approach. There are two possible approaches:
+We want to maintain support for `branch` workflows as it's useful for development, while also introducing a new `tags` approach. There are two possible approaches:
 
 #### Approach 1
 
