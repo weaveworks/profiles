@@ -215,6 +215,7 @@ foo/
 bar/
 ```
 
+with tags:
 ```
 bar/v0.10.19
 bar/v0.10.18
@@ -232,6 +233,7 @@ sub/
     foo/
 ```
 
+with tags:
 ```
 bar/v0.10.19
 bar/v0.10.18
