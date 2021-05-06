@@ -170,7 +170,7 @@ spec:
   profile: bar
 ```
 
-This approach hides the fact that the git tag contains the profile name, and leaves it up to the profiles controller to concatinate the `profile` and `tag` value together.
+This approach hides the fact that the git tag contains the profile name, and leaves it up to the profiles controller to concatenate the `profile` and `tag` value together.
 This introduces a common `profile` (or `profileName`) field that is shared across the two for us to know which profile in the repository we are referencing and its directory (they must be equal).
 
 #### Approach 2
