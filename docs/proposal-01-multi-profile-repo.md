@@ -207,7 +207,7 @@ It also maintains two completely different approaches for using `branch` vs `tag
 
 ## Open Questions / Known Unknowns
 
-Support for specifying sub-directories in the tag allow more granular repository layouts, but make parsing tags less clean. For example if my repository is as follows:
+Support for specifying sub-directories in the tag allow more granular repository layouts, but makes parsing tags less clean. For example if my repository is as follows:
 
 ```bash
 $ ls weaveworks-profiles
