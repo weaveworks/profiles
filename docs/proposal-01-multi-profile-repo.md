@@ -221,7 +221,7 @@ bar/v0.10.18
 foo/v0.1.1
 foo/v0.1.0
 ```
-Its clear that it has two profiles `foo` and `bar`, and that they have there respective tags. If we added support for sub-directories we introduce more complexity, for example:
+It's clear that it has two profiles `foo` and `bar`, and that they have their respective tags. If we added support for sub-directories we introduce more complexity, for example:
 
 ```bash
 $ ls weaveworks-profiles
