@@ -124,7 +124,7 @@ tree kustomize/
 ```
 
 If you wanted to get version `v0.8.9` of `api` you would checkout to tag `api/v0.8.9` and inside the `api/` directory it would contain the desired code.
-The case of `cmd/config` is slightly less clean, its easier to write automation around detecting new profiles if the profile directory is always at the top
+The case of `cmd/config` is slightly less clean, it's easier to write automation around detecting new profiles if the profile directory is always at the top
 level directory. Support for sub-directories is in the [Open Questions / Known Unknowns](#open-questions--known-unknowns) section below.
 
 This approach could be used for versioning profiles in a repository.
