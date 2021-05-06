@@ -822,7 +822,7 @@ var _ = Describe("Profile", func() {
 					Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 
 					err := p.ReconcileArtifacts()
-					Expect(err).To(MatchError(ContainSubstring("profile cannot contain profile artifact pointing to itself")))
+					Expect(err).To(MatchError(ContainSubstring(fmt.Sprintf("recursive artifact detected: profile %s on branch %s contains an artifact that points recursively back at itself", profileURL, branch))))
 				})
 			})
 		})

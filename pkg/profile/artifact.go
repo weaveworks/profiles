@@ -203,7 +203,7 @@ func (p *Profile) makeOwnerlessArtifacts(profileRepos []string) ([]runtime.Objec
 			nestedSub := New(p.ctx, nestedProfileDef, *nestedProfile, p.client, p.log)
 			profileRepoName := nestedSub.profileRepo()
 			if containsKey(profileRepos, profileRepoName) {
-				return nil, fmt.Errorf("profile cannot contain profile artifact pointing to itself")
+				return nil, fmt.Errorf("recursive artifact detected: profile %s on branch %s contains an artifact that points recursively back at itself", artifact.Profile.URL, artifact.Profile.Branch)
 			}
 			profileRepos = append(profileRepos, profileRepoName)
 			nestedObjs, err := nestedSub.makeOwnerlessArtifacts(profileRepos)
