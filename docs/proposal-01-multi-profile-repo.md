@@ -199,7 +199,7 @@ spec:
 ```
 
 This approach makes it clear upon inspection what tag is actually being referenced in the repository, but is less clear what directory/profile inside the repository is being referenced.
-It also maintains two completely different approach for using `branch` vs `tag`
+It also maintains two completely different approaches for using `branch` vs `tag`
 
 ## Drawbacks (Optional)
 
