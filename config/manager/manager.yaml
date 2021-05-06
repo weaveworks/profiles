@@ -1,15 +1,8 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    control-plane: controller-manager
-  name: system
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: controller-manager
-  namespace: system
+  namespace: profiles-system
   labels:
     control-plane: controller-manager
 spec:
@@ -29,7 +22,7 @@ spec:
         - /manager
         args:
         - --leader-elect
-        image: controller:latest
+        image: weaveworks/profiles-controller:latest
         name: manager
         securityContext:
           allowPrivilegeEscalation: false

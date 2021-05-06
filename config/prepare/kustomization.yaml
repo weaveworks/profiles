@@ -13,6 +13,7 @@ namePrefix: profiles-
 #  someName: someValue
 
 bases:
+- namespace.yaml
 - ../crd
 - ../rbac
 - ../manager

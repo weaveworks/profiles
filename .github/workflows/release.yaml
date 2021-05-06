@@ -51,6 +51,7 @@ jobs:
           platforms: linux/amd64,linux/arm/v7,linux/arm64
           tags: |
             docker.io/${{ env.ORG }}/${{ env.CONTROLLER }}:${{ steps.prep.outputs.VERSION }}
+            docker.io/${{ env.ORG }}/${{ env.CONTROLLER }}:latest
           labels: |
             org.opencontainers.image.title=${{ github.event.repository.name }}
             org.opencontainers.image.description=${{ github.event.repository.description }}
@@ -64,14 +65,19 @@ jobs:
           docker pull docker.io/${{ env.ORG }}/${{ env.CONTROLLER }}:${{ steps.prep.outputs.VERSION }}
       - name: Generate release manifests
         run: |
-          mkdir -p config/release
-          kustomize build ./config/crd > ./config/release/${{ env.CONTROLLER }}.crds.yaml
-          kustomize build ./config/manager > ./config/release/${{ env.CONTROLLER }}.deployment.yaml
-          tar -czvf ./config/release/manifests.tar.gz ./config/release/*.yaml
+          mkdir -p config/release/crd config/release/manager config/release/rbac
+          kustomize build ./config/crd > ./config/release/crd/${{ env.CONTROLLER }}.crds.yaml
+          (cd ./config/manager && kustomize edit set image weaveworks/profiles-controller:${{ steps.prep.outputs.VERSION }})
+          kustomize build ./config/manager > ./config/release/manager/${{ env.CONTROLLER }}.deployment.yaml
+          kustomize build ./config/rbac > ./config/release/rbac/${{ env.CONTROLLER }}.rbac.yaml
+          kustomize build ./config/prepare > ./config/prepare/prepare.yaml
+          tar -czvf ./config/release/manifests.tar.gz ./config/release/*/*.yaml
       - name: Do release
         uses: softprops/action-gh-release@v1
         with:
           bodyPath: "docs/release_notes/${{ steps.prep.outputs.VERSION }}.md"
-          files: "config/release/manifests.tar.gz"
+          files: |
+            config/release/manifests.tar.gz
+            config/prepare/prepare.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
