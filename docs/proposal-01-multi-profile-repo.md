@@ -154,7 +154,7 @@ metadata:
   namespace: default
 spec:
   profileURL: https://github.com/weaveworks/weaveworks-profiles
-  tag: v0.1.2
+  version: v0.1.2
   profile: foo
 ```
 
@@ -183,7 +183,7 @@ metadata:
   namespace: default
 spec:
   profileURL: https://github.com/weaveworks/weaveworks-profiles
-  tag: foo/v0.1.2
+  version: foo/v0.1.2
 ```
 
 ```yaml
@@ -251,7 +251,7 @@ metadata:
   namespace: default
 spec:
   profileURL: https://github.com/weaveworks/weaveworks-profiles
-  tag: v0.1.2
+  version: v0.1.2
   profile: foo
   path: sub/path
 ```
@@ -266,6 +266,6 @@ metadata:
   namespace: default
 spec:
   profileURL: https://github.com/weaveworks/weaveworks-profiles
-  tag: v0.1.2
+  version: v0.1.2
   profile: sub/path/foo
 ```
