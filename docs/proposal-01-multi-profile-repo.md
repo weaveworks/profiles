@@ -241,7 +241,7 @@ sub/path/foo/v1.1.0
 sub/path/foo/v1.0.0
 ```
 
-Here we have to different profiles, both called `foo` who are only distinguishable by there paths. If we were to write automation to parse profile repositories we might find it awkward
+Here we have two different profiles, both called `foo` which are only distinguishable by their paths. If we were to write automation to parse profile repositories we might find it awkward
 to handle such scenarios. It would also result in more obscure subscription definitions, for example to adapt approach 1 would look like:
 ```yaml
 apiVersion: weave.works/v1alpha1
