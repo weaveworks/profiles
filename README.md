@@ -240,6 +240,8 @@ Install:
 
 Configure:
 - [x] Configure a Helm release artifact installation
+- [x] Reconcile artifacts in case in-line values of a subscription are updated
+- [ ] Reconcile artifacts in case ConfigMap or Secrets values are updated defined by valuesFrom
 - [ ] Apply Kustomise patches
 - [ ] Configure different values across multiple artifacts
 
