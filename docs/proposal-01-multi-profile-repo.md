@@ -24,7 +24,7 @@ Jake Klein @aclevername
 
 ## Status
 
-WIP
+Approved
 
 
 <!--
@@ -144,7 +144,37 @@ spec:
 
 We want to maintain support for `branch` workflows as it's useful for development, while also introducing a new `tags` approach. There are two possible approaches:
 
-#### Approach 1
+
+#### New layout
+
+```yaml
+apiVersion: weave.works/v1alpha1
+kind: ProfileSubscription
+metadata:
+  name: foo-test
+  namespace: default
+spec:
+  profileURL: https://github.com/weaveworks/weaveworks-profiles
+  version: foo/v0.1.2
+```
+
+```yaml
+apiVersion: weave.works/v1alpha1
+kind: ProfileSubscription
+metadata:
+  name: bar-test
+  namespace: default
+spec:
+  profileURL: https://github.com/weaveworks/weaveworks-profiles
+  branch: main
+  path: bar/
+```
+
+This approach makes it clear upon inspection what tag is actually being referenced in the repository, but is less clear what directory/profile inside the repository is being referenced.
+It also maintains two completely different approaches for using `branch` vs `tag`
+
+#### Alternatives
+An alternative approach:
 
 ```yaml
 apiVersion: weave.works/v1alpha1
@@ -172,34 +202,6 @@ spec:
 
 This approach hides the fact that the git tag contains the profile name, and leaves it up to the profiles controller to concatenate the `profile` and `tag` value together.
 This introduces a common `profile` (or `profileName`) field that is shared across the two for us to know which profile in the repository we are referencing and its directory (they must be equal).
-
-#### Approach 2
-
-```yaml
-apiVersion: weave.works/v1alpha1
-kind: ProfileSubscription
-metadata:
-  name: foo-test
-  namespace: default
-spec:
-  profileURL: https://github.com/weaveworks/weaveworks-profiles
-  version: foo/v0.1.2
-```
-
-```yaml
-apiVersion: weave.works/v1alpha1
-kind: ProfileSubscription
-metadata:
-  name: bar-test
-  namespace: default
-spec:
-  profileURL: https://github.com/weaveworks/weaveworks-profiles
-  branch: main
-  path: bar/
-```
-
-This approach makes it clear upon inspection what tag is actually being referenced in the repository, but is less clear what directory/profile inside the repository is being referenced.
-It also maintains two completely different approaches for using `branch` vs `tag`
 
 ## Drawbacks (Optional)
 
