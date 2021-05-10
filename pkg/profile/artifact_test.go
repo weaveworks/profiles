@@ -767,17 +767,52 @@ var _ = Describe("Profile", func() {
 			})
 
 			When("profile artifact pointing to itself", func() {
+				var (
+					pNestedDef2    profilesv1.ProfileDefinition
+					pNestedDef2URL = "example.com/nested"
+				)
 				BeforeEach(func() {
-					pNestedDef.Spec.Artifacts = []profilesv1.Artifact{
-						{
+					pNestedDef2 = profilesv1.ProfileDefinition{
+						ObjectMeta: metav1.ObjectMeta{
 							Name: profileName2,
-							Kind: profilesv1.ProfileKind,
-							Profile: &profilesv1.Profile{
-								URL:    profileURL,
-								Branch: "main",
+						},
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Profile",
+							APIVersion: "profiles.fluxcd.io/profilesv1",
+						},
+						Spec: profilesv1.ProfileDefinitionSpec{
+							Description: "foo",
+							Artifacts: []profilesv1.Artifact{
+								{
+									Name: "recursive",
+									Profile: &profilesv1.Profile{
+										URL:    profileURL,
+										Branch: branch,
+									},
+									Kind: profilesv1.ProfileKind,
+								},
 							},
 						},
 					}
+					pNestedDef.Spec.Artifacts = []profilesv1.Artifact{
+						{
+							Name: "recursive",
+							Profile: &profilesv1.Profile{
+								URL:    pNestedDef2URL,
+								Branch: branch,
+							},
+							Kind: profilesv1.ProfileKind,
+						},
+					}
+				})
+
+				JustBeforeEach(func() {
+					p.SetProfileGetter(func(repoURL, branch string, log logr.Logger) (profilesv1.ProfileDefinition, error) {
+						if repoURL == pNestedDef2URL {
+							return pNestedDef2, nil
+						}
+						return pNestedDef, nil
+					})
 				})
 
 				It("errors", func() {
@@ -787,7 +822,7 @@ var _ = Describe("Profile", func() {
 					Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 
 					err := p.ReconcileArtifacts()
-					Expect(err).To(MatchError(ContainSubstring("profile cannot contain profile artifact pointing to itself")))
+					Expect(err).To(MatchError(ContainSubstring(fmt.Sprintf("recursive artifact detected: profile %s on branch %s contains an artifact that points recursively back at itself", profileURL, branch))))
 				})
 			})
 		})
