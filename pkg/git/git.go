@@ -22,7 +22,7 @@ type HTTPClient interface {
 var httpClient HTTPClient = http.DefaultClient
 
 // GetProfileDefinition returns a definition based on a url and a branch.
-func GetProfileDefinition(repoURL, branch string, log logr.Logger) (profilesv1.ProfileDefinition, error) {
+func GetProfileDefinition(repoURL, branch, path string, log logr.Logger) (profilesv1.ProfileDefinition, error) {
 	if _, err := url.Parse(repoURL); err != nil {
 		return profilesv1.ProfileDefinition{}, fmt.Errorf("failed to parse repo URL %q: %w", repoURL, err)
 	}
@@ -32,7 +32,7 @@ func GetProfileDefinition(repoURL, branch string, log logr.Logger) (profilesv1.P
 	}
 
 	profileURL := strings.Replace(repoURL, "github.com", "raw.githubusercontent.com", 1)
-	profileURL = fmt.Sprintf("%s/%s/profile.yaml", profileURL, branch)
+	profileURL = fmt.Sprintf("%s/%s/%s/profile.yaml", profileURL, branch, path)
 
 	log.Info("fetching profile.yaml", "repoURL", repoURL)
 	resp, err := httpClient.Get(profileURL)

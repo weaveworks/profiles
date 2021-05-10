@@ -42,7 +42,7 @@ var _ = Describe("Acceptance", func() {
 		)
 
 		BeforeEach(func() {
-			profileURL = "https://github.com/weaveworks/nginx-profile"
+			profileURL = "https://github.com/weaveworks/profiles-examples"
 			branch = "main"
 
 			namespace = uuid.New().String()
@@ -71,13 +71,13 @@ var _ = Describe("Acceptance", func() {
 					},
 					Spec: profilesv1.ProfileSubscriptionSpec{
 						ProfileURL: profileURL,
-						Branch:     branch,
+						Version:    "weaveworks-nginx/v0.1.0",
 					},
 				}
 				Expect(kClient.Create(context.Background(), &pSub)).To(Succeed())
 
 				By("successfully deploying the helm release")
-				helmReleaseName := fmt.Sprintf("%s-%s-%s", subName, "nginx", "nginx-server")
+				helmReleaseName := fmt.Sprintf("%s-%s-%s", subName, "bitnami-nginx", "nginx-server")
 				var helmRelease *helmv2.HelmRelease
 				Eventually(func() bool {
 					helmRelease = &helmv2.HelmRelease{}
@@ -111,7 +111,7 @@ var _ = Describe("Acceptance", func() {
 				Expect(podList.Items[0].Spec.Containers[0].Image).To(Equal(nginxImage))
 
 				By("successfully deploying the kustomize resource")
-				kustomizeName := fmt.Sprintf("%s-%s-%s", subName, "nginx", "nginx-deployment")
+				kustomizeName := fmt.Sprintf("%s-%s-%s", subName, "weaveworks-nginx", "nginx-deployment")
 				var kustomize *kustomizev1.Kustomization
 				Eventually(func() bool {
 					kustomize = &kustomizev1.Kustomization{}
@@ -220,13 +220,14 @@ var _ = Describe("Acceptance", func() {
 					Spec: profilesv1.ProfileSubscriptionSpec{
 						ProfileURL: profileURL,
 						Branch:     branch,
+						Path:       "weaveworks-nginx",
 						Values: &apiextensionsv1.JSON{
 							Raw: []byte(`{"replicaCount": 3,"service":{"port":8081}}`),
 						},
 					},
 				}
 				Expect(kClient.Create(context.Background(), &pSub)).To(Succeed())
-				appName := "nginx"
+				appName := "bitnami-nginx"
 				By("successfully deploying the helm release")
 				helmReleaseName := fmt.Sprintf("%s-%s-%s", subName, appName, "nginx-server")
 				var helmRelease *helmv2.HelmRelease

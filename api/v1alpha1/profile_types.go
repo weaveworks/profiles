@@ -91,6 +91,12 @@ type Profile struct {
 	URL string `json:"url,omitempty"`
 	// Branch is the branch in the git repository the profile lives in
 	Branch string `json:"branch,omitempty"`
+	// Path is the location in the git repo containing the profile definition. Only used in combination with Branch
+	// +optional
+	Path string `json:"path,omitempty"`
+	// Version is the git tag containing the profile definition
+	// +optional
+	Version string `json:"version,omitempty"`
 }
 
 // ProfileDefinitionStatus defines the observed state of ProfileDefinition
