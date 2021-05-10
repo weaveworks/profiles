@@ -1,6 +1,7 @@
 package acceptance_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -14,8 +15,10 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
@@ -201,6 +204,72 @@ var _ = Describe("Acceptance", func() {
 					return len(podList.Items)
 				}, 5*time.Minute, 10*time.Second).Should(Equal(0))
 
+			})
+		})
+		When("updating values in a subscription", func() {
+			It("should reconcile and apply the new values", func() {
+				pSub := profilesv1.ProfileSubscription{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       profileSubscriptionKind,
+						APIVersion: profileSubscriptionAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      subName,
+						Namespace: namespace,
+					},
+					Spec: profilesv1.ProfileSubscriptionSpec{
+						ProfileURL: profileURL,
+						Branch:     branch,
+						Values: &apiextensionsv1.JSON{
+							Raw: []byte(`{"replicaCount": 3,"service":{"port":8081}}`),
+						},
+					},
+				}
+				Expect(kClient.Create(context.Background(), &pSub)).To(Succeed())
+				appName := "nginx"
+				By("successfully deploying the helm release")
+				helmReleaseName := fmt.Sprintf("%s-%s-%s", subName, appName, "nginx-server")
+				var helmRelease *helmv2.HelmRelease
+				Eventually(func() bool {
+					helmRelease = &helmv2.HelmRelease{}
+					err := kClient.Get(context.Background(), client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, helmRelease)
+					if err != nil {
+						return false
+					}
+					for _, condition := range helmRelease.Status.Conditions {
+						if condition.Type == "Ready" && condition.Status == "True" {
+							return true
+						}
+					}
+					return false
+				}, 2*time.Minute, 5*time.Second).Should(BeTrue())
+
+				By("updating the values")
+				updatedSub := &profilesv1.ProfileSubscription{}
+				Eventually(func() error {
+					return kClient.Get(context.Background(), client.ObjectKey{Name: subName, Namespace: namespace}, updatedSub)
+				}, 2*time.Minute, 5*time.Second).ShouldNot(HaveOccurred())
+				updatedRaw := []byte(`{"replicaCount":1,"service":{"port":8881}}`)
+				updatedSub.Spec.Values.Raw = updatedRaw
+				Expect(kClient.Patch(context.Background(), updatedSub, client.MergeFrom(&pSub))).To(Succeed())
+
+				helmReleaseNew := helmv2.HelmRelease{}
+				Eventually(func() bool {
+					err := kClient.Get(context.Background(), client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmReleaseNew)
+					return err == nil && bytes.Equal(helmReleaseNew.Spec.Values.Raw, updatedRaw)
+				}, 2*time.Minute, 5*time.Second).Should(BeTrue())
+
+				By("examining the pod count as we change replica count value")
+				Eventually(func() bool {
+					pods := &v1.PodList{}
+					labelSelector, _ := labels.Parse("app.kubernetes.io/instance=" + helmReleaseName)
+					opts := &client.ListOptions{
+						Namespace:     namespace,
+						LabelSelector: labelSelector,
+					}
+					err := kClient.List(context.Background(), pods, opts)
+					return err == nil && len(pods.Items) == 1
+				}, 2*time.Minute, 5*time.Second).Should(BeTrue())
 			})
 		})
 	})
