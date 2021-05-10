@@ -21,8 +21,8 @@ import (
 var _ = Describe("ProfileController", func() {
 	const nginxProfileURL = "https://github.com/weaveworks/nginx-profile"
 	const helmChartURL = "https://charts.bitnami.com/bitnami"
-	const nginxCatalogName = "nginx"
-	const nginxCatalogVersion = "v0.0.1"
+	const nginxCatalogName = "weaveworks-nginx"
+	const nginxCatalogVersion = "0.0.1"
 
 	var (
 		namespace            string
@@ -43,6 +43,31 @@ var _ = Describe("ProfileController", func() {
 
 	Context("Create with multiple artifacts", func() {
 		DescribeTable("Applying a Profile creates the correct resources", func(pSubSpec profilesv1.ProfileSubscriptionSpec) {
+			if pSubSpec.ProfileCatalogDescription != nil {
+				// only create the catalog source in case we want to test using it
+				pSub := &profilesv1.ProfileCatalogSource{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ProfileCatalogSource",
+						APIVersion: "profilesubscriptions.weave.works/v1alpha1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      nginxCatalogName,
+						Namespace: namespace,
+					},
+					Spec: profilesv1.ProfileCatalogSourceSpec{
+						Profiles: []profilesv1.ProfileDescription{
+							{
+								URL:         nginxProfileURL,
+								Name:        "foo",
+								Description: "Profile Controller Description Test",
+								Version:     nginxCatalogVersion,
+							},
+						},
+					},
+				}
+				Expect(k8sClient.Create(ctx, pSub)).Should(Succeed())
+			}
+
 			subscriptionName := "foo"
 
 			pSub := profilesv1.ProfileSubscription{
@@ -187,8 +212,13 @@ var _ = Describe("ProfileController", func() {
 			Entry("a single Helm chart with no supplied values", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
 				Branch:     branch,
-				Catalog:    nginxCatalogName,
-				Version:    nginxCatalogVersion,
+			}),
+			Entry("a single Helm chart with catalog details is defined", profilesv1.ProfileSubscriptionSpec{
+				ProfileCatalogDescription: &profilesv1.ProfileCatalogDescription{
+					Version: nginxCatalogVersion,
+					Catalog: nginxCatalogName,
+				},
+				Branch: branch,
 			}),
 			Entry("a single Helm chart with supplied values", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
@@ -196,8 +226,6 @@ var _ = Describe("ProfileController", func() {
 				Values: &apiextensionsv1.JSON{
 					Raw: []byte(`{"replicaCount": 3,"service":{"port":8081}}`),
 				},
-				Catalog: nginxCatalogName,
-				Version: nginxCatalogVersion,
 			}),
 			Entry("a single Helm chart with values supplied via valuesFrom", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
@@ -209,8 +237,6 @@ var _ = Describe("ProfileController", func() {
 						Optional: true,
 					},
 				},
-				Catalog: nginxCatalogName,
-				Version: nginxCatalogVersion,
 			}),
 		)
 

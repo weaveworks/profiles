@@ -42,6 +42,12 @@ type ProfileSubscriptionSpec struct {
 	// +optional
 	ValuesFrom []helmv2.ValuesReference `json:"valuesFrom,omitempty"`
 
+	// ProfileCatalogDescription defines properties of the catalog this profile is from
+	ProfileCatalogDescription *ProfileCatalogDescription `json:"profile_catalog_description,omitempty"`
+}
+
+// ProfileCatalogDescription defines properties of the catalog this profile is from
+type ProfileCatalogDescription struct {
 	// Version defines the version of the catalog to get the profile from
 	Version string `json:"version,omitempty"`
 

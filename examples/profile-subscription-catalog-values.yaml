@@ -1,0 +1,8 @@
+apiVersion: weave.works/v1alpha1
+kind: ProfileSubscription
+metadata:
+  name: nginx-profile-test
+  namespace: default
+spec:
+  catalog: nginx
+  version: v0.0.1
