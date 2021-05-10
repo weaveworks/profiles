@@ -41,6 +41,12 @@ type ProfileSubscriptionSpec struct {
 	// ValuesFrom holds references to resources containing values for the Helm chart specified in the first artifact
 	// +optional
 	ValuesFrom []helmv2.ValuesReference `json:"valuesFrom,omitempty"`
+
+	// Version defines the version of the catalog to get the profile from
+	Version string `json:"version,omitempty"`
+
+	// Catalog defines the name of the catalog to get the profile from
+	Catalog string `json:"catalog,omitempty"`
 }
 
 // ProfileSubscriptionStatus defines the observed state of ProfileSubscription

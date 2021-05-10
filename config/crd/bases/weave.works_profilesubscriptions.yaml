@@ -52,6 +52,10 @@ spec:
                 description: 'Branch is the git repo branch containing the profile
                   definition (default: main)'
                 type: string
+              catalog:
+                description: Catalog defines the name of the catalog to get the profile
+                  from
+                type: string
               profileURL:
                 description: ProfileURL is a fully qualified URL to a profile repo
                 type: string
@@ -101,6 +105,10 @@ spec:
                   - name
                   type: object
                 type: array
+              version:
+                description: Version defines the version of the catalog to get the
+                  profile from
+                type: string
             type: object
           status:
             description: ProfileSubscriptionStatus defines the observed state of ProfileSubscription

@@ -21,6 +21,8 @@ import (
 var _ = Describe("ProfileController", func() {
 	const nginxProfileURL = "https://github.com/weaveworks/nginx-profile"
 	const helmChartURL = "https://charts.bitnami.com/bitnami"
+	const nginxCatalogName = "nginx"
+	const nginxCatalogVersion = "v0.0.1"
 
 	var (
 		namespace            string
@@ -185,6 +187,8 @@ var _ = Describe("ProfileController", func() {
 			Entry("a single Helm chart with no supplied values", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
 				Branch:     branch,
+				Catalog:    nginxCatalogName,
+				Version:    nginxCatalogVersion,
 			}),
 			Entry("a single Helm chart with supplied values", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
@@ -192,6 +196,8 @@ var _ = Describe("ProfileController", func() {
 				Values: &apiextensionsv1.JSON{
 					Raw: []byte(`{"replicaCount": 3,"service":{"port":8081}}`),
 				},
+				Catalog: nginxCatalogName,
+				Version: nginxCatalogVersion,
 			}),
 			Entry("a single Helm chart with values supplied via valuesFrom", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: nginxProfileURL,
@@ -203,6 +209,8 @@ var _ = Describe("ProfileController", func() {
 						Optional: true,
 					},
 				},
+				Catalog: nginxCatalogName,
+				Version: nginxCatalogVersion,
 			}),
 		)
 
