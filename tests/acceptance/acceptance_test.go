@@ -206,6 +206,66 @@ var _ = Describe("Acceptance", func() {
 
 			})
 		})
+		When("subscribing to a Profile with a Helm Chart using chart description", func() {
+			It("should deploy the Profile workload", func() {
+				pCatalog := profilesv1.ProfileCatalogSource{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ProfileCatalogSource",
+						APIVersion: profileSubscriptionAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "weaveworks-nginx",
+						Namespace: "default",
+					},
+					Spec: profilesv1.ProfileCatalogSourceSpec{
+						Profiles: []profilesv1.ProfileDescription{
+							{
+								Name:    "bitnami-nginx",
+								Version: "v0.1.0",
+								URL:     profileURL,
+							},
+						},
+					},
+				}
+				Expect(kClient.Create(context.Background(), &pCatalog)).To(Succeed())
+
+				pSub := profilesv1.ProfileSubscription{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       profileSubscriptionKind,
+						APIVersion: profileSubscriptionAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      subName,
+						Namespace: namespace,
+					},
+					Spec: profilesv1.ProfileSubscriptionSpec{
+						ProfileCatalogDescription: &profilesv1.ProfileCatalogDescription{
+							Version:     "v0.1.0",
+							Catalog:     "weaveworks-nginx",
+							ProfileName: "bitnami-nginx",
+						},
+					},
+				}
+				Expect(kClient.Create(context.Background(), &pSub)).To(Succeed())
+
+				By("successfully deploying the helm release")
+				helmReleaseName := fmt.Sprintf("%s-%s-%s", subName, "bitnami-nginx", "nginx-server")
+				var helmRelease *helmv2.HelmRelease
+				Eventually(func() bool {
+					helmRelease = &helmv2.HelmRelease{}
+					err := kClient.Get(context.Background(), client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, helmRelease)
+					if err != nil {
+						return false
+					}
+					for _, condition := range helmRelease.Status.Conditions {
+						if condition.Type == "Ready" && condition.Status == "True" {
+							return true
+						}
+					}
+					return false
+				}, 2*time.Minute, 5*time.Second).Should(BeTrue())
+			})
+		})
 		When("updating values in a subscription", func() {
 			It("should reconcile and apply the new values", func() {
 				pSub := profilesv1.ProfileSubscription{
