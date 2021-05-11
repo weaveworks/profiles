@@ -19,16 +19,16 @@ import (
 )
 
 var _ = Describe("ProfileController", func() {
-	const nginxProfileURL = "https://github.com/weaveworks/nginx-profile"
+	const exampleProfilesURL = "https://github.com/weaveworks/profiles-examples"
 	const helmChartURL = "https://charts.bitnami.com/bitnami"
 	const nginxCatalogName = "weaveworks-nginx"
-	const nginxCatalogVersion = "0.0.1"
+	const nginxCatalogVersion = "v0.1.0"
 
 	var (
-		namespace            string
-		branch               = "main"
-		nestedArtifactBranch = "helm-artifact"
-		ctx                  = context.Background()
+		namespace             string
+		version               = "weaveworks-nginx/v0.1.0"
+		nestedArtifactVersion = "bitnami-nginx/v0.0.1"
+		ctx                   = context.Background()
 	)
 
 	BeforeEach(func() {
@@ -57,8 +57,8 @@ var _ = Describe("ProfileController", func() {
 					Spec: profilesv1.ProfileCatalogSourceSpec{
 						Profiles: []profilesv1.ProfileDescription{
 							{
-								URL:         nginxProfileURL,
-								Name:        "foo",
+								URL:         exampleProfilesURL,
+								Name:        "bitnami-nginx",
 								Description: "Profile Controller Description Test",
 								Version:     nginxCatalogVersion,
 							},
@@ -84,33 +84,33 @@ var _ = Describe("ProfileController", func() {
 			Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())
 
 			By("creating a GitRepository resource for the profile")
-			profileRepoName := "nginx-profile"
-			gitRepoName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileRepoName, branch)
+			profileRepoName := "profiles-examples"
+			gitRepoName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileRepoName, "v0.1.0")
 			gitRepo := sourcev1.GitRepository{}
 			Eventually(func() error {
 				return k8sClient.Get(ctx, client.ObjectKey{Name: gitRepoName, Namespace: namespace}, &gitRepo)
 			}, 10*time.Second).ShouldNot(HaveOccurred())
-			Expect(gitRepo.Spec.URL).To(Equal(nginxProfileURL))
-			Expect(gitRepo.Spec.Reference.Branch).To(Equal(branch))
+			Expect(gitRepo.Spec.URL).To(Equal(exampleProfilesURL))
+			Expect(gitRepo.Spec.Reference.Tag).To(Equal(version))
 
 			By("creating a GitRepository resource for the nested profile")
-			gitRepoName = fmt.Sprintf("%s-%s-%s", subscriptionName, profileRepoName, nestedArtifactBranch)
+			gitRepoName = fmt.Sprintf("%s-%s-%s", subscriptionName, profileRepoName, "v0.0.1")
 			gitRepo = sourcev1.GitRepository{}
 			Eventually(func() error {
 				return k8sClient.Get(ctx, client.ObjectKey{Name: gitRepoName, Namespace: namespace}, &gitRepo)
 			}, 10*time.Second).ShouldNot(HaveOccurred())
-			Expect(gitRepo.Spec.URL).To(Equal(nginxProfileURL))
-			Expect(gitRepo.Spec.Reference.Branch).To(Equal(nestedArtifactBranch))
+			Expect(gitRepo.Spec.URL).To(Equal(exampleProfilesURL))
+			Expect(gitRepo.Spec.Reference.Tag).To(Equal(nestedArtifactVersion))
 
 			By("creating a HelmRelease resource")
-			profileName := "nginx"
+			profileName := "bitnami-nginx"
 			chartName := "nginx-server"
 			helmReleaseName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName, chartName)
 			helmRelease := helmv2.HelmRelease{}
 			Eventually(func() error {
 				return k8sClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
 			}, 10*time.Second).ShouldNot(HaveOccurred())
-			Expect(helmRelease.Spec.Chart.Spec.Chart).To(Equal("nginx/chart"))
+			Expect(helmRelease.Spec.Chart.Spec.Chart).To(Equal("bitnami-nginx/nginx/chart"))
 			Expect(helmRelease.Spec.Chart.Spec.SourceRef).To(Equal(
 				helmv2.CrossNamespaceObjectReference{
 					Kind:      "GitRepository",
@@ -120,6 +120,7 @@ var _ = Describe("ProfileController", func() {
 			))
 
 			By("creating a HelmRepository resource")
+			profileName = "weaveworks-nginx"
 			helmRepoName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileRepoName, "dokuwiki")
 			helmRepo := sourcev1.HelmRepository{}
 			Eventually(func() error {
@@ -210,26 +211,26 @@ var _ = Describe("ProfileController", func() {
 			}, 10*time.Second).Should(BeTrue())
 		},
 			Entry("a single Helm chart with no supplied values", profilesv1.ProfileSubscriptionSpec{
-				ProfileURL: nginxProfileURL,
-				Branch:     branch,
+				ProfileURL: exampleProfilesURL,
+				Version:    version,
 			}),
 			Entry("a single Helm chart with catalog details is defined", profilesv1.ProfileSubscriptionSpec{
 				ProfileCatalogDescription: &profilesv1.ProfileCatalogDescription{
 					Version: nginxCatalogVersion,
 					Catalog: nginxCatalogName,
+					Name:    "bitnami-nginx",
 				},
-				Branch: branch,
 			}),
 			Entry("a single Helm chart with supplied values", profilesv1.ProfileSubscriptionSpec{
-				ProfileURL: nginxProfileURL,
-				Branch:     branch,
+				ProfileURL: exampleProfilesURL,
+				Version:    version,
 				Values: &apiextensionsv1.JSON{
 					Raw: []byte(`{"replicaCount": 3,"service":{"port":8081}}`),
 				},
 			}),
 			Entry("a single Helm chart with values supplied via valuesFrom", profilesv1.ProfileSubscriptionSpec{
-				ProfileURL: nginxProfileURL,
-				Branch:     branch,
+				ProfileURL: exampleProfilesURL,
+				Version:    version,
 				ValuesFrom: []helmv2.ValuesReference{
 					{
 						Name:     "nginx-values",
@@ -276,7 +277,7 @@ var _ = Describe("ProfileController", func() {
 		When("creating Profile artifacts fail", func() {
 			It("updates the status", func() {
 				subscriptionName := "git-resource-already-exists-error"
-				profileURL := nginxProfileURL
+				profileURL := exampleProfilesURL
 				pSub := profilesv1.ProfileSubscription{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ProfileSubscription",
@@ -289,6 +290,7 @@ var _ = Describe("ProfileController", func() {
 					Spec: profilesv1.ProfileSubscriptionSpec{
 						ProfileURL: profileURL,
 						Branch:     "invalid-artifact",
+						Path:       "weaveworks-nginx",
 					},
 				}
 				Expect(k8sClient.Create(ctx, &pSub)).Should(Succeed())

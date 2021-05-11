@@ -1,6 +1,7 @@
 package profile
 
 import (
+	"path"
 	"reflect"
 	"strings"
 
@@ -60,10 +61,10 @@ func (p *Profile) makeHelmRepoName(name string) string {
 	return join(p.subscription.Name, repoName, name)
 }
 
-func (p *Profile) makeHelmRelease(artifact profilesv1.Artifact) *helmv2.HelmRelease {
+func (p *Profile) makeHelmRelease(artifact profilesv1.Artifact, repoPath string) *helmv2.HelmRelease {
 	var helmChartSpec helmv2.HelmChartTemplateSpec
 	if artifact.Path != "" {
-		helmChartSpec = p.makeGitChartSpec(artifact.Path)
+		helmChartSpec = p.makeGitChartSpec(path.Join(repoPath, artifact.Path))
 	} else if artifact.Chart != nil {
 		helmChartSpec = p.makeHelmChartSpec(artifact.Chart.Name, artifact.Chart.Version)
 	}

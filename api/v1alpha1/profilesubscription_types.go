@@ -34,9 +34,17 @@ type ProfileSubscriptionSpec struct {
 	// +optional
 	Branch string `json:"branch,omitempty"`
 
+	// Path is the location in the git repo containing the profile definition. Only used in combination with Branch
+	// +optional
+	Path string `json:"path,omitempty"`
+
 	// Values holds the values for the Helm chart specified in the first artifact
 	// +optional
 	Values *apiextensionsv1.JSON `json:"values,omitempty"`
+
+	// Version is the git tag containing the profile definition
+	// +optional
+	Version string `json:"version,omitempty"`
 
 	// ValuesFrom holds references to resources containing values for the Helm chart specified in the first artifact
 	// +optional
@@ -53,6 +61,9 @@ type ProfileCatalogDescription struct {
 
 	// Catalog defines the name of the catalog to get the profile from
 	Catalog string `json:"catalog,omitempty"`
+
+	// Name defines the name of the profile
+	Name string `json:"name,omitempty"`
 }
 
 // ProfileSubscriptionStatus defines the observed state of ProfileSubscription

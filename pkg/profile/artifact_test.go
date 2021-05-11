@@ -3,6 +3,7 @@ package profile_test
 import (
 	"context"
 	"fmt"
+	"path"
 	"reflect"
 	"time"
 
@@ -165,7 +166,7 @@ var _ = Describe("Profile", func() {
 
 	JustBeforeEach(func() {
 		p = profile.New(ctx, pDef, pSub, fakeClient, logr.Discard())
-		p.SetProfileGetter(func(repoURL, branch string, log logr.Logger) (profilesv1.ProfileDefinition, error) {
+		p.SetProfileGetter(func(repoURL, branch, path string, log logr.Logger) (profilesv1.ProfileDefinition, error) {
 			return pNestedDef, nil
 		})
 	})
@@ -530,7 +531,7 @@ var _ = Describe("Profile", func() {
 				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
 
 				p = profile.New(ctx, pDef, pSub, fakeClient, logr.Discard())
-				p.SetProfileGetter(func(repoURL, branch string, log logr.Logger) (profilesv1.ProfileDefinition, error) {
+				p.SetProfileGetter(func(repoURL, branch, path string, log logr.Logger) (profilesv1.ProfileDefinition, error) {
 					return pNestedDef, nil
 				})
 
@@ -588,6 +589,85 @@ var _ = Describe("Profile", func() {
 			}),
 		)
 
+		When("the profile uses a versioned profile definition", func() {
+			var (
+				tag = "foo/v1.2.3"
+			)
+
+			JustBeforeEach(func() {
+				pSub.Spec.Branch = ""
+				pSub.Spec.Version = tag
+				pDef.Spec.Artifacts = []profilesv1.Artifact{
+					{
+						Name: kustomizeName1,
+						Path: kustomizePath1,
+						Kind: profilesv1.KustomizeKind,
+					},
+					{
+						Name: chartName1,
+						Path: chartPath1,
+						Kind: profilesv1.HelmChartKind,
+					},
+				}
+				p = profile.New(ctx, pDef, pSub, fakeClient, logr.Discard())
+			})
+
+			It("uses the git tag for the profile definition", func() {
+				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
+				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
+				Expect(kustomizev1.AddToScheme(scheme)).To(Succeed())
+				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
+				err := p.ReconcileArtifacts()
+				Expect(err).NotTo(HaveOccurred())
+
+				gitRefName := fmt.Sprintf("%s-%s-%s", subscriptionName, "repo-name", "v1.2.3")
+				gitRepo := sourcev1.GitRepository{}
+				err = fakeClient.Get(ctx, client.ObjectKey{Name: gitRefName, Namespace: namespace}, &gitRepo)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(gitRepo.Spec.URL).To(Equal("https://github.com/org/repo-name"))
+				Expect(gitRepo.Spec.Reference.Tag).To(Equal(tag))
+				Expect(gitRepo.OwnerReferences).To(HaveLen(1))
+				Expect(gitRepo.OwnerReferences[0].Name).To(Equal(subscriptionName))
+				Expect(gitRepo.OwnerReferences[0].Kind).To(Equal(profileSubKind))
+				Expect(gitRepo.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
+				Expect(*gitRepo.OwnerReferences[0].Controller).To(BeTrue())
+
+				kustomizeName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName1, kustomizeName1)
+				kustomize := kustomizev1.Kustomization{}
+				err = fakeClient.Get(ctx, client.ObjectKey{Name: kustomizeName, Namespace: namespace}, &kustomize)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(kustomize.Spec.Path).To(Equal(path.Join("foo", kustomizePath1)))
+				Expect(kustomize.Spec.TargetNamespace).To(Equal(namespace))
+				Expect(kustomize.Spec.Prune).To(BeTrue())
+				Expect(kustomize.Spec.Interval).To(Equal(metav1.Duration{Duration: time.Minute * 5}))
+				Expect(kustomize.Spec.SourceRef).To(Equal(
+					kustomizev1.CrossNamespaceSourceReference{
+						Kind:      gitRepoKind,
+						Name:      gitRefName,
+						Namespace: namespace,
+					},
+				))
+				Expect(kustomize.OwnerReferences).To(HaveLen(1))
+				Expect(kustomize.OwnerReferences[0].Name).To(Equal(subscriptionName))
+				Expect(kustomize.OwnerReferences[0].Kind).To(Equal(profileSubKind))
+				Expect(kustomize.OwnerReferences[0].APIVersion).To(Equal(profileSubAPIVersion))
+				Expect(*kustomize.OwnerReferences[0].Controller).To(BeTrue())
+
+				helmReleaseName := fmt.Sprintf("%s-%s-%s", subscriptionName, profileName1, chartName1)
+				helmRelease := helmv2.HelmRelease{}
+				err = fakeClient.Get(ctx, client.ObjectKey{Name: helmReleaseName, Namespace: namespace}, &helmRelease)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(helmRelease.Spec.Chart.Spec.Chart).To(Equal(path.Join("foo", chartPath1)))
+				Expect(helmRelease.Spec.Chart.Spec.SourceRef).To(Equal(
+					helmv2.CrossNamespaceObjectReference{
+						Kind:      gitRepoKind,
+						Name:      gitRefName,
+						Namespace: namespace,
+					},
+				))
+			})
+		})
+
 		When("setting the resource owner fails", func() {
 			It("errors", func() {
 				Expect(helmv2.AddToScheme(scheme)).To(Succeed())
@@ -625,7 +705,7 @@ var _ = Describe("Profile", func() {
 			It("errors", func() {
 				Expect(sourcev1.AddToScheme(scheme)).To(Succeed())
 				Expect(profilesv1.AddToScheme(scheme)).To(Succeed())
-				p.SetProfileGetter(func(repoURL, branch string, log logr.Logger) (profilesv1.ProfileDefinition, error) {
+				p.SetProfileGetter(func(repoURL, branch, path string, log logr.Logger) (profilesv1.ProfileDefinition, error) {
 					return pNestedDef, fmt.Errorf("foo")
 				})
 				err := p.ReconcileArtifacts()
@@ -807,7 +887,7 @@ var _ = Describe("Profile", func() {
 				})
 
 				JustBeforeEach(func() {
-					p.SetProfileGetter(func(repoURL, branch string, log logr.Logger) (profilesv1.ProfileDefinition, error) {
+					p.SetProfileGetter(func(repoURL, branch, path string, log logr.Logger) (profilesv1.ProfileDefinition, error) {
 						if repoURL == pNestedDef2URL {
 							return pNestedDef2, nil
 						}

@@ -177,7 +177,10 @@ func (p *Profile) MakeOwnerlessArtifacts() ([]runtime.Object, error) {
 }
 
 func (p *Profile) profileRepo() string {
-	return p.subscription.Spec.ProfileURL + ":" + p.subscription.Spec.Branch
+	if p.subscription.Spec.Version != "" {
+		return p.subscription.Spec.ProfileURL + ":" + p.subscription.Spec.Version
+	}
+	return p.subscription.Spec.ProfileURL + ":" + p.subscription.Spec.Branch + ":" + p.subscription.Spec.Path
 }
 
 func (p *Profile) makeOwnerlessArtifacts(profileRepos []string) ([]runtime.Object, error) {
@@ -185,6 +188,7 @@ func (p *Profile) makeOwnerlessArtifacts(profileRepos []string) ([]runtime.Objec
 		objs   []runtime.Object
 		gitRes *sourcev1.GitRepository
 	)
+	profileRepoPath := GetProfilePathFromSpec(p.subscription.Spec)
 
 	for _, artifact := range p.definition.Spec.Artifacts {
 		if err := artifact.Validate(); err != nil {
@@ -192,13 +196,21 @@ func (p *Profile) makeOwnerlessArtifacts(profileRepos []string) ([]runtime.Objec
 		}
 		switch artifact.Kind {
 		case profilesv1.ProfileKind:
-			nestedProfileDef, err := getProfileDefinition(artifact.Profile.URL, artifact.Profile.Branch, p.log)
+			branchOrTag := artifact.Profile.Branch
+			path := artifact.Profile.Path
+			if artifact.Profile.Version != "" {
+				branchOrTag = artifact.Profile.Version
+				path = strings.Split(artifact.Profile.Version, "/")[0]
+			}
+			nestedProfileDef, err := getProfileDefinition(artifact.Profile.URL, branchOrTag, path, p.log)
 			if err != nil {
 				return nil, fmt.Errorf("failed to fetch profile %q: %w", artifact.Name, err)
 			}
 			nestedProfile := p.subscription.DeepCopyObject().(*profilesv1.ProfileSubscription)
 			nestedProfile.Spec.ProfileURL = artifact.Profile.URL
 			nestedProfile.Spec.Branch = artifact.Profile.Branch
+			nestedProfile.Spec.Version = artifact.Profile.Version
+			nestedProfile.Spec.Path = artifact.Profile.Path
 
 			nestedSub := New(p.ctx, nestedProfileDef, *nestedProfile, p.client, p.log)
 			profileRepoName := nestedSub.profileRepo()
@@ -212,7 +224,7 @@ func (p *Profile) makeOwnerlessArtifacts(profileRepos []string) ([]runtime.Objec
 			}
 			objs = append(objs, nestedObjs...)
 		case profilesv1.HelmChartKind:
-			objs = append(objs, p.makeHelmRelease(artifact))
+			objs = append(objs, p.makeHelmRelease(artifact, profileRepoPath))
 			if artifact.Path != "" && gitRes == nil {
 				// this resource is added at the end because it's generated once.
 				gitRes = p.makeGitRepository()
@@ -221,7 +233,7 @@ func (p *Profile) makeOwnerlessArtifacts(profileRepos []string) ([]runtime.Objec
 				objs = append(objs, p.makeHelmRepository(artifact.Chart.URL, artifact.Chart.Name))
 			}
 		case profilesv1.KustomizeKind:
-			objs = append(objs, p.makeKustomization(artifact))
+			objs = append(objs, p.makeKustomization(artifact, profileRepoPath))
 			if gitRes == nil {
 				// this resource is added at the end because it's generated once.
 				gitRes = p.makeGitRepository()
@@ -271,6 +283,15 @@ func (p *Profile) MakeArtifacts() ([]runtime.Object, error) {
 
 func (p *Profile) makeArtifactName(name string) string {
 	return join(p.subscription.Name, p.definition.Name, name)
+}
+
+// GetProfilePathFromSpec returns either the path to the profile in the repo. Extracted from the
+// version field or directly from path
+func GetProfilePathFromSpec(spec profilesv1.ProfileSubscriptionSpec) string {
+	if spec.Path != "" {
+		return spec.Path
+	}
+	return strings.Split(spec.Version, "/")[0]
 }
 
 func join(s ...string) string {

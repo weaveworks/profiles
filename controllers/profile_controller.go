@@ -96,18 +96,23 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, err
 	}
 
+	//TODO add validation for arguments in PCTL
 	if pSub.Spec.ProfileCatalogDescription != nil {
-		desc := r.Profiles.GetWithVersion(pSub.Spec.ProfileCatalogDescription.Catalog, req.Name, pSub.Spec.ProfileCatalogDescription.Version)
+		desc := r.Profiles.GetWithVersion(pSub.Spec.ProfileCatalogDescription.Catalog, pSub.Spec.ProfileCatalogDescription.Name, pSub.Spec.ProfileCatalogDescription.Version)
 		if desc == nil {
 			logger.Error(err, "profile not found in catalog")
 			return ctrl.Result{}, err
 		}
 		pSub.Spec.ProfileURL = desc.URL
-		// TODO: After Jake's PR is in, fix this
-		pSub.Spec.Branch = "main"
+		pSub.Spec.Version = fmt.Sprintf("%s/%s", pSub.Spec.ProfileCatalogDescription.Catalog, pSub.Spec.ProfileCatalogDescription.Version)
 	}
 
-	pDef, err := git.GetProfileDefinition(pSub.Spec.ProfileURL, pSub.Spec.Branch, logger)
+	branchOrTag := pSub.Spec.Branch
+	path := profile.GetProfilePathFromSpec(pSub.Spec)
+	if pSub.Spec.Version != "" {
+		branchOrTag = pSub.Spec.Version
+	}
+	pDef, err := git.GetProfileDefinition(pSub.Spec.ProfileURL, branchOrTag, path, logger)
 	if err != nil {
 		if err := r.patchStatus(ctx, &pSub, logger, readyFalse, "FetchProfileFailed", "error when fetching profile definition"); err != nil {
 			return ctrl.Result{}, err

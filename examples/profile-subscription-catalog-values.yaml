@@ -4,5 +4,6 @@ metadata:
   name: nginx-profile-test
   namespace: default
 spec:
-  catalog: nginx
-  version: v0.0.1
+  profile_catalog_description:
+    catalog: nginx
+    version: v0.0.1

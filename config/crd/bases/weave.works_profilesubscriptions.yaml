@@ -52,6 +52,10 @@ spec:
                 description: 'Branch is the git repo branch containing the profile
                   definition (default: main)'
                 type: string
+              path:
+                description: Path is the location in the git repo containing the profile
+                  definition. Only used in combination with Branch
+                type: string
               profile_catalog_description:
                 description: ProfileCatalogDescription defines properties of the catalog
                   this profile is from
@@ -59,6 +63,9 @@ spec:
                   catalog:
                     description: Catalog defines the name of the catalog to get the
                       profile from
+                    type: string
+                  name:
+                    description: Name defines the name of the profile
                     type: string
                   version:
                     description: Version defines the version of the catalog to get
@@ -114,6 +121,9 @@ spec:
                   - name
                   type: object
                 type: array
+              version:
+                description: Version is the git tag containing the profile definition
+                type: string
             type: object
           status:
             description: ProfileSubscriptionStatus defines the observed state of ProfileSubscription
