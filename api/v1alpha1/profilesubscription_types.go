@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"fmt"
+
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -62,8 +64,13 @@ type ProfileCatalogDescription struct {
 	// Catalog defines the name of the catalog to get the profile from
 	Catalog string `json:"catalog,omitempty"`
 
-	// Name defines the name of the profile
-	Name string `json:"name,omitempty"`
+	// ProfileName defines the name of the profile
+	ProfileName string `json:"profile_name,omitempty"`
+}
+
+// GetProfileVersion constructs a profile version from the catalog description.
+func (p *ProfileCatalogDescription) GetProfileVersion() string {
+	return fmt.Sprintf("%s/%s", p.Catalog, p.Version)
 }
 
 // ProfileSubscriptionStatus defines the observed state of ProfileSubscription

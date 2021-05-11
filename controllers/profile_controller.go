@@ -98,13 +98,13 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 
 	//TODO add validation for arguments in PCTL
 	if pSub.Spec.ProfileCatalogDescription != nil {
-		desc := r.Profiles.GetWithVersion(pSub.Spec.ProfileCatalogDescription.Catalog, pSub.Spec.ProfileCatalogDescription.Name, pSub.Spec.ProfileCatalogDescription.Version)
+		desc := r.Profiles.GetWithVersion(pSub.Spec.ProfileCatalogDescription.Catalog, pSub.Spec.ProfileCatalogDescription.ProfileName, pSub.Spec.ProfileCatalogDescription.Version)
 		if desc == nil {
 			logger.Error(err, "profile not found in catalog")
 			return ctrl.Result{}, err
 		}
 		pSub.Spec.ProfileURL = desc.URL
-		pSub.Spec.Version = fmt.Sprintf("%s/%s", pSub.Spec.ProfileCatalogDescription.Catalog, pSub.Spec.ProfileCatalogDescription.Version)
+		pSub.Spec.Version = pSub.Spec.ProfileCatalogDescription.GetProfileVersion()
 	}
 
 	branchOrTag := pSub.Spec.Branch

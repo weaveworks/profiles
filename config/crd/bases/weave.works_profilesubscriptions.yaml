@@ -64,8 +64,8 @@ spec:
                     description: Catalog defines the name of the catalog to get the
                       profile from
                     type: string
-                  name:
-                    description: Name defines the name of the profile
+                  profile_name:
+                    description: ProfileName defines the name of the profile
                     type: string
                   version:
                     description: Version defines the version of the catalog to get
