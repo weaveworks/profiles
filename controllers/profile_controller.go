@@ -95,7 +95,13 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, err
 	}
 
-	pDef, err := git.GetProfileDefinition(pSub.Spec.ProfileURL, pSub.Spec.Branch, logger)
+	//TODO add validation for arguments in PCTL
+	branchOrTag := pSub.Spec.Branch
+	path := profile.GetProfilePathFromSpec(pSub.Spec)
+	if pSub.Spec.Version != "" {
+		branchOrTag = pSub.Spec.Version
+	}
+	pDef, err := git.GetProfileDefinition(pSub.Spec.ProfileURL, branchOrTag, path, logger)
 	if err != nil {
 		if err := r.patchStatus(ctx, &pSub, logger, readyFalse, "FetchProfileFailed", "error when fetching profile definition"); err != nil {
 			return ctrl.Result{}, err

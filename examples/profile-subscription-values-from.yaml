@@ -4,8 +4,8 @@ metadata:
   name: nginx-profile-test
   namespace: default
 spec:
-  profileURL: https://github.com/weaveworks/nginx-profile
-  branch: main
+  profileURL: https://github.com/weaveworks/profiles-examples
+  version: weaveworks-nginx/v0.1.0
   valuesFrom:
   - kind: ConfigMap
     name: nginx-values

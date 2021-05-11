@@ -1,6 +1,7 @@
 package profile
 
 import (
+	"path"
 	"reflect"
 	"time"
 
@@ -28,7 +29,7 @@ func kustomizeRequiresUpdate(existingRes, desiredRes *kustomizev1.Kustomization)
 	}
 }
 
-func (p *Profile) makeKustomization(artifact profilesv1.Artifact) *kustomizev1.Kustomization {
+func (p *Profile) makeKustomization(artifact profilesv1.Artifact, repoPath string) *kustomizev1.Kustomization {
 	return &kustomizev1.Kustomization{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      p.makeArtifactName(artifact.Name),
@@ -39,7 +40,7 @@ func (p *Profile) makeKustomization(artifact profilesv1.Artifact) *kustomizev1.K
 			APIVersion: kustomizev1.GroupVersion.String(),
 		},
 		Spec: kustomizev1.KustomizationSpec{
-			Path:            artifact.Path,
+			Path:            path.Join(repoPath, artifact.Path),
 			Interval:        metav1.Duration{Duration: time.Minute * 5},
 			Prune:           true,
 			TargetNamespace: p.subscription.ObjectMeta.Namespace,

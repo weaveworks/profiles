@@ -52,6 +52,10 @@ spec:
                 description: 'Branch is the git repo branch containing the profile
                   definition (default: main)'
                 type: string
+              path:
+                description: Path is the location in the git repo containing the profile
+                  definition. Only used in combination with Branch
+                type: string
               profileURL:
                 description: ProfileURL is a fully qualified URL to a profile repo
                 type: string
@@ -101,6 +105,9 @@ spec:
                   - name
                   type: object
                 type: array
+              version:
+                description: Version is the git tag containing the profile definition
+                type: string
             type: object
           status:
             description: ProfileSubscriptionStatus defines the observed state of ProfileSubscription

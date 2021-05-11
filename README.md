@@ -89,7 +89,7 @@ Steps:
 A Profile is a "package" of Kubernetes deployable objects, known as Artifacts, and configurable values.
 Artifacts are one of: Helm Chart; Helm Release; raw yaml; Kustomize patch; Profile (nested).
 
-For an example, see the [nginx-profile](https://github.com/weaveworks/nginx-profile).
+For an example, see the [profiles-examples](https://github.com/weaveworks/profiles-examples).
 
 ### Catalog
 

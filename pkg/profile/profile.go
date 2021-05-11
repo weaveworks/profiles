@@ -21,7 +21,7 @@ type Profile struct {
 }
 
 // ProfileGetter is a func that can fetch a profile definition
-type ProfileGetter func(repoURL, branch string, log logr.Logger) (profilesv1.ProfileDefinition, error)
+type ProfileGetter func(repoURL, branch, path string, log logr.Logger) (profilesv1.ProfileDefinition, error)
 
 var getProfileDefinition = git.GetProfileDefinition
 

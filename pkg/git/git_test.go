@@ -46,10 +46,10 @@ spec:
 			StatusCode: http.StatusOK,
 		}, nil)
 
-		definition, err := git.GetProfileDefinition(repoURL, branch, logr.Discard())
+		definition, err := git.GetProfileDefinition(repoURL, branch, "my-profile", logr.Discard())
 		Expect(err).NotTo(HaveOccurred())
 		Expect(fakeHTTPClient.GetCallCount()).To(Equal(1))
-		Expect(fakeHTTPClient.GetArgsForCall(0)).To(Equal("raw.githubusercontent.com/foo/bar/main/profile.yaml"))
+		Expect(fakeHTTPClient.GetArgsForCall(0)).To(Equal("raw.githubusercontent.com/foo/bar/main/my-profile/profile.yaml"))
 		Expect(definition).To(Equal(profilesv1.ProfileDefinition{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "nginx",
@@ -73,20 +73,21 @@ spec:
 	When("the get request fails", func() {
 		It("returns an error", func() {
 			fakeHTTPClient.GetReturns(nil, errors.New("errord"))
-			_, err := git.GetProfileDefinition(repoURL, branch, logr.Discard())
+			_, err := git.GetProfileDefinition(repoURL, branch, "my-profile", logr.Discard())
 			Expect(err).To(MatchError("failed to fetch profile: errord"))
 			Expect(fakeHTTPClient.GetCallCount()).To(Equal(1))
-			Expect(fakeHTTPClient.GetArgsForCall(0)).To(Equal("raw.githubusercontent.com/foo/bar/main/profile.yaml"))
+			Expect(fakeHTTPClient.GetArgsForCall(0)).To(Equal("raw.githubusercontent.com/foo/bar/main/my-profile/profile.yaml"))
 		})
 	})
 
 	When("the return code is not 200", func() {
 		It("returns an error", func() {
 			fakeHTTPClient.GetReturns(&http.Response{StatusCode: 404, Body: ioutil.NopCloser(bytes.NewReader(nil))}, nil)
-			_, err := git.GetProfileDefinition(repoURL, branch, logr.Discard())
+			_, err := git.GetProfileDefinition(repoURL, branch, "my-profile", logr.Discard())
 			Expect(err).To(MatchError("failed to fetch profile: status code 404"))
 			Expect(fakeHTTPClient.GetCallCount()).To(Equal(1))
-			Expect(fakeHTTPClient.GetArgsForCall(0)).To(Equal("raw.githubusercontent.com/foo/bar/main/profile.yaml"))
+			Expect(fakeHTTPClient.GetArgsForCall(0)).To(Equal("raw.githubusercontent.com/foo/bar/main/my-profile/profile.yaml"))
+
 		})
 	})
 
@@ -98,17 +99,18 @@ spec:
 				StatusCode: http.StatusOK,
 			}, nil)
 
-			_, err := git.GetProfileDefinition(repoURL, branch, logr.Discard())
+			_, err := git.GetProfileDefinition(repoURL, branch, "my-profile", logr.Discard())
 			Expect(err).To(MatchError(ContainSubstring("failed to parse profile")))
 			Expect(fakeHTTPClient.GetCallCount()).To(Equal(1))
-			Expect(fakeHTTPClient.GetArgsForCall(0)).To(Equal("raw.githubusercontent.com/foo/bar/main/profile.yaml"))
+			Expect(fakeHTTPClient.GetArgsForCall(0)).To(Equal("raw.githubusercontent.com/foo/bar/main/my-profile/profile.yaml"))
+
 		})
 	})
 
 	When("the profile URL is not a URL", func() {
 		It("returns an error", func() {
 			repoURL = "{}\"!@£!@$:!@£!@"
-			_, err := git.GetProfileDefinition(repoURL, branch, logr.Discard())
+			_, err := git.GetProfileDefinition(repoURL, branch, "my-profile", logr.Discard())
 			Expect(err).To(MatchError(ContainSubstring("failed to parse repo URL")))
 			Expect(fakeHTTPClient.GetCallCount()).To(Equal(0))
 		})
@@ -117,7 +119,7 @@ spec:
 	When("the profile URL is not github.com", func() {
 		It("returns an error", func() {
 			repoURL = "gitlab.com/foo/bar"
-			_, err := git.GetProfileDefinition(repoURL, branch, logr.Discard())
+			_, err := git.GetProfileDefinition(repoURL, branch, "my-profile", logr.Discard())
 			Expect(err).To(MatchError("unsupported git provider, only github.com is currently supported"))
 			Expect(fakeHTTPClient.GetCallCount()).To(Equal(0))
 		})
