@@ -216,9 +216,9 @@ var _ = Describe("ProfileController", func() {
 			}),
 			Entry("a single Helm chart with catalog details is defined", profilesv1.ProfileSubscriptionSpec{
 				ProfileCatalogDescription: &profilesv1.ProfileCatalogDescription{
-					Version:     nginxCatalogVersion,
-					Catalog:     nginxCatalogName,
-					ProfileName: "bitnami-nginx",
+					Version: nginxCatalogVersion,
+					Catalog: nginxCatalogName,
+					Profile: "bitnami-nginx",
 				},
 			}),
 			Entry("a single Helm chart with supplied values", profilesv1.ProfileSubscriptionSpec{

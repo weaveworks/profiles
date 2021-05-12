@@ -64,8 +64,8 @@ type ProfileCatalogDescription struct {
 	// Catalog defines the name of the catalog to get the profile from
 	Catalog string `json:"catalog,omitempty"`
 
-	// ProfileName defines the name of the profile
-	ProfileName string `json:"profile_name,omitempty"`
+	// Profile defines the name of the profile
+	Profile string `json:"profile,omitempty"`
 }
 
 // GetProfileVersion constructs a profile version from the catalog description.

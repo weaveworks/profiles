@@ -240,9 +240,9 @@ var _ = Describe("Acceptance", func() {
 					},
 					Spec: profilesv1.ProfileSubscriptionSpec{
 						ProfileCatalogDescription: &profilesv1.ProfileCatalogDescription{
-							Version:     "v0.1.0",
-							Catalog:     "weaveworks-nginx",
-							ProfileName: "bitnami-nginx",
+							Version: "v0.1.0",
+							Catalog: "weaveworks-nginx",
+							Profile: "bitnami-nginx",
 						},
 					},
 				}
