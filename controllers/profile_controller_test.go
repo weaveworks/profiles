@@ -21,6 +21,8 @@ import (
 var _ = Describe("ProfileController", func() {
 	const exampleProfilesURL = "https://github.com/weaveworks/profiles-examples"
 	const helmChartURL = "https://charts.bitnami.com/bitnami"
+	const nginxCatalogName = "weaveworks-nginx"
+	const nginxCatalogVersion = "v0.1.0"
 
 	var (
 		namespace             string
@@ -41,6 +43,31 @@ var _ = Describe("ProfileController", func() {
 
 	Context("Create with multiple artifacts", func() {
 		DescribeTable("Applying a Profile creates the correct resources", func(pSubSpec profilesv1.ProfileSubscriptionSpec) {
+			if pSubSpec.ProfileCatalogDescription != nil {
+				// only create the catalog source in case we want to test using it
+				pSub := &profilesv1.ProfileCatalogSource{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ProfileCatalogSource",
+						APIVersion: "profilesubscriptions.weave.works/v1alpha1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      nginxCatalogName,
+						Namespace: namespace,
+					},
+					Spec: profilesv1.ProfileCatalogSourceSpec{
+						Profiles: []profilesv1.ProfileDescription{
+							{
+								URL:         exampleProfilesURL,
+								Name:        "bitnami-nginx",
+								Description: "Profile Controller Description Test",
+								Version:     nginxCatalogVersion,
+							},
+						},
+					},
+				}
+				Expect(k8sClient.Create(ctx, pSub)).Should(Succeed())
+			}
+
 			subscriptionName := "foo"
 
 			pSub := profilesv1.ProfileSubscription{
@@ -186,6 +213,13 @@ var _ = Describe("ProfileController", func() {
 			Entry("a single Helm chart with no supplied values", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: exampleProfilesURL,
 				Version:    version,
+			}),
+			Entry("a single Helm chart with catalog details is defined", profilesv1.ProfileSubscriptionSpec{
+				ProfileCatalogDescription: &profilesv1.ProfileCatalogDescription{
+					Version: nginxCatalogVersion,
+					Catalog: nginxCatalogName,
+					Profile: "bitnami-nginx",
+				},
 			}),
 			Entry("a single Helm chart with supplied values", profilesv1.ProfileSubscriptionSpec{
 				ProfileURL: exampleProfilesURL,

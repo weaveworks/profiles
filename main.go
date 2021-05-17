@@ -25,6 +25,7 @@ import (
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	"github.com/weaveworks/profiles/pkg/api"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -38,7 +39,6 @@ import (
 
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/controllers"
-	"github.com/weaveworks/profiles/pkg/api"
 	"github.com/weaveworks/profiles/pkg/catalog"
 	// +kubebuilder:scaffold:imports
 )
@@ -90,16 +90,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	profileCatalog := catalog.New()
 	if err = (&controllers.ProfileSubscriptionReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("ProfileSubscription"),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Log:      ctrl.Log.WithName("controllers").WithName("ProfileSubscription"),
+		Scheme:   mgr.GetScheme(),
+		Profiles: profileCatalog,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ProfileSubscription")
 		os.Exit(1)
 	}
 
-	profileCatalog := catalog.New()
 	if err = (&controllers.ProfileCatalogSourceReconciler{
 		Client:   mgr.GetClient(),
 		Log:      ctrl.Log.WithName("controllers").WithName("ProfileCatalogSource"),
@@ -122,8 +123,7 @@ func main() {
 
 	setupLog.Info(fmt.Sprintf("starting profiles api server at %s", apiAddr))
 	go func() {
-		err := http.ListenAndServe(apiAddr, api.New(profileCatalog))
-		if err != nil {
+		if err := http.ListenAndServe(apiAddr, api.New(profileCatalog)); err != nil {
 			setupLog.Error(err, "unable to start profiles api server")
 			os.Exit(1)
 		}

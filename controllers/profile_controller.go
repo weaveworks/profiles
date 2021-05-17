@@ -21,22 +21,22 @@ import (
 	"fmt"
 	"strings"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/go-logr/logr"
-	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
-	"github.com/weaveworks/profiles/pkg/git"
-	"github.com/weaveworks/profiles/pkg/profile"
-
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	"github.com/go-logr/logr"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+
+	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
+	"github.com/weaveworks/profiles/pkg/catalog"
+	"github.com/weaveworks/profiles/pkg/git"
+	"github.com/weaveworks/profiles/pkg/profile"
 )
 
 const (
@@ -47,9 +47,10 @@ const (
 
 // ProfileSubscriptionReconciler reconciles a ProfileSubscription object
 type ProfileSubscriptionReconciler struct {
-	Client client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Client   client.Client
+	Log      logr.Logger
+	Scheme   *runtime.Scheme
+	Profiles *catalog.Catalog
 }
 
 // +kubebuilder:rbac:groups=weave.works,resources=profilesubscriptions,verbs=get;list;watch;create;update;patch;delete
@@ -96,6 +97,16 @@ func (r *ProfileSubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	//TODO add validation for arguments in PCTL
+	if pSub.Spec.ProfileCatalogDescription != nil {
+		desc := r.Profiles.GetWithVersion(pSub.Spec.ProfileCatalogDescription.Catalog, pSub.Spec.ProfileCatalogDescription.Profile, pSub.Spec.ProfileCatalogDescription.Version)
+		if desc == nil {
+			logger.Error(err, "profile not found in catalog")
+			return ctrl.Result{}, err
+		}
+		pSub.Spec.ProfileURL = desc.URL
+		pSub.Spec.Version = pSub.Spec.ProfileCatalogDescription.GetProfileVersion()
+	}
+
 	branchOrTag := pSub.Spec.Branch
 	path := profile.GetProfilePathFromSpec(pSub.Spec)
 	if pSub.Spec.Version != "" {
