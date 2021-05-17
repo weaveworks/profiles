@@ -21,6 +21,19 @@ type FakeCatalog struct {
 	getReturnsOnCall map[int]struct {
 		result1 *v1alpha1.ProfileDescription
 	}
+	GetWithVersionStub        func(string, string, string) *v1alpha1.ProfileDescription
+	getWithVersionMutex       sync.RWMutex
+	getWithVersionArgsForCall []struct {
+		arg1 string
+		arg2 string
+		arg3 string
+	}
+	getWithVersionReturns struct {
+		result1 *v1alpha1.ProfileDescription
+	}
+	getWithVersionReturnsOnCall map[int]struct {
+		result1 *v1alpha1.ProfileDescription
+	}
 	SearchStub        func(string) []v1alpha1.ProfileDescription
 	searchMutex       sync.RWMutex
 	searchArgsForCall []struct {
@@ -98,6 +111,69 @@ func (fake *FakeCatalog) GetReturnsOnCall(i int, result1 *v1alpha1.ProfileDescri
 	}{result1}
 }
 
+func (fake *FakeCatalog) GetWithVersion(arg1 string, arg2 string, arg3 string) *v1alpha1.ProfileDescription {
+	fake.getWithVersionMutex.Lock()
+	ret, specificReturn := fake.getWithVersionReturnsOnCall[len(fake.getWithVersionArgsForCall)]
+	fake.getWithVersionArgsForCall = append(fake.getWithVersionArgsForCall, struct {
+		arg1 string
+		arg2 string
+		arg3 string
+	}{arg1, arg2, arg3})
+	stub := fake.GetWithVersionStub
+	fakeReturns := fake.getWithVersionReturns
+	fake.recordInvocation("GetWithVersion", []interface{}{arg1, arg2, arg3})
+	fake.getWithVersionMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeCatalog) GetWithVersionCallCount() int {
+	fake.getWithVersionMutex.RLock()
+	defer fake.getWithVersionMutex.RUnlock()
+	return len(fake.getWithVersionArgsForCall)
+}
+
+func (fake *FakeCatalog) GetWithVersionCalls(stub func(string, string, string) *v1alpha1.ProfileDescription) {
+	fake.getWithVersionMutex.Lock()
+	defer fake.getWithVersionMutex.Unlock()
+	fake.GetWithVersionStub = stub
+}
+
+func (fake *FakeCatalog) GetWithVersionArgsForCall(i int) (string, string, string) {
+	fake.getWithVersionMutex.RLock()
+	defer fake.getWithVersionMutex.RUnlock()
+	argsForCall := fake.getWithVersionArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeCatalog) GetWithVersionReturns(result1 *v1alpha1.ProfileDescription) {
+	fake.getWithVersionMutex.Lock()
+	defer fake.getWithVersionMutex.Unlock()
+	fake.GetWithVersionStub = nil
+	fake.getWithVersionReturns = struct {
+		result1 *v1alpha1.ProfileDescription
+	}{result1}
+}
+
+func (fake *FakeCatalog) GetWithVersionReturnsOnCall(i int, result1 *v1alpha1.ProfileDescription) {
+	fake.getWithVersionMutex.Lock()
+	defer fake.getWithVersionMutex.Unlock()
+	fake.GetWithVersionStub = nil
+	if fake.getWithVersionReturnsOnCall == nil {
+		fake.getWithVersionReturnsOnCall = make(map[int]struct {
+			result1 *v1alpha1.ProfileDescription
+		})
+	}
+	fake.getWithVersionReturnsOnCall[i] = struct {
+		result1 *v1alpha1.ProfileDescription
+	}{result1}
+}
+
 func (fake *FakeCatalog) Search(arg1 string) []v1alpha1.ProfileDescription {
 	fake.searchMutex.Lock()
 	ret, specificReturn := fake.searchReturnsOnCall[len(fake.searchArgsForCall)]
@@ -164,6 +240,8 @@ func (fake *FakeCatalog) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.getMutex.RLock()
 	defer fake.getMutex.RUnlock()
+	fake.getWithVersionMutex.RLock()
+	defer fake.getWithVersionMutex.RUnlock()
 	fake.searchMutex.RLock()
 	defer fake.searchMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}

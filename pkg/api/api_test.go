@@ -135,4 +135,57 @@ var _ = Describe("Api", func() {
 			})
 		})
 	})
+	Context("/profiles/catalog/profile-name/version", func() {
+		var (
+			sourceName, profileName, version string
+		)
+
+		BeforeEach(func() {
+			sourceName, profileName, version = "catalog", "nginx-1", "v0.1.0"
+		})
+
+		When("the requested profile exists", func() {
+			BeforeEach(func() {
+				fakeCatalog.GetReturns(&profilesv1.ProfileDescription{
+					Name:          "nginx-1",
+					Description:   "nginx 1",
+					CatalogSource: "catalog",
+					Version:       "v0.1.0",
+				})
+			})
+
+			It("returns the profile summary from the catalog", func() {
+				req, err := http.NewRequest("GET", "/profile/catalog/nginx-1/v0.1.0", nil)
+				req = mux.SetURLVars(req, map[string]string{"catalog": sourceName, "profile": profileName, "version": version})
+				Expect(err).NotTo(HaveOccurred())
+
+				rr := httptest.NewRecorder()
+				handler := http.HandlerFunc(catalogAPI.ProfileHandler)
+
+				handler.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusOK))
+				Expect(rr.Body.String()).To(ContainSubstring(`{"name":"nginx-1","description":"nginx 1","version":"v0.1.0","catalog":"catalog"}`))
+			})
+		})
+
+		When("the requested profile does not exist", func() {
+			BeforeEach(func() {
+				fakeCatalog.GetReturns(nil)
+			})
+
+			It("returns a 404", func() {
+				req, err := http.NewRequest("GET", "/profile/catalog/nginx-1/v0.3.0", nil)
+				req = mux.SetURLVars(req, map[string]string{"catalog": sourceName, "profile": profileName, "version": version})
+				Expect(err).NotTo(HaveOccurred())
+
+				rr := httptest.NewRecorder()
+				handler := http.HandlerFunc(catalogAPI.ProfileHandler)
+
+				handler.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusNotFound))
+			})
+		})
+	})
 })
