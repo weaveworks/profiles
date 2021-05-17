@@ -10,7 +10,7 @@ import (
 
 var _ = Describe("Catalog", func() {
 	var (
-		c       catalog.Catalog
+		c       *catalog.Catalog
 		catName string
 	)
 

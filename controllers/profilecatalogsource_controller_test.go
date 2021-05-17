@@ -2,9 +2,8 @@ package controllers_test
 
 import (
 	"context"
-	"time"
-
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -57,7 +56,7 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 			query := func() []profilesv1.ProfileDescription {
 				return catalogReconciler.Profiles.Search("foo")
 			}
-			Eventually(query, 2*time.Second).Should(ConsistOf(profilesv1.ProfileDescription{Name: "foo", Description: "bar", CatalogSource: "catalog"}))
+			Eventually(query, 2*time.Second).Should(ContainElement(profilesv1.ProfileDescription{Name: "foo", Description: "bar", CatalogSource: "catalog"}))
 
 			By("adding more items to ProfileCatalogSource")
 			pName := fmt.Sprintf("new-profile-%s", uuid.New().String())
