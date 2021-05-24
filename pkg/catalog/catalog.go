@@ -1,9 +1,11 @@
 package catalog
 
 import (
+	"sort"
 	"strings"
 	"sync"
 
+	"github.com/hashicorp/go-version"
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 )
 
@@ -62,15 +64,47 @@ func (c *Catalog) Get(sourceName, profileName string) *profilesv1.ProfileDescrip
 }
 
 // GetWithVersion returns the profile description `profileName` with the given version.
-func (c *Catalog) GetWithVersion(sourceName, profileName, version string) *profilesv1.ProfileDescription {
+func (c *Catalog) GetWithVersion(sourceName, profileName, profileVersion string) *profilesv1.ProfileDescription {
 	profiles, ok := c.m.Load(sourceName)
 	if !ok {
 		return nil
 	}
+
+	if profileVersion == "latest" {
+		return getLatestVersion(profiles.([]profilesv1.ProfileDescription), profileName)
+	}
+
 	for _, p := range profiles.([]profilesv1.ProfileDescription) {
-		if p.Name == profileName && p.CatalogSource == sourceName && p.Version == version {
+		if p.Name == profileName && p.CatalogSource == sourceName && p.Version == profileVersion {
 			return p.DeepCopy()
 		}
 	}
 	return nil
+}
+
+type profileDescriptionWithVersion struct {
+	profileDescription profilesv1.ProfileDescription
+	semverVersion      *version.Version
+}
+
+func getLatestVersion(profiles []profilesv1.ProfileDescription, profileName string) *profilesv1.ProfileDescription {
+	var profilesWithValidVersion []profileDescriptionWithVersion
+
+	for _, p := range profiles {
+		v, err := version.NewVersion(p.Version)
+		if err != nil {
+			continue
+		}
+
+		profilesWithValidVersion = append(profilesWithValidVersion, profileDescriptionWithVersion{profileDescription: p, semverVersion: v})
+	}
+
+	if len(profilesWithValidVersion) == 0 {
+		return nil
+	}
+
+	sort.SliceStable(profilesWithValidVersion, func(i, j int) bool {
+		return profilesWithValidVersion[j].semverVersion.LessThan(profilesWithValidVersion[i].semverVersion)
+	})
+	return &profilesWithValidVersion[0].profileDescription
 }
