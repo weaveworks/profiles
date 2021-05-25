@@ -3,7 +3,7 @@ module github.com/weaveworks/profiles
 go 1.16
 
 require (
-	github.com/fluxcd/helm-controller/api v0.10.0
+	github.com/fluxcd/helm-controller/api v0.10.1
 	github.com/fluxcd/kustomize-controller/api v0.12.0
 	github.com/fluxcd/source-controller/api v0.12.2
 	github.com/go-logr/logr v0.4.0
