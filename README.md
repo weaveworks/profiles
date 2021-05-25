@@ -17,12 +17,10 @@ and run: mdtoc -inplace README.md
   - [Profile](#profile)
   - [Catalog](#catalog)
   - [Profile Catalog Source](#profile-catalog-source)
-  - [Profile Subscription](#profile-subscription)
-  - [Profile Controller](#profile-controller)
   - [Profile Catalog Source Controller](#profile-catalog-source-controller)
 - [Current Architecture](#current-architecture)
   - [Catalogs and Sources](#catalogs-and-sources)
-  - [Profile Subscriptions](#profile-subscriptions)
+  - [Profile Installation](#profile-installation)
 - [Roadmap](#roadmap)
   - [Profiles](#profiles)
   - [Catalogs](#catalogs)
@@ -135,47 +133,6 @@ type ProfileDescription struct {
 
 Profiles can therefore be grouped and namespaced within the Catalog.
 
-### Profile Subscription
-
-A `ProfileSubscription` is the top-level Profile installation object. Once a Subscription is
-applied to the cluster, the requested Profile is parsed and child artifact objects are created.
-
-Artifact objects are processed by Flux components, with the health of Subscription children
-reflected in the `ProfileSubscriptionStatus`.
-
-```go
-// ProfileSubscriptionSpec defines the desired state of a ProfileSubscription
-type ProfileSubscriptionSpec struct {
-	// ProfileURL is a fully qualified URL to a profile repo
-	ProfileURL string `json:"profileURL,omitempty"`
-	// Branch is the git repo branch containing the profile definition (default: main)
-	// +kubebuilder:default:=main
-	// +optional
-	Branch string `json:"branch,omitempty"`
-
-	// Values holds the values for the Helm chart specified in the first artifact
-	// +optional
-	Values *apiextensionsv1.JSON `json:"values,omitempty"`
-
-	// ValuesFrom holds references to resources containing values for the Helm chart specified in the first artifact
-	// +optional
-	ValuesFrom []helmv2.ValuesReference `json:"valuesFrom,omitempty"`
-}
-
-// ProfileSubscriptionStatus defines the observed state of ProfileSubscription
-type ProfileSubscriptionStatus struct {
-	// Conditions holds the conditions for the ProfileSubscription
-	// +optional
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
-}
-```
-
-If using `pctl`, Profiles can only be installed if they are listed in a [Catalog Source](#profile-catalog-source).
-
-### Profile Controller
-
-The Profile Controller reconciles `ProfileSubscription` resources.
-See architecture diagrams below for what the reconciliation process does.
 
 ### Profile Catalog Source Controller
 
@@ -194,34 +151,9 @@ Illustration of how Profiles are added to the Catalog and how they can then be q
 
 ![](/docs/assets/catalog.jpg)
 
-### Profile Subscriptions
+### Profile Installation
 
-Illustration of a basic profile install (aka subscription), using `kubectl` and a hand-written `ProfileSubscription`:
-
-<!--
-To update this diagram go to https://miro.com/app/board/o9J_lI2seIg=/
-edit, export, save as image (size small) and commit. Easy.
--->
-![](/docs/assets/psub_install.png)
-
-Slightly more complex Gitops flow, using `pctl` and without direct cluster interaction:
-
-<!--
-To update this diagram go to https://miro.com/app/board/o9J_lI2seIg=/
-edit, export, save as image (size small) and commit. Easy.
--->
-![](/docs/assets/pctl_install.png)
-
-Or if swimlanes are more your thing:
-
-<!--
-To update this swimlanes diagram go to https://swimlanes.io/u/ZTpo-6Wyv
-edit, export, download image and commit. Easy.
--->
-![](/docs/assets/pctl_install_ladder.png)
-
-Successful installations can be verified by running: `kubectl describe pod [-n <namespace>] <pod-name>`.
-The pod name will be comprised of `profileSubscriptionName-profileDefinitionName-artifactName-xxxx`
+To see how a profile installation works, take a look at the [pctl documentation](https://github.com/weaveworks/pctl)
 
 ## Roadmap
 
@@ -230,23 +162,18 @@ The pod name will be comprised of `profileSubscriptionName-profileDefinitionName
 Install:
 - [x] Install a simple profile which contains a single Helm release artifact
 - [x] Install a simple profile which contains a raw yaml artifact (k8s object manifest)
-- [ ] Install a simple profile which contains another profile (single nesting)
-- [ ] Install a profile which contains a mix of all artifact types
-- [ ] Install a profile which contains nested profiles to depth N
-- [ ] Install a profile with `pctl` in a gitops way (ie there is a PR involved, and nobody touches the cluster)
+- [x] Install a simple profile which contains another profile (single nesting)
+- [x] Install a profile which contains a mix of all artifact types
+- [x] Install a profile which contains nested profiles to depth N
+- [x] Install a profile with `pctl` in a gitops way (ie there is a PR involved, and nobody touches the cluster)
 - [x] Install a profile which is listed in the catalog
-- [ ] Install a profile which is NOT listed in the catalog
+- [x] Install a profile which is NOT listed in the catalog
 - [ ] Install a private profile
 
 Configure:
 - [x] Configure a Helm release artifact installation
-- [x] Reconcile artifacts in case in-line values of a subscription are updated
-- [ ] Reconcile artifacts in case ConfigMap or Secrets values are updated defined by valuesFrom
 - [ ] Apply Kustomise patches
 - [ ] Configure different values across multiple artifacts
-
-Uninstall:
-- [ ] Uninstall a profile with `pctl` in a gitops way (ie there is a PR involved, and nobody touches the cluster)
 
 Update:
 - [ ] Discover when there is a newer version available
@@ -256,12 +183,12 @@ Update:
 
 Catalog sources:
 - [x] Create a catalog source
-- [ ] Delete a catalog source
+- [x] Delete a catalog source
 - [ ] Grant/Revoke access to CatalogSources
 
 Catalog management:
 - [x] Add profiles to the catalog
-- [ ] Update profiles in the catalog
+- [X] Update profiles in the catalog
 - [ ] Delete profiles from the catalog
 
 API:
