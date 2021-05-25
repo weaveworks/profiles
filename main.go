@@ -91,15 +91,6 @@ func main() {
 	}
 
 	profileCatalog := catalog.New()
-	if err = (&controllers.ProfileSubscriptionReconciler{
-		Client:   mgr.GetClient(),
-		Log:      ctrl.Log.WithName("controllers").WithName("ProfileSubscription"),
-		Scheme:   mgr.GetScheme(),
-		Profiles: profileCatalog,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ProfileSubscription")
-		os.Exit(1)
-	}
 
 	if err = (&controllers.ProfileCatalogSourceReconciler{
 		Client:   mgr.GetClient(),

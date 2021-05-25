@@ -88,13 +88,6 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	profiles := catalog.New()
-	err = (&controllers.ProfileSubscriptionReconciler{
-		Client:   k8sManager.GetClient(),
-		Log:      ctrl.Log.WithName("controllers").WithName("profilesubscription"),
-		Profiles: profiles,
-	}).SetupWithManager(k8sManager)
-	Expect(err).ToNot(HaveOccurred())
-
 	catalogReconciler = &controllers.ProfileCatalogSourceReconciler{
 		Client:   k8sManager.GetClient(),
 		Log:      ctrl.Log.WithName("controllers").WithName("profilecatalog"),
