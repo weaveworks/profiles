@@ -44,4 +44,43 @@ var _ = Describe("Catalog", func() {
 		c.Remove(catName)
 		Expect(c.Search("foo")).To(BeEmpty())
 	})
+
+	Describe("GetWithVersion", func() {
+		It("returns the profile with the matching verrsion", func() {
+
+			profiles := []profilesv1.ProfileDescription{{Name: "foo", Version: "v0.1.0", Description: "install foo"}, {Name: "foo", Version: "0.2.0"}, {Name: "foo"}}
+			c.Update(catName, profiles...)
+
+			Expect(c.GetWithVersion(catName, "foo", "v0.1.0")).To(Equal(
+				&profilesv1.ProfileDescription{Name: "foo", Version: "v0.1.0", Description: "install foo", CatalogSource: catName},
+			))
+		})
+
+		When("version is set to latest", func() {
+			It("returns the latest version", func() {
+				profiles := []profilesv1.ProfileDescription{{Name: "foo", Version: "v0.1.0"}, {Name: "foo", Version: "0.2.0"}, {Name: "foo"}}
+				c.Update(catName, profiles...)
+
+				Expect(c.GetWithVersion(catName, "foo", "latest")).To(Equal(
+					&profilesv1.ProfileDescription{Name: "foo", Version: "0.2.0", CatalogSource: catName},
+				))
+
+				profiles = []profilesv1.ProfileDescription{{Name: "foo", Version: "v0.3.0"}, {Name: "foo", Version: "0.2.0"}, {Name: "foo"}}
+				c.Update(catName, profiles...)
+
+				Expect(c.GetWithVersion(catName, "foo", "latest")).To(Equal(
+					&profilesv1.ProfileDescription{Name: "foo", Version: "v0.3.0", CatalogSource: catName},
+				))
+			})
+
+			When("no profile has a valid version", func() {
+				It("returns nil", func() {
+					profiles := []profilesv1.ProfileDescription{{Name: "foo", Version: "vsda012!.1.0"}, {Name: "foo", Version: "!0.!2.0"}, {Name: "foo"}}
+					c.Update(catName, profiles...)
+
+					Expect(c.GetWithVersion(catName, "foo", "latest")).To(BeNil())
+				})
+			})
+		})
+	})
 })

@@ -21,9 +21,9 @@ const (
 var _ = Describe("Acceptance", func() {
 	Context("ProfileCatalog", func() {
 		var (
-			pCatalog                profilesv1.ProfileCatalogSource
-			expectedNginx1          profilesv1.ProfileDescription
-			sourceName, profileName string
+			pCatalog                       profilesv1.ProfileCatalogSource
+			expectedNginx1, expectedNginx2 profilesv1.ProfileDescription
+			sourceName, profileName        string
 		)
 
 		BeforeEach(func() {
@@ -48,6 +48,14 @@ var _ = Describe("Acceptance", func() {
 							Prerequisites: []string{"at least 20 years of kubernetes experience"},
 						},
 						{
+							Name:          profileName,
+							Description:   "nginx 1 with super cool updates",
+							Version:       "0.0.2",
+							URL:           "foo.com/bar",
+							Maintainer:    "my latest version of aunt ethel",
+							Prerequisites: []string{"at least 20 years of kubernetes experience"},
+						},
+						{
 							Name:        "nginx-2",
 							Description: "nginx 1",
 						},
@@ -67,6 +75,16 @@ var _ = Describe("Acceptance", func() {
 				Version:       "0.0.1",
 				URL:           "foo.com/bar",
 				Maintainer:    "my aunt ethel",
+				Prerequisites: []string{"at least 20 years of kubernetes experience"},
+			}
+
+			expectedNginx2 = profilesv1.ProfileDescription{
+				Name:          profileName,
+				Description:   "nginx 1 with super cool updates",
+				CatalogSource: sourceName,
+				Version:       "0.0.2",
+				URL:           "foo.com/bar",
+				Maintainer:    "my latest version of aunt ethel",
 				Prerequisites: []string{"at least 20 years of kubernetes experience"},
 			}
 		})
@@ -94,6 +112,7 @@ var _ = Describe("Acceptance", func() {
 					return descriptions
 				}).Should(ConsistOf(
 					expectedNginx1,
+					expectedNginx2,
 					profilesv1.ProfileDescription{
 						Name:          "nginx-2",
 						Description:   "nginx 1",
@@ -106,9 +125,18 @@ var _ = Describe("Acceptance", func() {
 		Context("get", func() {
 			It("returns details of the requested catalog entry", func() {
 				Eventually(func() profilesv1.ProfileDescription {
-					description, _ := getProfile(profileName, sourceName)
+					description, _ := getProfile(profileName, sourceName, "")
 					return description
 				}, "10s").Should(Equal(expectedNginx1))
+			})
+
+			When("version is set to latest", func() {
+				It("returns details of the requested catalog entry with the latest version", func() {
+					Eventually(func() profilesv1.ProfileDescription {
+						description, _ := getProfile(profileName, sourceName, "latest")
+						return description
+					}, "10s").Should(Equal(expectedNginx2))
+				})
 			})
 		})
 
@@ -120,7 +148,7 @@ var _ = Describe("Acceptance", func() {
 				})
 				Expect(kClient.Update(context.Background(), &pCatalog)).To(Succeed())
 				Eventually(func() profilesv1.ProfileDescription {
-					description, err := getProfile("new-profile", sourceName)
+					description, err := getProfile("new-profile", sourceName, "")
 					Expect(err).NotTo(HaveOccurred())
 					return description
 				}).Should(Equal(profilesv1.ProfileDescription{
@@ -133,13 +161,13 @@ var _ = Describe("Acceptance", func() {
 
 		Context("delete", func() {
 			It("clears the in-memory cache when a ProfileCatalogSource is deleted", func() {
-				description, err := getProfile(profileName, sourceName)
+				description, err := getProfile(profileName, sourceName, "")
 				Expect(err).NotTo(HaveOccurred())
 				Expect(description).To(Equal(expectedNginx1))
 
 				Expect(kClient.Delete(context.Background(), &pCatalog)).To(Succeed())
 				Eventually(func() error {
-					_, err := getProfile(profileName, sourceName)
+					_, err := getProfile(profileName, sourceName, "")
 					return err
 				}, "5s").Should(MatchError(ContainSubstring("got 404")))
 			})
@@ -147,8 +175,12 @@ var _ = Describe("Acceptance", func() {
 	})
 })
 
-func getProfile(profileName, sourceName string) (profilesv1.ProfileDescription, error) {
-	resp, err := http.Get(fmt.Sprintf("http://localhost:8000/profiles/%s/%s", sourceName, profileName))
+func getProfile(profileName, sourceName, version string) (profilesv1.ProfileDescription, error) {
+	url := fmt.Sprintf("http://localhost:8000/profiles/%s/%s", sourceName, profileName)
+	if version != "" {
+		url = fmt.Sprintf("%s/%s", url, version)
+	}
+	resp, err := http.Get(url)
 	if err != nil {
 		return profilesv1.ProfileDescription{}, err
 	}
