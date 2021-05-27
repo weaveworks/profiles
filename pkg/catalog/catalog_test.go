@@ -58,7 +58,7 @@ var _ = Describe("Catalog", func() {
 
 		When("version is set to latest", func() {
 			It("returns the latest version", func() {
-				profiles := []profilesv1.ProfileDescription{{Name: "foo", Version: "v0.1.0"}, {Name: "foo", Version: "0.2.0"}, {Name: "foo"}}
+				profiles := []profilesv1.ProfileDescription{{Name: "foo", Version: "v0.1.0"}, {Name: "foo", Version: "0.2.0"}, {Name: "bar", Version: "0.3.0"}, {Name: "foo"}}
 				c.Update(catName, profiles...)
 
 				Expect(c.GetWithVersion(catName, "foo", "latest")).To(Equal(

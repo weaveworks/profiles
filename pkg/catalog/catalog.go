@@ -96,7 +96,9 @@ func getLatestVersion(profiles []profilesv1.ProfileDescription, profileName stri
 			continue
 		}
 
-		profilesWithValidVersion = append(profilesWithValidVersion, profileDescriptionWithVersion{profileDescription: p, semverVersion: v})
+		if p.Name == profileName {
+			profilesWithValidVersion = append(profilesWithValidVersion, profileDescriptionWithVersion{profileDescription: p, semverVersion: v})
+		}
 	}
 
 	if len(profilesWithValidVersion) == 0 {
