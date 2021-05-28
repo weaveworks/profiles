@@ -21,6 +21,19 @@ type FakeCatalog struct {
 	getReturnsOnCall map[int]struct {
 		result1 *v1alpha1.ProfileDescription
 	}
+	GetGreaterThanStub        func(string, string, string) []v1alpha1.ProfileDescription
+	getGreaterThanMutex       sync.RWMutex
+	getGreaterThanArgsForCall []struct {
+		arg1 string
+		arg2 string
+		arg3 string
+	}
+	getGreaterThanReturns struct {
+		result1 []v1alpha1.ProfileDescription
+	}
+	getGreaterThanReturnsOnCall map[int]struct {
+		result1 []v1alpha1.ProfileDescription
+	}
 	GetWithVersionStub        func(string, string, string) *v1alpha1.ProfileDescription
 	getWithVersionMutex       sync.RWMutex
 	getWithVersionArgsForCall []struct {
@@ -108,6 +121,69 @@ func (fake *FakeCatalog) GetReturnsOnCall(i int, result1 *v1alpha1.ProfileDescri
 	}
 	fake.getReturnsOnCall[i] = struct {
 		result1 *v1alpha1.ProfileDescription
+	}{result1}
+}
+
+func (fake *FakeCatalog) GetGreaterThan(arg1 string, arg2 string, arg3 string) []v1alpha1.ProfileDescription {
+	fake.getGreaterThanMutex.Lock()
+	ret, specificReturn := fake.getGreaterThanReturnsOnCall[len(fake.getGreaterThanArgsForCall)]
+	fake.getGreaterThanArgsForCall = append(fake.getGreaterThanArgsForCall, struct {
+		arg1 string
+		arg2 string
+		arg3 string
+	}{arg1, arg2, arg3})
+	stub := fake.GetGreaterThanStub
+	fakeReturns := fake.getGreaterThanReturns
+	fake.recordInvocation("GetGreaterThan", []interface{}{arg1, arg2, arg3})
+	fake.getGreaterThanMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeCatalog) GetGreaterThanCallCount() int {
+	fake.getGreaterThanMutex.RLock()
+	defer fake.getGreaterThanMutex.RUnlock()
+	return len(fake.getGreaterThanArgsForCall)
+}
+
+func (fake *FakeCatalog) GetGreaterThanCalls(stub func(string, string, string) []v1alpha1.ProfileDescription) {
+	fake.getGreaterThanMutex.Lock()
+	defer fake.getGreaterThanMutex.Unlock()
+	fake.GetGreaterThanStub = stub
+}
+
+func (fake *FakeCatalog) GetGreaterThanArgsForCall(i int) (string, string, string) {
+	fake.getGreaterThanMutex.RLock()
+	defer fake.getGreaterThanMutex.RUnlock()
+	argsForCall := fake.getGreaterThanArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeCatalog) GetGreaterThanReturns(result1 []v1alpha1.ProfileDescription) {
+	fake.getGreaterThanMutex.Lock()
+	defer fake.getGreaterThanMutex.Unlock()
+	fake.GetGreaterThanStub = nil
+	fake.getGreaterThanReturns = struct {
+		result1 []v1alpha1.ProfileDescription
+	}{result1}
+}
+
+func (fake *FakeCatalog) GetGreaterThanReturnsOnCall(i int, result1 []v1alpha1.ProfileDescription) {
+	fake.getGreaterThanMutex.Lock()
+	defer fake.getGreaterThanMutex.Unlock()
+	fake.GetGreaterThanStub = nil
+	if fake.getGreaterThanReturnsOnCall == nil {
+		fake.getGreaterThanReturnsOnCall = make(map[int]struct {
+			result1 []v1alpha1.ProfileDescription
+		})
+	}
+	fake.getGreaterThanReturnsOnCall[i] = struct {
+		result1 []v1alpha1.ProfileDescription
 	}{result1}
 }
 
@@ -240,6 +316,8 @@ func (fake *FakeCatalog) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.getMutex.RLock()
 	defer fake.getMutex.RUnlock()
+	fake.getGreaterThanMutex.RLock()
+	defer fake.getGreaterThanMutex.RUnlock()
 	fake.getWithVersionMutex.RLock()
 	defer fake.getWithVersionMutex.RUnlock()
 	fake.searchMutex.RLock()

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -107,7 +108,7 @@ var _ = Describe("Acceptance", func() {
 					resp, err := http.DefaultClient.Do(req)
 					Expect(err).NotTo(HaveOccurred())
 					Expect(resp.StatusCode).To(Equal(http.StatusOK))
-					descriptions := []profilesv1.ProfileDescription{}
+					var descriptions []profilesv1.ProfileDescription
 					_ = json.NewDecoder(resp.Body).Decode(&descriptions)
 					return descriptions
 				}).Should(ConsistOf(
@@ -136,6 +137,16 @@ var _ = Describe("Acceptance", func() {
 						description, _ := getProfile(profileName, sourceName, "latest")
 						return description
 					}, "10s").Should(Equal(expectedNginx2))
+				})
+			})
+
+			When("a request is made to list all available updates", func() {
+				It("returns a list of available profiles with greater versions", func() {
+					Eventually(func() []profilesv1.ProfileDescription {
+						versions, err := getProfileUpdates(profileName, sourceName, "0.0.1")
+						Expect(err).NotTo(HaveOccurred())
+						return versions
+					}, "10s").Should(ContainElement(expectedNginx2))
 				})
 			})
 		})
@@ -176,11 +187,12 @@ var _ = Describe("Acceptance", func() {
 })
 
 func getProfile(profileName, sourceName, version string) (profilesv1.ProfileDescription, error) {
-	url := fmt.Sprintf("http://localhost:8000/profiles/%s/%s", sourceName, profileName)
-	if version != "" {
-		url = fmt.Sprintf("%s/%s", url, version)
+	u, err := url.Parse("http://localhost:8000/profiles")
+	if err != nil {
+		return profilesv1.ProfileDescription{}, err
 	}
-	resp, err := http.Get(url)
+	u.Path = path.Join(u.Path, sourceName, profileName, version)
+	resp, err := http.Get(u.String())
 	if err != nil {
 		return profilesv1.ProfileDescription{}, err
 	}
@@ -193,6 +205,25 @@ func getProfile(profileName, sourceName, version string) (profilesv1.ProfileDesc
 	var p profilesv1.ProfileDescription
 	if err := json.NewDecoder(resp.Body).Decode(&p); err != nil {
 		return profilesv1.ProfileDescription{}, err
+	}
+	return p, nil
+}
+
+func getProfileUpdates(profileName, sourceName, version string) ([]profilesv1.ProfileDescription, error) {
+	u := fmt.Sprintf("http://localhost:8000/profiles/%s/%s/%s/available_updates", sourceName, profileName, version)
+	resp, err := http.Get(u)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("expected status code 200; got %d", resp.StatusCode)
+	}
+	var p []profilesv1.ProfileDescription
+	if err := json.NewDecoder(resp.Body).Decode(&p); err != nil {
+		return nil, err
 	}
 	return p, nil
 }

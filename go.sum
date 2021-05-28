@@ -71,6 +71,8 @@ github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
+github.com/Masterminds/semver/v3 v3.1.0 h1:Y2lUDsFKVRSYGojLJ1yLxSXdMmMYTYls0rCvoqmMUQk=
+github.com/Masterminds/semver/v3 v3.1.0/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
 github.com/NYTimes/gziphandler v0.0.0-20170623195520-56545f4a5d46/go.mod h1:3wb06e3pkSAbeQ52E9H9iFoQsEEwGN64994WTCIhntQ=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/PuerkitoBio/purell v1.0.0/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
@@ -190,6 +192,8 @@ github.com/fluxcd/pkg/apis/meta v0.9.0 h1:rxW69p+VmJCKXXkaRYnovRBFlKjd+MJQfm2RrB
 github.com/fluxcd/pkg/apis/meta v0.9.0/go.mod h1:yHuY8kyGHYz22I0jQzqMMGCcHViuzC/WPdo9Gisk8Po=
 github.com/fluxcd/pkg/runtime v0.11.0 h1:FPsiu1k5NQGl2tsaXH5WgSmrOMg7o44jdOP0rW/TI1Y=
 github.com/fluxcd/pkg/runtime v0.11.0/go.mod h1:ZjAwug6DBLXwo9UdP1/tTPyuWpK9kZ0BEJbctbuEB1o=
+github.com/fluxcd/pkg/version v0.0.1 h1:/8asQoDXSThz3csiwi4Qo8Zb6blAxLXbtxNgeMJ9bCg=
+github.com/fluxcd/pkg/version v0.0.1/go.mod h1:WAF4FEEA9xyhngF8TDxg3UPu5fA1qhEYV8Pmi2Il01Q=
 github.com/fluxcd/source-controller/api v0.12.2 h1:8n9+poUv/6bAEgteTxKV591aKzqRIv391VS8uD1imzo=
 github.com/fluxcd/source-controller/api v0.12.2/go.mod h1:+EPyhxC7Y+hUnq7EwAkkLtfbwCxJxF5yfmiyzDk43KY=
 github.com/form3tech-oss/jwt-go v3.2.2+incompatible h1:TcekIExNqud5crz4xD2pavyTgWiPvpYe4Xau31I0PRk=
@@ -396,8 +400,6 @@ github.com/hashicorp/go-syslog v1.0.0/go.mod h1:qPfqrKkXGihmCqbJM2mZgkZGvKG1dFdv
 github.com/hashicorp/go-uuid v1.0.0/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
 github.com/hashicorp/go-uuid v1.0.1/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
 github.com/hashicorp/go-version v1.2.0/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09ZGVZPK5anwXA=
-github.com/hashicorp/go-version v1.3.0 h1:McDWVJIU/y+u1BRV06dPaLfLCaT7fUTJLp5r04x7iNw=
-github.com/hashicorp/go-version v1.3.0/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09ZGVZPK5anwXA=
 github.com/hashicorp/go.net v0.0.1/go.mod h1:hjKkEWcCURg++eb33jQU7oqQcI9XDCnUzHA0oac0k90=
 github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/hashicorp/golang-lru v0.5.1/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
