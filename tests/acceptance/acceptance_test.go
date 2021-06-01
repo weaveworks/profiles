@@ -123,6 +123,84 @@ var _ = Describe("Acceptance", func() {
 			})
 		})
 
+		Context("creating a catalog", func() {
+			var catalog profilesv1.ProfileCatalogSource
+			AfterEach(func() {
+				_ = kClient.Delete(context.Background(), &catalog)
+			})
+
+			Context("when a valid version is provided", func() {
+				It("create successfully", func() {
+					catalog = profilesv1.ProfileCatalogSource{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "ProfileCatalogSource",
+							APIVersion: profileSubscriptionAPIVersion,
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "invalid",
+							Namespace: "default",
+						},
+						Spec: profilesv1.ProfileCatalogSourceSpec{
+							Profiles: []profilesv1.ProfileDescription{
+								{
+									Name:          profileName,
+									Description:   "nginx 1",
+									Version:       "0.2.1",
+									URL:           "foo.com/bar",
+									Maintainer:    "my aunt ethel",
+									Prerequisites: []string{"at least 20 years of kubernetes experience"},
+								},
+								{
+									Name:          profileName,
+									Description:   "nginx 1",
+									Version:       "v0.2.1",
+									URL:           "foo.com/bar",
+									Maintainer:    "my aunt ethel",
+									Prerequisites: []string{"at least 20 years of kubernetes experience"},
+								},
+								{
+									Name:          profileName,
+									Description:   "nginx 1",
+									Version:       "0.2.1-build.1",
+									URL:           "foo.com/bar",
+									Maintainer:    "my aunt ethel",
+									Prerequisites: []string{"at least 20 years of kubernetes experience"},
+								},
+							},
+						},
+					}
+					Expect(kClient.Create(context.Background(), &catalog)).To(Succeed())
+				})
+			})
+			Context("when a invalid version is provided", func() {
+				It("rejects it", func() {
+					catalog = profilesv1.ProfileCatalogSource{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "ProfileCatalogSource",
+							APIVersion: profileSubscriptionAPIVersion,
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "invalid",
+							Namespace: "default",
+						},
+						Spec: profilesv1.ProfileCatalogSourceSpec{
+							Profiles: []profilesv1.ProfileDescription{
+								{
+									Name:          profileName,
+									Description:   "nginx 1",
+									Version:       "0.not.1",
+									URL:           "foo.com/bar",
+									Maintainer:    "my aunt ethel",
+									Prerequisites: []string{"at least 20 years of kubernetes experience"},
+								},
+							},
+						},
+					}
+					Expect(kClient.Create(context.Background(), &catalog)).To(MatchError(ContainSubstring("spec.profiles.version in body should match")))
+				})
+			})
+		})
+
 		Context("get", func() {
 			It("returns details of the requested catalog entry", func() {
 				Eventually(func() profilesv1.ProfileDescription {
