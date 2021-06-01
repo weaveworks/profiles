@@ -124,7 +124,7 @@ func (fake *FakeCatalog) GetReturnsOnCall(i int, result1 *v1alpha1.ProfileDescri
 	}{result1}
 }
 
-func (fake *FakeCatalog) GetGreaterThan(arg1 string, arg2 string, arg3 string) []v1alpha1.ProfileDescription {
+func (fake *FakeCatalog) ProfilesGreaterThanVersion(arg1 string, arg2 string, arg3 string) []v1alpha1.ProfileDescription {
 	fake.getGreaterThanMutex.Lock()
 	ret, specificReturn := fake.getGreaterThanReturnsOnCall[len(fake.getGreaterThanArgsForCall)]
 	fake.getGreaterThanArgsForCall = append(fake.getGreaterThanArgsForCall, struct {
@@ -134,7 +134,7 @@ func (fake *FakeCatalog) GetGreaterThan(arg1 string, arg2 string, arg3 string) [
 	}{arg1, arg2, arg3})
 	stub := fake.GetGreaterThanStub
 	fakeReturns := fake.getGreaterThanReturns
-	fake.recordInvocation("GetGreaterThan", []interface{}{arg1, arg2, arg3})
+	fake.recordInvocation("ProfilesGreaterThanVersion", []interface{}{arg1, arg2, arg3})
 	fake.getGreaterThanMutex.Unlock()
 	if stub != nil {
 		return stub(arg1, arg2, arg3)

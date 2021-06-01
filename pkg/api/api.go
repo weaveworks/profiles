@@ -18,7 +18,7 @@ type Catalog interface {
 	// GetWithVersion will return a specific profile from the catalog
 	GetWithVersion(sourceName, profileName, version string) *profilesv1.ProfileDescription
 	// GetGreaterThan returns all profiles which are of a greater version for a given profile with a version.
-	GetGreaterThan(sourceName, profileName, version string) []profilesv1.ProfileDescription
+	ProfilesGreaterThanVersion(sourceName, profileName, version string) []profilesv1.ProfileDescription
 	// Search will return a list of profiles which match query
 	Search(query string) []profilesv1.ProfileDescription
 }
@@ -76,7 +76,7 @@ func (a *API) ProfileWithVersionHandler(w http.ResponseWriter, r *http.Request) 
 // ProfileGreaterThanVersionHandler is the handler for /profiles/{catalog}/{profile}/{version} requests.
 func (a *API) ProfileGreaterThanVersionHandler(w http.ResponseWriter, r *http.Request) {
 	sourceName, profileName, catalogVersion := mux.Vars(r)["catalog"], mux.Vars(r)["profile"], mux.Vars(r)["version"]
-	result := a.profileCatalog.GetGreaterThan(sourceName, profileName, catalogVersion)
+	result := a.profileCatalog.ProfilesGreaterThanVersion(sourceName, profileName, catalogVersion)
 	if result == nil {
 		w.WriteHeader(404)
 		return

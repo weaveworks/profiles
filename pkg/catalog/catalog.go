@@ -73,7 +73,7 @@ func (c *Catalog) GetWithVersion(sourceName, profileName, profileVersion string)
 	}
 
 	if profileVersion == "latest" {
-		versions := c.GetGreaterThan(sourceName, profileName, profileVersion)
+		versions := c.ProfilesGreaterThanVersion(sourceName, profileName, profileVersion)
 		if len(versions) == 0 {
 			return nil
 		}
@@ -93,8 +93,9 @@ type profileDescriptionWithVersion struct {
 	semverVersion      *semver.Version
 }
 
-// GetGreaterThan returns all profiles which are of a greater version for a given profile with a version.
-func (c *Catalog) GetGreaterThan(sourceName, profileName, profileVersion string) []profilesv1.ProfileDescription {
+// ProfilesGreaterThanVersion returns all profiles which are of a greater version for a given profile with a version.
+// If set to "latest" all versions are returned. Versions are ordered in descending order
+func (c *Catalog) ProfilesGreaterThanVersion(sourceName, profileName, profileVersion string) []profilesv1.ProfileDescription {
 	var profilesWithValidVersion []profileDescriptionWithVersion
 	profiles, ok := c.m.Load(sourceName)
 	if !ok {
