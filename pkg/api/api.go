@@ -17,6 +17,8 @@ type Catalog interface {
 	Get(sourceName, profileName string) *profilesv1.ProfileDescription
 	// GetWithVersion will return a specific profile from the catalog
 	GetWithVersion(sourceName, profileName, version string) *profilesv1.ProfileDescription
+	// GetGreaterThan returns all profiles which are of a greater version for a given profile with a version.
+	ProfilesGreaterThanVersion(sourceName, profileName, version string) []profilesv1.ProfileDescription
 	// Search will return a list of profiles which match query
 	Search(query string) []profilesv1.ProfileDescription
 }
@@ -38,6 +40,7 @@ func New(profileCatalog Catalog) API {
 	r.HandleFunc("/profiles", a.ProfilesHandler)
 	r.HandleFunc("/profiles/{catalog}/{profile}", a.ProfileHandler)
 	r.HandleFunc("/profiles/{catalog}/{profile}/{version}", a.ProfileWithVersionHandler)
+	r.HandleFunc("/profiles/{catalog}/{profile}/{version}/available_updates", a.ProfileGreaterThanVersionHandler)
 
 	return a
 }
@@ -63,6 +66,17 @@ func (a *API) ProfileHandler(w http.ResponseWriter, r *http.Request) {
 func (a *API) ProfileWithVersionHandler(w http.ResponseWriter, r *http.Request) {
 	sourceName, profileName, catalogVersion := mux.Vars(r)["catalog"], mux.Vars(r)["profile"], mux.Vars(r)["version"]
 	result := a.profileCatalog.GetWithVersion(sourceName, profileName, catalogVersion)
+	if result == nil {
+		w.WriteHeader(404)
+		return
+	}
+	marshalResponse(w, result)
+}
+
+// ProfileGreaterThanVersionHandler is the handler for /profiles/{catalog}/{profile}/{version} requests.
+func (a *API) ProfileGreaterThanVersionHandler(w http.ResponseWriter, r *http.Request) {
+	sourceName, profileName, catalogVersion := mux.Vars(r)["catalog"], mux.Vars(r)["profile"], mux.Vars(r)["version"]
+	result := a.profileCatalog.ProfilesGreaterThanVersion(sourceName, profileName, catalogVersion)
 	if result == nil {
 		w.WriteHeader(404)
 		return

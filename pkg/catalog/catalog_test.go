@@ -46,7 +46,7 @@ var _ = Describe("Catalog", func() {
 	})
 
 	Describe("GetWithVersion", func() {
-		It("returns the profile with the matching verrsion", func() {
+		It("returns the profile with the matching version", func() {
 
 			profiles := []profilesv1.ProfileDescription{{Name: "foo", Version: "v0.1.0", Description: "install foo"}, {Name: "foo", Version: "0.2.0"}, {Name: "foo"}}
 			c.Update(catName, profiles...)
@@ -65,9 +65,8 @@ var _ = Describe("Catalog", func() {
 					&profilesv1.ProfileDescription{Name: "foo", Version: "0.2.0", CatalogSource: catName},
 				))
 
-				profiles = []profilesv1.ProfileDescription{{Name: "foo", Version: "v0.3.0"}, {Name: "foo", Version: "0.2.0"}, {Name: "foo"}}
+				profiles = []profilesv1.ProfileDescription{{Name: "foo", Version: "0.2.0"}, {Name: "foo", Version: "v0.3.0"}, {Name: "foo"}}
 				c.Update(catName, profiles...)
-
 				Expect(c.GetWithVersion(catName, "foo", "latest")).To(Equal(
 					&profilesv1.ProfileDescription{Name: "foo", Version: "v0.3.0", CatalogSource: catName},
 				))
@@ -81,6 +80,28 @@ var _ = Describe("Catalog", func() {
 					Expect(c.GetWithVersion(catName, "foo", "latest")).To(BeNil())
 				})
 			})
+		})
+	})
+
+	Describe("ProfilesGreaterThanVersion", func() {
+		It("lists all available versions which are greater than the current version in descending order", func() {
+
+			profiles := []profilesv1.ProfileDescription{
+				{Name: "foo", Version: "v0.0.1", Description: "install foo"},
+				{Name: "foo", Version: "v0.1.0", Description: "install foo"},
+				{Name: "foo", Version: "v0.2.0"}, {Name: "foo"},
+				{Name: "foo", Version: "v0.3.0"}, {Name: "foo"},
+				{Name: "foo2", Version: "v0.3.0"}, {Name: "foo"},
+				{Name: "foo2", Version: "v0.3.1"}, {Name: "foo"},
+			}
+			c.Update(catName, profiles...)
+
+			Expect(c.ProfilesGreaterThanVersion(catName, "foo", "v0.1.0")).To(Equal(
+				[]profilesv1.ProfileDescription{
+					{Name: "foo", Version: "v0.3.0", CatalogSource: catName},
+					{Name: "foo", Version: "v0.2.0", CatalogSource: catName},
+				},
+			))
 		})
 	})
 })
