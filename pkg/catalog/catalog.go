@@ -5,7 +5,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/hashicorp/go-version"
+	"github.com/Masterminds/semver/v3"
+	"github.com/fluxcd/pkg/version"
+
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 )
 
@@ -71,7 +73,11 @@ func (c *Catalog) GetWithVersion(sourceName, profileName, profileVersion string)
 	}
 
 	if profileVersion == "latest" {
-		return getLatestVersion(profiles.([]profilesv1.ProfileDescription), profileName)
+		versions := c.ProfilesGreaterThanVersion(sourceName, profileName, profileVersion)
+		if len(versions) == 0 {
+			return nil
+		}
+		return versions[0].DeepCopy()
 	}
 
 	for _, p := range profiles.([]profilesv1.ProfileDescription) {
@@ -84,20 +90,30 @@ func (c *Catalog) GetWithVersion(sourceName, profileName, profileVersion string)
 
 type profileDescriptionWithVersion struct {
 	profileDescription profilesv1.ProfileDescription
-	semverVersion      *version.Version
+	semverVersion      *semver.Version
 }
 
-func getLatestVersion(profiles []profilesv1.ProfileDescription, profileName string) *profilesv1.ProfileDescription {
+// ProfilesGreaterThanVersion returns all profiles which are of a greater version for a given profile with a version.
+// If set to "latest" all versions are returned. Versions are ordered in descending order
+func (c *Catalog) ProfilesGreaterThanVersion(sourceName, profileName, profileVersion string) []profilesv1.ProfileDescription {
 	var profilesWithValidVersion []profileDescriptionWithVersion
-
-	for _, p := range profiles {
-		v, err := version.NewVersion(p.Version)
+	profiles, ok := c.m.Load(sourceName)
+	if !ok {
+		return nil
+	}
+	cv, err := version.ParseVersion(profileVersion)
+	if err != nil && profileVersion != "latest" {
+		return nil
+	}
+	for _, p := range profiles.([]profilesv1.ProfileDescription) {
+		v, err := version.ParseVersion(p.Version)
 		if err != nil {
 			continue
 		}
-
 		if p.Name == profileName {
-			profilesWithValidVersion = append(profilesWithValidVersion, profileDescriptionWithVersion{profileDescription: p, semverVersion: v})
+			if profileVersion == "latest" || v.GreaterThan(cv) {
+				profilesWithValidVersion = append(profilesWithValidVersion, profileDescriptionWithVersion{profileDescription: p, semverVersion: v})
+			}
 		}
 	}
 
@@ -108,5 +124,9 @@ func getLatestVersion(profiles []profilesv1.ProfileDescription, profileName stri
 	sort.SliceStable(profilesWithValidVersion, func(i, j int) bool {
 		return profilesWithValidVersion[j].semverVersion.LessThan(profilesWithValidVersion[i].semverVersion)
 	})
-	return &profilesWithValidVersion[0].profileDescription
+	var result []profilesv1.ProfileDescription
+	for _, p := range profilesWithValidVersion {
+		result = append(result, p.profileDescription)
+	}
+	return result
 }
