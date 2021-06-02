@@ -13,6 +13,7 @@ and run: mdtoc -inplace README.md
 - [Development](#development)
   - [Tests](#tests)
   - [Release process](#release-process)
+  - [Dev Tags](#dev-tags)
 - [Terminology](#terminology)
   - [Profile](#profile)
   - [Catalog](#catalog)
@@ -79,6 +80,14 @@ Steps:
 		1. With the correct release notes
 	1. The image has been pushed to docker
 	1. The image can be pulled and used in a deployment
+    
+### Dev Tags
+
+As part of pushing a new branch to profiles, a new dev tag will be created for that branch. This action is part of
+the procedure around working with profiles and [pctl](https://github.com/weaveworks/pctl), it's companion CLI tool. The details of this are
+explained in `pctl`'s README section [Working with Profiles](https://github.com/weaveworks/pctl#working-with-profiles).
+
+The dev tag's format is as follows: `<currentLatestReleaseTag>-<branch-name>`.
 
 ## Terminology
 
