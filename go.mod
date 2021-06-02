@@ -3,7 +3,7 @@ module github.com/weaveworks/profiles
 go 1.16
 
 require (
-	github.com/Masterminds/semver/v3 v3.1.0
+	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/fluxcd/helm-controller/api v0.10.1
 	github.com/fluxcd/kustomize-controller/api v0.12.0
 	github.com/fluxcd/pkg/version v0.0.1
