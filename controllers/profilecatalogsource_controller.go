@@ -27,6 +27,7 @@ import (
 
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/pkg/catalog"
+	"github.com/weaveworks/profiles/pkg/detector"
 )
 
 // ProfileCatalogSourceReconciler reconciles a ProfileCatalogSource object
@@ -40,6 +41,11 @@ type ProfileCatalogSourceReconciler struct {
 // +kubebuilder:rbac:groups=weave.works,resources=profilecatalogsources,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=weave.works,resources=profilecatalogsources/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=weave.works,resources=profilecatalogsources/finalizers,verbs=update
+
+// +kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=gitrepositories,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=gitrepositories/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=source.toolkit.fluxcd.io,resources=gitrepositories/finalizers,verbs=get;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -60,7 +66,10 @@ func (r *ProfileCatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl
 		return ctrl.Result{}, err
 	}
 
-	r.Profiles.Update(pCatalog.Name, pCatalog.Spec.Profiles...)
+	// r.Profiles.Update(pCatalog.Name, pCatalog.Spec.Profiles...)
+	if err := detector.Detect(pCatalog, r.Profiles, r.Client, logger); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }

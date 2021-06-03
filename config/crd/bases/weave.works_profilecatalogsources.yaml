@@ -70,6 +70,8 @@ spec:
                       type: string
                   type: object
                 type: array
+              repo:
+                type: string
             type: object
           status:
             description: ProfileCatalogSourceStatus defines the observed state of

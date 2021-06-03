@@ -24,6 +24,7 @@ import (
 type ProfileCatalogSourceSpec struct {
 	// Profiles is the list of profiles exposed by the catalog
 	Profiles []ProfileDescription `json:"profiles,omitempty"`
+	Repo     string               `json:"repo,omitempty"`
 }
 
 // ProfileDescription defines details about a given profile.
