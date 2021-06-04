@@ -17,7 +17,7 @@ type Catalog interface {
 	Get(sourceName, profileName string) *profilesv1.ProfileDescription
 	// GetWithVersion will return a specific profile from the catalog
 	GetWithVersion(sourceName, profileName, version string) *profilesv1.ProfileDescription
-	// GetGreaterThan returns all profiles which are of a greater version for a given profile with a version.
+	// ProfilesGreaterThanVersion returns all profiles which are of a greater version for a given profile with a version.
 	ProfilesGreaterThanVersion(sourceName, profileName, version string) []profilesv1.ProfileDescription
 	// Search will return a list of profiles which match query
 	Search(query string) []profilesv1.ProfileDescription
