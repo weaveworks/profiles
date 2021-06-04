@@ -114,7 +114,7 @@ func main() {
 
 	setupLog.Info(fmt.Sprintf("starting profiles api server at %s", apiAddr))
 	go func() {
-		if err := http.ListenAndServe(apiAddr, api.New(profileCatalog)); err != nil {
+		if err := http.ListenAndServe(apiAddr, api.New(profileCatalog, ctrl.Log.WithName("api"))); err != nil {
 			setupLog.Error(err, "unable to start profiles api server")
 			os.Exit(1)
 		}

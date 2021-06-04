@@ -4,6 +4,7 @@ package fakes
 import (
 	"sync"
 
+	"github.com/go-logr/logr"
 	"github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/pkg/api"
 )
@@ -21,12 +22,13 @@ type FakeCatalog struct {
 	getReturnsOnCall map[int]struct {
 		result1 *v1alpha1.ProfileDescription
 	}
-	GetWithVersionStub        func(string, string, string) *v1alpha1.ProfileDescription
+	GetWithVersionStub        func(logr.Logger, string, string, string) *v1alpha1.ProfileDescription
 	getWithVersionMutex       sync.RWMutex
 	getWithVersionArgsForCall []struct {
-		arg1 string
+		arg1 logr.Logger
 		arg2 string
 		arg3 string
+		arg4 string
 	}
 	getWithVersionReturns struct {
 		result1 *v1alpha1.ProfileDescription
@@ -34,12 +36,13 @@ type FakeCatalog struct {
 	getWithVersionReturnsOnCall map[int]struct {
 		result1 *v1alpha1.ProfileDescription
 	}
-	ProfilesGreaterThanVersionStub        func(string, string, string) []v1alpha1.ProfileDescription
+	ProfilesGreaterThanVersionStub        func(logr.Logger, string, string, string) []v1alpha1.ProfileDescription
 	profilesGreaterThanVersionMutex       sync.RWMutex
 	profilesGreaterThanVersionArgsForCall []struct {
-		arg1 string
+		arg1 logr.Logger
 		arg2 string
 		arg3 string
+		arg4 string
 	}
 	profilesGreaterThanVersionReturns struct {
 		result1 []v1alpha1.ProfileDescription
@@ -124,20 +127,21 @@ func (fake *FakeCatalog) GetReturnsOnCall(i int, result1 *v1alpha1.ProfileDescri
 	}{result1}
 }
 
-func (fake *FakeCatalog) GetWithVersion(arg1 string, arg2 string, arg3 string) *v1alpha1.ProfileDescription {
+func (fake *FakeCatalog) GetWithVersion(arg1 logr.Logger, arg2 string, arg3 string, arg4 string) *v1alpha1.ProfileDescription {
 	fake.getWithVersionMutex.Lock()
 	ret, specificReturn := fake.getWithVersionReturnsOnCall[len(fake.getWithVersionArgsForCall)]
 	fake.getWithVersionArgsForCall = append(fake.getWithVersionArgsForCall, struct {
-		arg1 string
+		arg1 logr.Logger
 		arg2 string
 		arg3 string
-	}{arg1, arg2, arg3})
+		arg4 string
+	}{arg1, arg2, arg3, arg4})
 	stub := fake.GetWithVersionStub
 	fakeReturns := fake.getWithVersionReturns
-	fake.recordInvocation("GetWithVersion", []interface{}{arg1, arg2, arg3})
+	fake.recordInvocation("GetWithVersion", []interface{}{arg1, arg2, arg3, arg4})
 	fake.getWithVersionMutex.Unlock()
 	if stub != nil {
-		return stub(arg1, arg2, arg3)
+		return stub(arg1, arg2, arg3, arg4)
 	}
 	if specificReturn {
 		return ret.result1
@@ -151,17 +155,17 @@ func (fake *FakeCatalog) GetWithVersionCallCount() int {
 	return len(fake.getWithVersionArgsForCall)
 }
 
-func (fake *FakeCatalog) GetWithVersionCalls(stub func(string, string, string) *v1alpha1.ProfileDescription) {
+func (fake *FakeCatalog) GetWithVersionCalls(stub func(logr.Logger, string, string, string) *v1alpha1.ProfileDescription) {
 	fake.getWithVersionMutex.Lock()
 	defer fake.getWithVersionMutex.Unlock()
 	fake.GetWithVersionStub = stub
 }
 
-func (fake *FakeCatalog) GetWithVersionArgsForCall(i int) (string, string, string) {
+func (fake *FakeCatalog) GetWithVersionArgsForCall(i int) (logr.Logger, string, string, string) {
 	fake.getWithVersionMutex.RLock()
 	defer fake.getWithVersionMutex.RUnlock()
 	argsForCall := fake.getWithVersionArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
 }
 
 func (fake *FakeCatalog) GetWithVersionReturns(result1 *v1alpha1.ProfileDescription) {
@@ -187,20 +191,21 @@ func (fake *FakeCatalog) GetWithVersionReturnsOnCall(i int, result1 *v1alpha1.Pr
 	}{result1}
 }
 
-func (fake *FakeCatalog) ProfilesGreaterThanVersion(arg1 string, arg2 string, arg3 string) []v1alpha1.ProfileDescription {
+func (fake *FakeCatalog) ProfilesGreaterThanVersion(arg1 logr.Logger, arg2 string, arg3 string, arg4 string) []v1alpha1.ProfileDescription {
 	fake.profilesGreaterThanVersionMutex.Lock()
 	ret, specificReturn := fake.profilesGreaterThanVersionReturnsOnCall[len(fake.profilesGreaterThanVersionArgsForCall)]
 	fake.profilesGreaterThanVersionArgsForCall = append(fake.profilesGreaterThanVersionArgsForCall, struct {
-		arg1 string
+		arg1 logr.Logger
 		arg2 string
 		arg3 string
-	}{arg1, arg2, arg3})
+		arg4 string
+	}{arg1, arg2, arg3, arg4})
 	stub := fake.ProfilesGreaterThanVersionStub
 	fakeReturns := fake.profilesGreaterThanVersionReturns
-	fake.recordInvocation("ProfilesGreaterThanVersion", []interface{}{arg1, arg2, arg3})
+	fake.recordInvocation("ProfilesGreaterThanVersion", []interface{}{arg1, arg2, arg3, arg4})
 	fake.profilesGreaterThanVersionMutex.Unlock()
 	if stub != nil {
-		return stub(arg1, arg2, arg3)
+		return stub(arg1, arg2, arg3, arg4)
 	}
 	if specificReturn {
 		return ret.result1
@@ -214,17 +219,17 @@ func (fake *FakeCatalog) ProfilesGreaterThanVersionCallCount() int {
 	return len(fake.profilesGreaterThanVersionArgsForCall)
 }
 
-func (fake *FakeCatalog) ProfilesGreaterThanVersionCalls(stub func(string, string, string) []v1alpha1.ProfileDescription) {
+func (fake *FakeCatalog) ProfilesGreaterThanVersionCalls(stub func(logr.Logger, string, string, string) []v1alpha1.ProfileDescription) {
 	fake.profilesGreaterThanVersionMutex.Lock()
 	defer fake.profilesGreaterThanVersionMutex.Unlock()
 	fake.ProfilesGreaterThanVersionStub = stub
 }
 
-func (fake *FakeCatalog) ProfilesGreaterThanVersionArgsForCall(i int) (string, string, string) {
+func (fake *FakeCatalog) ProfilesGreaterThanVersionArgsForCall(i int) (logr.Logger, string, string, string) {
 	fake.profilesGreaterThanVersionMutex.RLock()
 	defer fake.profilesGreaterThanVersionMutex.RUnlock()
 	argsForCall := fake.profilesGreaterThanVersionArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
 }
 
 func (fake *FakeCatalog) ProfilesGreaterThanVersionReturns(result1 []v1alpha1.ProfileDescription) {
