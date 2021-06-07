@@ -51,7 +51,7 @@ func New(profileCatalog Catalog, logger logr.Logger) API {
 // ProfilesHandler is the handler for /profiles requests.
 func (a *API) ProfilesHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("name")
-	logger := a.logger.WithValues("endpoint", "/profiles", "name", query)
+	logger := a.logger.WithValues("endpoint", r.URL.Path, "name", query)
 	if query == "" {
 		a.logger.Error(fmt.Errorf("missing query param"), "name param not set", "name", query)
 		a.logAndWriteHeader(w, http.StatusBadRequest)
@@ -65,7 +65,7 @@ func (a *API) ProfilesHandler(w http.ResponseWriter, r *http.Request) {
 // ProfileHandler is the handler for /profiles/{catalog}/{profile} requests.
 func (a *API) ProfileHandler(w http.ResponseWriter, r *http.Request) {
 	sourceName, profileName := mux.Vars(r)["catalog"], mux.Vars(r)["profile"]
-	logger := a.logger.WithValues("endpoint", "/profiles/{catalog}/{profile}", "catalog", sourceName, "profile", profileName)
+	logger := a.logger.WithValues("endpoint", r.URL.Path, "catalog", sourceName, "profile", profileName)
 	if sourceName == "" || profileName == "" {
 		a.logger.Error(fmt.Errorf("missing query param"), "profile and/or catalog not set")
 		a.logAndWriteHeader(w, http.StatusBadRequest)
@@ -84,7 +84,7 @@ func (a *API) ProfileHandler(w http.ResponseWriter, r *http.Request) {
 // ProfileWithVersionHandler is the handler for /profiles/{catalog}/{profile}/{version} requests.
 func (a *API) ProfileWithVersionHandler(w http.ResponseWriter, r *http.Request) {
 	sourceName, profileName, catalogVersion := mux.Vars(r)["catalog"], mux.Vars(r)["profile"], mux.Vars(r)["version"]
-	logger := a.logger.WithValues("endpoint", "/profiles/{catalog}/{profile}/{version}", "catalog", sourceName, "profile", profileName, "version", catalogVersion)
+	logger := a.logger.WithValues("endpoint", r.URL.Path, "catalog", sourceName, "profile", profileName, "version", catalogVersion)
 	if sourceName == "" || profileName == "" || catalogVersion == "" {
 		a.logger.Error(fmt.Errorf("missing query param"), "catalog, profile and/or version not set")
 		a.logAndWriteHeader(w, http.StatusBadRequest)
@@ -103,7 +103,7 @@ func (a *API) ProfileWithVersionHandler(w http.ResponseWriter, r *http.Request) 
 // ProfileGreaterThanVersionHandler is the handler for /profiles/{catalog}/{profile}/{version}/available_updates requests.
 func (a *API) ProfileGreaterThanVersionHandler(w http.ResponseWriter, r *http.Request) {
 	sourceName, profileName, catalogVersion := mux.Vars(r)["catalog"], mux.Vars(r)["profile"], mux.Vars(r)["version"]
-	logger := a.logger.WithValues("endpoint", "/profiles/{catalog}/{profile}/{version}/available_updates", "catalog", sourceName, "profile", profileName, "version", catalogVersion)
+	logger := a.logger.WithValues("endpoint", r.URL.Path, "catalog", sourceName, "profile", profileName, "version", catalogVersion)
 	if sourceName == "" || profileName == "" || catalogVersion == "" {
 		a.logger.Error(fmt.Errorf("missing query param"), "catalog, profile and/or version not set")
 		a.logAndWriteHeader(w, http.StatusBadRequest)
