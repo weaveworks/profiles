@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/fluxcd/helm-controller/api v0.10.1
-	github.com/fluxcd/kustomize-controller/api v0.12.0
+	github.com/fluxcd/kustomize-controller/api v0.12.2
 	github.com/fluxcd/pkg/version v0.0.1
 	github.com/fluxcd/source-controller/api v0.13.1
 	github.com/go-logr/logr v0.4.0
