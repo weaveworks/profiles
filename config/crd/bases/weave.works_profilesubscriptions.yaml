@@ -54,7 +54,7 @@ spec:
                 type: string
               path:
                 description: Path is the location in the git repo containing the profile
-                  definition. Only used in combination with Branch
+                  definition
                 type: string
               profile_catalog_description:
                 description: ProfileCatalogDescription defines properties of the catalog
@@ -74,6 +74,9 @@ spec:
                 type: object
               profileURL:
                 description: ProfileURL is a fully qualified URL to a profile repo
+                type: string
+              tag:
+                description: Tag is the git tag containing the profile definition
                 type: string
               values:
                 description: Values holds the values for the Helm chart specified
@@ -121,9 +124,6 @@ spec:
                   - name
                   type: object
                 type: array
-              version:
-                description: Version is the git tag containing the profile definition
-                type: string
             type: object
           status:
             description: ProfileSubscriptionStatus defines the observed state of ProfileSubscription

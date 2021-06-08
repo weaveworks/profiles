@@ -61,6 +61,9 @@ spec:
                       items:
                         type: string
                       type: array
+                    tag:
+                      description: Tag
+                      type: string
                     url:
                       description: URL is the full URL path to the profile.yaml
                       type: string

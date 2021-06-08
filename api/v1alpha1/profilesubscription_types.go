@@ -36,7 +36,7 @@ type ProfileSubscriptionSpec struct {
 	// +optional
 	Branch string `json:"branch,omitempty"`
 
-	// Path is the location in the git repo containing the profile definition. Only used in combination with Branch
+	// Path is the location in the git repo containing the profile definition
 	// +optional
 	Path string `json:"path,omitempty"`
 
@@ -44,9 +44,9 @@ type ProfileSubscriptionSpec struct {
 	// +optional
 	Values *apiextensionsv1.JSON `json:"values,omitempty"`
 
-	// Version is the git tag containing the profile definition
+	// Tag is the git tag containing the profile definition
 	// +optional
-	Version string `json:"version,omitempty"`
+	Tag string `json:"tag,omitempty"`
 
 	// ValuesFrom holds references to resources containing values for the Helm chart specified in the first artifact
 	// +optional

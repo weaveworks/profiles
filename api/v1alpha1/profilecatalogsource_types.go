@@ -36,6 +36,9 @@ type ProfileDescription struct {
 	// +optional
 	// +kubebuilder:validation:Pattern=^(v)?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$
 	Version string `json:"version,omitempty"`
+	// Tag
+	// +optional
+	Tag string `json:"tag,omitempty"`
 	// CatalogSource is the name of the catalog the profile is listed in
 	// +optional
 	CatalogSource string `json:"catalog,omitempty"`
