@@ -7,6 +7,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/fluxcd/pkg/version"
+	"github.com/go-logr/logr"
 
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 )
@@ -66,14 +67,14 @@ func (c *Catalog) Get(sourceName, profileName string) *profilesv1.ProfileDescrip
 }
 
 // GetWithVersion returns the profile description `profileName` with the given version.
-func (c *Catalog) GetWithVersion(sourceName, profileName, profileVersion string) *profilesv1.ProfileDescription {
+func (c *Catalog) GetWithVersion(logger logr.Logger, sourceName, profileName, profileVersion string) *profilesv1.ProfileDescription {
 	profiles, ok := c.m.Load(sourceName)
 	if !ok {
 		return nil
 	}
 
 	if profileVersion == "latest" {
-		versions := c.ProfilesGreaterThanVersion(sourceName, profileName, profileVersion)
+		versions := c.ProfilesGreaterThanVersion(logger, sourceName, profileName, profileVersion)
 		if len(versions) == 0 {
 			return nil
 		}
@@ -95,7 +96,7 @@ type profileDescriptionWithVersion struct {
 
 // ProfilesGreaterThanVersion returns all profiles which are of a greater version for a given profile with a version.
 // If set to "latest" all versions are returned. Versions are ordered in descending order
-func (c *Catalog) ProfilesGreaterThanVersion(sourceName, profileName, profileVersion string) []profilesv1.ProfileDescription {
+func (c *Catalog) ProfilesGreaterThanVersion(logger logr.Logger, sourceName, profileName, profileVersion string) []profilesv1.ProfileDescription {
 	var profilesWithValidVersion []profileDescriptionWithVersion
 	profiles, ok := c.m.Load(sourceName)
 	if !ok {
@@ -108,6 +109,7 @@ func (c *Catalog) ProfilesGreaterThanVersion(sourceName, profileName, profileVer
 	for _, p := range profiles.([]profilesv1.ProfileDescription) {
 		v, err := version.ParseVersion(p.Version)
 		if err != nil {
+			logger.Error(err, "failed to parse profile version", "profile", p)
 			continue
 		}
 		if p.Name == profileName {

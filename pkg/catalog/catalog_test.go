@@ -1,6 +1,7 @@
 package catalog_test
 
 import (
+	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -12,6 +13,7 @@ var _ = Describe("Catalog", func() {
 	var (
 		c       *catalog.Catalog
 		catName string
+		logger  = logr.Discard()
 	)
 
 	BeforeEach(func() {
@@ -51,7 +53,7 @@ var _ = Describe("Catalog", func() {
 			profiles := []profilesv1.ProfileDescription{{Name: "foo", Version: "v0.1.0", Description: "install foo"}, {Name: "foo", Version: "0.2.0"}, {Name: "foo"}}
 			c.Update(catName, profiles...)
 
-			Expect(c.GetWithVersion(catName, "foo", "v0.1.0")).To(Equal(
+			Expect(c.GetWithVersion(logger, catName, "foo", "v0.1.0")).To(Equal(
 				&profilesv1.ProfileDescription{Name: "foo", Version: "v0.1.0", Description: "install foo", CatalogSource: catName},
 			))
 		})
@@ -61,13 +63,13 @@ var _ = Describe("Catalog", func() {
 				profiles := []profilesv1.ProfileDescription{{Name: "foo", Version: "v0.1.0"}, {Name: "foo", Version: "0.2.0"}, {Name: "bar", Version: "0.3.0"}, {Name: "foo"}}
 				c.Update(catName, profiles...)
 
-				Expect(c.GetWithVersion(catName, "foo", "latest")).To(Equal(
+				Expect(c.GetWithVersion(logger, catName, "foo", "latest")).To(Equal(
 					&profilesv1.ProfileDescription{Name: "foo", Version: "0.2.0", CatalogSource: catName},
 				))
 
 				profiles = []profilesv1.ProfileDescription{{Name: "foo", Version: "0.2.0"}, {Name: "foo", Version: "v0.3.0"}, {Name: "foo"}}
 				c.Update(catName, profiles...)
-				Expect(c.GetWithVersion(catName, "foo", "latest")).To(Equal(
+				Expect(c.GetWithVersion(logger, catName, "foo", "latest")).To(Equal(
 					&profilesv1.ProfileDescription{Name: "foo", Version: "v0.3.0", CatalogSource: catName},
 				))
 			})
@@ -77,7 +79,7 @@ var _ = Describe("Catalog", func() {
 					profiles := []profilesv1.ProfileDescription{{Name: "foo", Version: "vsda012!.1.0"}, {Name: "foo", Version: "!0.!2.0"}, {Name: "foo"}}
 					c.Update(catName, profiles...)
 
-					Expect(c.GetWithVersion(catName, "foo", "latest")).To(BeNil())
+					Expect(c.GetWithVersion(logger, catName, "foo", "latest")).To(BeNil())
 				})
 			})
 		})
@@ -96,7 +98,7 @@ var _ = Describe("Catalog", func() {
 			}
 			c.Update(catName, profiles...)
 
-			Expect(c.ProfilesGreaterThanVersion(catName, "foo", "v0.1.0")).To(Equal(
+			Expect(c.ProfilesGreaterThanVersion(logger, catName, "foo", "v0.1.0")).To(Equal(
 				[]profilesv1.ProfileDescription{
 					{Name: "foo", Version: "v0.3.0", CatalogSource: catName},
 					{Name: "foo", Version: "v0.2.0", CatalogSource: catName},

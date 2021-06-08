@@ -60,6 +60,7 @@ func (r *ProfileCatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl
 		return ctrl.Result{}, err
 	}
 
+	logger.Info("updating catalog entries", "profiles", pCatalog.Spec.Profiles)
 	r.Profiles.Update(pCatalog.Name, pCatalog.Spec.Profiles...)
 
 	return ctrl.Result{}, nil
