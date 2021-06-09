@@ -50,7 +50,7 @@ and as a quick reference for people coming by to learn the proposal's purpose
 without reading the entire thing.
 -->
 The purpose of this doc is to outline the proposed implementation of multi-profile repositories, and how to handle tagging profiles in this scenario.
-Currently you are limited to 1 profile per repository and you can only reference a branch in a repository. This document proposes that 
+Currently you are limited to 1 profile per repository and you can only reference a branch in a repository. This document proposes that
 we introduce the ability to have multiple profiles in a repository, and follow a pattern of tagging used in [kustomize](https://github.com/kubernetes-sigs/kustomize/tags)
 to distinguish what tag is used for each profile.
 
@@ -80,7 +80,7 @@ $ tree weaveworks-profile/foo
 The `profile.yaml` would contain a reference to the artifacts relative to profile directory, for example:
 ```yaml
 $ cat foo/profile.yaml
-apiVersion: profiles.fluxcd.io/v1alpha1
+apiVersion: packages.weave.works/v1alpha1
 kind: Profile
 metadata:
   name: foo
