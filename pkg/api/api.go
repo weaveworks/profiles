@@ -15,13 +15,13 @@ import (
 // Catalog is an interface for the Catalog
 type Catalog interface {
 	// Get will return a specific profile from the catalog
-	Get(sourceName, profileName string) *profilesv1.ProfileDescription
+	Get(sourceName, profileName string) *profilesv1.ProfileCatalogEntry
 	// GetWithVersion will return a specific profile from the catalog
-	GetWithVersion(logger logr.Logger, sourceName, profileName, version string) *profilesv1.ProfileDescription
+	GetWithVersion(logger logr.Logger, sourceName, profileName, version string) *profilesv1.ProfileCatalogEntry
 	// ProfilesGreaterThanVersion returns all profiles which are of a greater version for a given profile with a version.
-	ProfilesGreaterThanVersion(logger logr.Logger, sourceName, profileName, version string) []profilesv1.ProfileDescription
+	ProfilesGreaterThanVersion(logger logr.Logger, sourceName, profileName, version string) []profilesv1.ProfileCatalogEntry
 	// Search will return a list of profiles which match query
-	Search(query string) []profilesv1.ProfileDescription
+	Search(query string) []profilesv1.ProfileCatalogEntry
 }
 
 // API defines a catalog router.
