@@ -35,17 +35,19 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 			pSub := &profilesv1.ProfileCatalogSource{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ProfileCatalogSource",
-					APIVersion: "profilesubscriptions.weave.works/v1alpha1",
+					APIVersion: "profile.weave.works/v1alpha1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "catalog",
 					Namespace: namespace,
 				},
 				Spec: profilesv1.ProfileCatalogSourceSpec{
-					Profiles: []profilesv1.ProfileDescription{
+					Profiles: []profilesv1.ProfileCatalogEntry{
 						{
-							Name:        "foo",
-							Description: "bar",
+							ProfileDescription: profilesv1.ProfileDescription{
+								Name:        "foo",
+								Description: "bar",
+							},
 						},
 					},
 				},
@@ -53,24 +55,28 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 			Expect(k8sClient.Create(ctx, pSub)).Should(Succeed())
 
 			By("searching for a profile")
-			query := func() []profilesv1.ProfileDescription {
+			query := func() []profilesv1.ProfileCatalogEntry {
 				return catalogReconciler.Profiles.Search("foo")
 			}
-			Eventually(query, 2*time.Second).Should(ContainElement(profilesv1.ProfileDescription{Name: "foo", Description: "bar", CatalogSource: "catalog"}))
+			Eventually(query, 2*time.Second).Should(ContainElement(profilesv1.ProfileCatalogEntry{ProfileDescription: profilesv1.ProfileDescription{Name: "foo", Description: "bar"}, CatalogSource: "catalog"}))
 
 			By("adding more items to ProfileCatalogSource")
 			pName := fmt.Sprintf("new-profile-%s", uuid.New().String())
-			pSub.Spec.Profiles = append(pSub.Spec.Profiles, profilesv1.ProfileDescription{
-				Name:        pName,
-				Description: "I am new here",
+			pSub.Spec.Profiles = append(pSub.Spec.Profiles, profilesv1.ProfileCatalogEntry{
+				ProfileDescription: profilesv1.ProfileDescription{
+					Name:        pName,
+					Description: "I am new here",
+				},
 			})
 			Expect(k8sClient.Update(context.Background(), pSub)).To(Succeed())
 
-			Eventually(func() []profilesv1.ProfileDescription {
+			Eventually(func() []profilesv1.ProfileCatalogEntry {
 				return catalogReconciler.Profiles.Search(pName)
-			}, 2*time.Second).Should(ConsistOf(profilesv1.ProfileDescription{
-				Name:          pName,
-				Description:   "I am new here",
+			}, 2*time.Second).Should(ConsistOf(profilesv1.ProfileCatalogEntry{
+				ProfileDescription: profilesv1.ProfileDescription{
+					Name:        pName,
+					Description: "I am new here",
+				},
 				CatalogSource: "catalog",
 			}))
 

@@ -13,7 +13,7 @@ import (
 )
 
 // Catalog provides an in-memory cache of profiles from the cluster which can be queried easily.
-//type Catalog map[string][]profilesv1.ProfileDescription
+//type Catalog map[string][]profilesv1.ProfileCatalogEntry
 type Catalog struct {
 	m sync.Map
 }
@@ -26,7 +26,7 @@ func New() *Catalog {
 }
 
 // Update updates the catalog by replacing existing profiles with new profiles
-func (c *Catalog) Update(sourceName string, profiles ...profilesv1.ProfileDescription) {
+func (c *Catalog) Update(sourceName string, profiles ...profilesv1.ProfileCatalogEntry) {
 	for i := range profiles {
 		profiles[i].CatalogSource = sourceName
 	}
@@ -39,10 +39,10 @@ func (c *Catalog) Remove(sourceName string) {
 }
 
 // Search returns profile descriptions that contain `name` in their names.
-func (c *Catalog) Search(name string) []profilesv1.ProfileDescription {
-	var ret []profilesv1.ProfileDescription
+func (c *Catalog) Search(name string) []profilesv1.ProfileCatalogEntry {
+	var ret []profilesv1.ProfileCatalogEntry
 	c.m.Range(func(key, value interface{}) bool {
-		for _, p := range value.([]profilesv1.ProfileDescription) {
+		for _, p := range value.([]profilesv1.ProfileCatalogEntry) {
 			if strings.Contains(p.Name, name) {
 				ret = append(ret, p)
 			}
@@ -53,21 +53,21 @@ func (c *Catalog) Search(name string) []profilesv1.ProfileDescription {
 }
 
 // Get returns the profile description `profileName`.
-func (c *Catalog) Get(sourceName, profileName string) *profilesv1.ProfileDescription {
+func (c *Catalog) Get(sourceName, profileName string) *profilesv1.ProfileCatalogEntry {
 	profiles, ok := c.m.Load(sourceName)
 	if !ok {
 		return nil
 	}
-	for _, p := range profiles.([]profilesv1.ProfileDescription) {
+	for _, p := range profiles.([]profilesv1.ProfileCatalogEntry) {
 		if p.Name == profileName && p.CatalogSource == sourceName {
-			return p.DeepCopy()
+			return &p
 		}
 	}
 	return nil
 }
 
 // GetWithVersion returns the profile description `profileName` with the given version.
-func (c *Catalog) GetWithVersion(logger logr.Logger, sourceName, profileName, profileVersion string) *profilesv1.ProfileDescription {
+func (c *Catalog) GetWithVersion(logger logr.Logger, sourceName, profileName, profileVersion string) *profilesv1.ProfileCatalogEntry {
 	profiles, ok := c.m.Load(sourceName)
 	if !ok {
 		return nil
@@ -78,25 +78,25 @@ func (c *Catalog) GetWithVersion(logger logr.Logger, sourceName, profileName, pr
 		if len(versions) == 0 {
 			return nil
 		}
-		return versions[0].DeepCopy()
+		return &versions[0]
 	}
 
-	for _, p := range profiles.([]profilesv1.ProfileDescription) {
-		if p.Name == profileName && p.CatalogSource == sourceName && p.Version == profileVersion {
-			return p.DeepCopy()
+	for _, p := range profiles.([]profilesv1.ProfileCatalogEntry) {
+		if p.Name == profileName && p.CatalogSource == sourceName && profilesv1.GetVersionFromTag(p.Tag) == profileVersion {
+			return &p
 		}
 	}
 	return nil
 }
 
 type profileDescriptionWithVersion struct {
-	profileDescription profilesv1.ProfileDescription
+	profileDescription profilesv1.ProfileCatalogEntry
 	semverVersion      *semver.Version
 }
 
 // ProfilesGreaterThanVersion returns all profiles which are of a greater version for a given profile with a version.
 // If set to "latest" all versions are returned. Versions are ordered in descending order
-func (c *Catalog) ProfilesGreaterThanVersion(logger logr.Logger, sourceName, profileName, profileVersion string) []profilesv1.ProfileDescription {
+func (c *Catalog) ProfilesGreaterThanVersion(logger logr.Logger, sourceName, profileName, profileVersion string) []profilesv1.ProfileCatalogEntry {
 	var profilesWithValidVersion []profileDescriptionWithVersion
 	profiles, ok := c.m.Load(sourceName)
 	if !ok {
@@ -106,8 +106,8 @@ func (c *Catalog) ProfilesGreaterThanVersion(logger logr.Logger, sourceName, pro
 	if err != nil && profileVersion != "latest" {
 		return nil
 	}
-	for _, p := range profiles.([]profilesv1.ProfileDescription) {
-		v, err := version.ParseVersion(p.Version)
+	for _, p := range profiles.([]profilesv1.ProfileCatalogEntry) {
+		v, err := version.ParseVersion(profilesv1.GetVersionFromTag(p.Tag))
 		if err != nil {
 			logger.Error(err, "failed to parse profile version", "profile", p)
 			continue
@@ -126,7 +126,7 @@ func (c *Catalog) ProfilesGreaterThanVersion(logger logr.Logger, sourceName, pro
 	sort.SliceStable(profilesWithValidVersion, func(i, j int) bool {
 		return profilesWithValidVersion[j].semverVersion.LessThan(profilesWithValidVersion[i].semverVersion)
 	})
-	var result []profilesv1.ProfileDescription
+	var result []profilesv1.ProfileCatalogEntry
 	for _, p := range profilesWithValidVersion {
 		result = append(result, p.profileDescription)
 	}

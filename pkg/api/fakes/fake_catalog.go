@@ -10,19 +10,19 @@ import (
 )
 
 type FakeCatalog struct {
-	GetStub        func(string, string) *v1alpha1.ProfileDescription
+	GetStub        func(string, string) *v1alpha1.ProfileCatalogEntry
 	getMutex       sync.RWMutex
 	getArgsForCall []struct {
 		arg1 string
 		arg2 string
 	}
 	getReturns struct {
-		result1 *v1alpha1.ProfileDescription
+		result1 *v1alpha1.ProfileCatalogEntry
 	}
 	getReturnsOnCall map[int]struct {
-		result1 *v1alpha1.ProfileDescription
+		result1 *v1alpha1.ProfileCatalogEntry
 	}
-	GetWithVersionStub        func(logr.Logger, string, string, string) *v1alpha1.ProfileDescription
+	GetWithVersionStub        func(logr.Logger, string, string, string) *v1alpha1.ProfileCatalogEntry
 	getWithVersionMutex       sync.RWMutex
 	getWithVersionArgsForCall []struct {
 		arg1 logr.Logger
@@ -31,12 +31,12 @@ type FakeCatalog struct {
 		arg4 string
 	}
 	getWithVersionReturns struct {
-		result1 *v1alpha1.ProfileDescription
+		result1 *v1alpha1.ProfileCatalogEntry
 	}
 	getWithVersionReturnsOnCall map[int]struct {
-		result1 *v1alpha1.ProfileDescription
+		result1 *v1alpha1.ProfileCatalogEntry
 	}
-	ProfilesGreaterThanVersionStub        func(logr.Logger, string, string, string) []v1alpha1.ProfileDescription
+	ProfilesGreaterThanVersionStub        func(logr.Logger, string, string, string) []v1alpha1.ProfileCatalogEntry
 	profilesGreaterThanVersionMutex       sync.RWMutex
 	profilesGreaterThanVersionArgsForCall []struct {
 		arg1 logr.Logger
@@ -45,27 +45,27 @@ type FakeCatalog struct {
 		arg4 string
 	}
 	profilesGreaterThanVersionReturns struct {
-		result1 []v1alpha1.ProfileDescription
+		result1 []v1alpha1.ProfileCatalogEntry
 	}
 	profilesGreaterThanVersionReturnsOnCall map[int]struct {
-		result1 []v1alpha1.ProfileDescription
+		result1 []v1alpha1.ProfileCatalogEntry
 	}
-	SearchStub        func(string) []v1alpha1.ProfileDescription
+	SearchStub        func(string) []v1alpha1.ProfileCatalogEntry
 	searchMutex       sync.RWMutex
 	searchArgsForCall []struct {
 		arg1 string
 	}
 	searchReturns struct {
-		result1 []v1alpha1.ProfileDescription
+		result1 []v1alpha1.ProfileCatalogEntry
 	}
 	searchReturnsOnCall map[int]struct {
-		result1 []v1alpha1.ProfileDescription
+		result1 []v1alpha1.ProfileCatalogEntry
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeCatalog) Get(arg1 string, arg2 string) *v1alpha1.ProfileDescription {
+func (fake *FakeCatalog) Get(arg1 string, arg2 string) *v1alpha1.ProfileCatalogEntry {
 	fake.getMutex.Lock()
 	ret, specificReturn := fake.getReturnsOnCall[len(fake.getArgsForCall)]
 	fake.getArgsForCall = append(fake.getArgsForCall, struct {
@@ -91,7 +91,7 @@ func (fake *FakeCatalog) GetCallCount() int {
 	return len(fake.getArgsForCall)
 }
 
-func (fake *FakeCatalog) GetCalls(stub func(string, string) *v1alpha1.ProfileDescription) {
+func (fake *FakeCatalog) GetCalls(stub func(string, string) *v1alpha1.ProfileCatalogEntry) {
 	fake.getMutex.Lock()
 	defer fake.getMutex.Unlock()
 	fake.GetStub = stub
@@ -104,30 +104,30 @@ func (fake *FakeCatalog) GetArgsForCall(i int) (string, string) {
 	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *FakeCatalog) GetReturns(result1 *v1alpha1.ProfileDescription) {
+func (fake *FakeCatalog) GetReturns(result1 *v1alpha1.ProfileCatalogEntry) {
 	fake.getMutex.Lock()
 	defer fake.getMutex.Unlock()
 	fake.GetStub = nil
 	fake.getReturns = struct {
-		result1 *v1alpha1.ProfileDescription
+		result1 *v1alpha1.ProfileCatalogEntry
 	}{result1}
 }
 
-func (fake *FakeCatalog) GetReturnsOnCall(i int, result1 *v1alpha1.ProfileDescription) {
+func (fake *FakeCatalog) GetReturnsOnCall(i int, result1 *v1alpha1.ProfileCatalogEntry) {
 	fake.getMutex.Lock()
 	defer fake.getMutex.Unlock()
 	fake.GetStub = nil
 	if fake.getReturnsOnCall == nil {
 		fake.getReturnsOnCall = make(map[int]struct {
-			result1 *v1alpha1.ProfileDescription
+			result1 *v1alpha1.ProfileCatalogEntry
 		})
 	}
 	fake.getReturnsOnCall[i] = struct {
-		result1 *v1alpha1.ProfileDescription
+		result1 *v1alpha1.ProfileCatalogEntry
 	}{result1}
 }
 
-func (fake *FakeCatalog) GetWithVersion(arg1 logr.Logger, arg2 string, arg3 string, arg4 string) *v1alpha1.ProfileDescription {
+func (fake *FakeCatalog) GetWithVersion(arg1 logr.Logger, arg2 string, arg3 string, arg4 string) *v1alpha1.ProfileCatalogEntry {
 	fake.getWithVersionMutex.Lock()
 	ret, specificReturn := fake.getWithVersionReturnsOnCall[len(fake.getWithVersionArgsForCall)]
 	fake.getWithVersionArgsForCall = append(fake.getWithVersionArgsForCall, struct {
@@ -155,7 +155,7 @@ func (fake *FakeCatalog) GetWithVersionCallCount() int {
 	return len(fake.getWithVersionArgsForCall)
 }
 
-func (fake *FakeCatalog) GetWithVersionCalls(stub func(logr.Logger, string, string, string) *v1alpha1.ProfileDescription) {
+func (fake *FakeCatalog) GetWithVersionCalls(stub func(logr.Logger, string, string, string) *v1alpha1.ProfileCatalogEntry) {
 	fake.getWithVersionMutex.Lock()
 	defer fake.getWithVersionMutex.Unlock()
 	fake.GetWithVersionStub = stub
@@ -168,30 +168,30 @@ func (fake *FakeCatalog) GetWithVersionArgsForCall(i int) (logr.Logger, string, 
 	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
 }
 
-func (fake *FakeCatalog) GetWithVersionReturns(result1 *v1alpha1.ProfileDescription) {
+func (fake *FakeCatalog) GetWithVersionReturns(result1 *v1alpha1.ProfileCatalogEntry) {
 	fake.getWithVersionMutex.Lock()
 	defer fake.getWithVersionMutex.Unlock()
 	fake.GetWithVersionStub = nil
 	fake.getWithVersionReturns = struct {
-		result1 *v1alpha1.ProfileDescription
+		result1 *v1alpha1.ProfileCatalogEntry
 	}{result1}
 }
 
-func (fake *FakeCatalog) GetWithVersionReturnsOnCall(i int, result1 *v1alpha1.ProfileDescription) {
+func (fake *FakeCatalog) GetWithVersionReturnsOnCall(i int, result1 *v1alpha1.ProfileCatalogEntry) {
 	fake.getWithVersionMutex.Lock()
 	defer fake.getWithVersionMutex.Unlock()
 	fake.GetWithVersionStub = nil
 	if fake.getWithVersionReturnsOnCall == nil {
 		fake.getWithVersionReturnsOnCall = make(map[int]struct {
-			result1 *v1alpha1.ProfileDescription
+			result1 *v1alpha1.ProfileCatalogEntry
 		})
 	}
 	fake.getWithVersionReturnsOnCall[i] = struct {
-		result1 *v1alpha1.ProfileDescription
+		result1 *v1alpha1.ProfileCatalogEntry
 	}{result1}
 }
 
-func (fake *FakeCatalog) ProfilesGreaterThanVersion(arg1 logr.Logger, arg2 string, arg3 string, arg4 string) []v1alpha1.ProfileDescription {
+func (fake *FakeCatalog) ProfilesGreaterThanVersion(arg1 logr.Logger, arg2 string, arg3 string, arg4 string) []v1alpha1.ProfileCatalogEntry {
 	fake.profilesGreaterThanVersionMutex.Lock()
 	ret, specificReturn := fake.profilesGreaterThanVersionReturnsOnCall[len(fake.profilesGreaterThanVersionArgsForCall)]
 	fake.profilesGreaterThanVersionArgsForCall = append(fake.profilesGreaterThanVersionArgsForCall, struct {
@@ -219,7 +219,7 @@ func (fake *FakeCatalog) ProfilesGreaterThanVersionCallCount() int {
 	return len(fake.profilesGreaterThanVersionArgsForCall)
 }
 
-func (fake *FakeCatalog) ProfilesGreaterThanVersionCalls(stub func(logr.Logger, string, string, string) []v1alpha1.ProfileDescription) {
+func (fake *FakeCatalog) ProfilesGreaterThanVersionCalls(stub func(logr.Logger, string, string, string) []v1alpha1.ProfileCatalogEntry) {
 	fake.profilesGreaterThanVersionMutex.Lock()
 	defer fake.profilesGreaterThanVersionMutex.Unlock()
 	fake.ProfilesGreaterThanVersionStub = stub
@@ -232,30 +232,30 @@ func (fake *FakeCatalog) ProfilesGreaterThanVersionArgsForCall(i int) (logr.Logg
 	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
 }
 
-func (fake *FakeCatalog) ProfilesGreaterThanVersionReturns(result1 []v1alpha1.ProfileDescription) {
+func (fake *FakeCatalog) ProfilesGreaterThanVersionReturns(result1 []v1alpha1.ProfileCatalogEntry) {
 	fake.profilesGreaterThanVersionMutex.Lock()
 	defer fake.profilesGreaterThanVersionMutex.Unlock()
 	fake.ProfilesGreaterThanVersionStub = nil
 	fake.profilesGreaterThanVersionReturns = struct {
-		result1 []v1alpha1.ProfileDescription
+		result1 []v1alpha1.ProfileCatalogEntry
 	}{result1}
 }
 
-func (fake *FakeCatalog) ProfilesGreaterThanVersionReturnsOnCall(i int, result1 []v1alpha1.ProfileDescription) {
+func (fake *FakeCatalog) ProfilesGreaterThanVersionReturnsOnCall(i int, result1 []v1alpha1.ProfileCatalogEntry) {
 	fake.profilesGreaterThanVersionMutex.Lock()
 	defer fake.profilesGreaterThanVersionMutex.Unlock()
 	fake.ProfilesGreaterThanVersionStub = nil
 	if fake.profilesGreaterThanVersionReturnsOnCall == nil {
 		fake.profilesGreaterThanVersionReturnsOnCall = make(map[int]struct {
-			result1 []v1alpha1.ProfileDescription
+			result1 []v1alpha1.ProfileCatalogEntry
 		})
 	}
 	fake.profilesGreaterThanVersionReturnsOnCall[i] = struct {
-		result1 []v1alpha1.ProfileDescription
+		result1 []v1alpha1.ProfileCatalogEntry
 	}{result1}
 }
 
-func (fake *FakeCatalog) Search(arg1 string) []v1alpha1.ProfileDescription {
+func (fake *FakeCatalog) Search(arg1 string) []v1alpha1.ProfileCatalogEntry {
 	fake.searchMutex.Lock()
 	ret, specificReturn := fake.searchReturnsOnCall[len(fake.searchArgsForCall)]
 	fake.searchArgsForCall = append(fake.searchArgsForCall, struct {
@@ -280,7 +280,7 @@ func (fake *FakeCatalog) SearchCallCount() int {
 	return len(fake.searchArgsForCall)
 }
 
-func (fake *FakeCatalog) SearchCalls(stub func(string) []v1alpha1.ProfileDescription) {
+func (fake *FakeCatalog) SearchCalls(stub func(string) []v1alpha1.ProfileCatalogEntry) {
 	fake.searchMutex.Lock()
 	defer fake.searchMutex.Unlock()
 	fake.SearchStub = stub
@@ -293,26 +293,26 @@ func (fake *FakeCatalog) SearchArgsForCall(i int) string {
 	return argsForCall.arg1
 }
 
-func (fake *FakeCatalog) SearchReturns(result1 []v1alpha1.ProfileDescription) {
+func (fake *FakeCatalog) SearchReturns(result1 []v1alpha1.ProfileCatalogEntry) {
 	fake.searchMutex.Lock()
 	defer fake.searchMutex.Unlock()
 	fake.SearchStub = nil
 	fake.searchReturns = struct {
-		result1 []v1alpha1.ProfileDescription
+		result1 []v1alpha1.ProfileCatalogEntry
 	}{result1}
 }
 
-func (fake *FakeCatalog) SearchReturnsOnCall(i int, result1 []v1alpha1.ProfileDescription) {
+func (fake *FakeCatalog) SearchReturnsOnCall(i int, result1 []v1alpha1.ProfileCatalogEntry) {
 	fake.searchMutex.Lock()
 	defer fake.searchMutex.Unlock()
 	fake.SearchStub = nil
 	if fake.searchReturnsOnCall == nil {
 		fake.searchReturnsOnCall = make(map[int]struct {
-			result1 []v1alpha1.ProfileDescription
+			result1 []v1alpha1.ProfileCatalogEntry
 		})
 	}
 	fake.searchReturnsOnCall[i] = struct {
-		result1 []v1alpha1.ProfileDescription
+		result1 []v1alpha1.ProfileCatalogEntry
 	}{result1}
 }
 
