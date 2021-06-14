@@ -69,12 +69,6 @@ type Artifact struct {
 	Kustomize *Kustomize `json:"kustomize,omitempty"`
 }
 
-// Validate will validate Artifacts properties.
-func (in Artifact) Validate() error {
-	// TODO follow up PR
-	return nil
-}
-
 type Kustomize struct {
 	// Path is the local path to the Artifact in the Profile repo.
 	Path string `json:"path,omitempty"`
