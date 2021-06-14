@@ -17,37 +17,31 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"strings"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ProfileCatalogSourceSpec defines the desired state of ProfileCatalogSource
 type ProfileCatalogSourceSpec struct {
 	// Profiles is the list of profiles exposed by the catalog
-	Profiles []ProfileDescription `json:"profiles,omitempty"`
+	Profiles []ProfileCatalogEntry `json:"profiles,omitempty"`
 }
 
 // ProfileDescription defines details about a given profile.
-type ProfileDescription struct {
-	// Profile name
-	Name string `json:"name,omitempty"`
-	// Profile description
-	Description string `json:"description,omitempty"`
-	// Version
+type ProfileCatalogEntry struct {
+	// Tag
 	// +optional
-	// +kubebuilder:validation:Pattern=^(v)?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$
-	Version string `json:"version,omitempty"`
+	// +kubebuilder:validation:Pattern=^([a-zA-Z\-]+\/)?(v)?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$
+
+	Tag string `json:"tag,omitempty"`
 	// CatalogSource is the name of the catalog the profile is listed in
 	// +optional
 	CatalogSource string `json:"catalog,omitempty"`
 	// URL is the full URL path to the profile.yaml
 	// +optional
-	URL string `json:"url,omitempty"`
-	// Maintainer is the name of the author(s)
-	// +optional
-	Maintainer string `json:"maintainer,omitempty"`
-	// Prerequisites are a list of dependencies required by the profile
-	// +optional
-	Prerequisites []string `json:"prerequisites,omitempty"`
+	URL                string `json:"url,omitempty"`
+	ProfileDescription `json:",inline"`
 }
 
 // ProfileCatalogSourceStatus defines the observed state of ProfileCatalogSource
@@ -77,4 +71,12 @@ type ProfileCatalogSourceList struct {
 
 func init() {
 	SchemeBuilder.Register(&ProfileCatalogSource{}, &ProfileCatalogSourceList{})
+}
+
+func GetVersionFromTag(tag string) string {
+	splitTag := strings.Split(tag, "/")
+	if len(splitTag) == 2 {
+		return splitTag[1]
+	}
+	return tag
 }

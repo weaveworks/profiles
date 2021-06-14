@@ -6,14 +6,14 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
-  name: profilesubscriptions.weave.works
+  name: profileinstallations.weave.works
 spec:
   group: weave.works
   names:
-    kind: ProfileSubscription
-    listKind: ProfileSubscriptionList
-    plural: profilesubscriptions
-    singular: profilesubscription
+    kind: ProfileInstallation
+    listKind: ProfileInstallationList
+    plural: profileinstallations
+    singular: profileinstallation
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -29,7 +29,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ProfileSubscription is the Schema for the profilesubscriptions
+        description: ProfileInstallation is the Schema for the profileinstallations
           API
         properties:
           apiVersion:
@@ -45,20 +45,10 @@ spec:
           metadata:
             type: object
           spec:
-            description: ProfileSubscriptionSpec defines the desired state of a ProfileSubscription
+            description: ProfileInstallationSpec defines the desired state of a ProfileInstallation
             properties:
-              branch:
-                default: main
-                description: 'Branch is the git repo branch containing the profile
-                  definition (default: main)'
-                type: string
-              path:
-                description: Path is the location in the git repo containing the profile
-                  definition. Only used in combination with Branch
-                type: string
-              profile_catalog_description:
-                description: ProfileCatalogDescription defines properties of the catalog
-                  this profile is from
+              catalog:
+                description: Catalog defines properties of the catalog reference
                 properties:
                   catalog:
                     description: Catalog defines the name of the catalog to get the
@@ -72,9 +62,26 @@ spec:
                       the profile from
                     type: string
                 type: object
-              profileURL:
-                description: ProfileURL is a fully qualified URL to a profile repo
-                type: string
+              source:
+                description: Source defines properties of the source of the profile
+                properties:
+                  branch:
+                    default: main
+                    description: 'Branch is the git repo branch containing the profile
+                      definition (default: main)'
+                    type: string
+                  path:
+                    description: Path is the location in the git repo containing the
+                      profile definition
+                    type: string
+                  tag:
+                    description: Tag is the git tag containing the profile definition
+                    type: string
+                  url:
+                    description: ProfileURL is a fully qualified URL to a profile
+                      repo
+                    type: string
+                type: object
               values:
                 description: Values holds the values for the Helm chart specified
                   in the first artifact
@@ -121,15 +128,12 @@ spec:
                   - name
                   type: object
                 type: array
-              version:
-                description: Version is the git tag containing the profile definition
-                type: string
             type: object
           status:
-            description: ProfileSubscriptionStatus defines the observed state of ProfileSubscription
+            description: ProfileInstallationStatus defines the observed state of ProfileInstallation
             properties:
               conditions:
-                description: Conditions holds the conditions for the ProfileSubscription
+                description: Conditions holds the conditions for the ProfileInstallation
                 items:
                   description: "Condition contains details for one aspect of the current
                     state of this API Resource. --- This struct is intended for direct

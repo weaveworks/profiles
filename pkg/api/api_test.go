@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/go-logr/logr"
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/pkg/api"
 	catfakes "github.com/weaveworks/profiles/pkg/api/fakes"
@@ -22,16 +23,18 @@ var _ = Describe("Api", func() {
 
 	BeforeEach(func() {
 		fakeCatalog = new(catfakes.FakeCatalog)
-		catalogAPI = api.New(fakeCatalog)
+		catalogAPI = api.New(fakeCatalog, logr.Discard())
 	})
 
 	Context("/profiles", func() {
 		When("a matching profile exists", func() {
 			BeforeEach(func() {
-				fakeCatalog.SearchReturns([]profilesv1.ProfileDescription{
+				fakeCatalog.SearchReturns([]profilesv1.ProfileCatalogEntry{
 					{
-						Name:          "nginx-1",
-						Description:   "nginx 1",
+						ProfileDescription: profilesv1.ProfileDescription{
+							Name:        "nginx-1",
+							Description: "nginx 1",
+						},
 						CatalogSource: "foo",
 					},
 				})
@@ -53,7 +56,7 @@ var _ = Describe("Api", func() {
 				handler.ServeHTTP(rr, req)
 
 				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(ContainSubstring(`[{"name":"nginx-1","description":"nginx 1","catalog":"foo"}]`))
+				Expect(rr.Body.String()).To(ContainSubstring(`[{"catalog":"foo","name":"nginx-1","description":"nginx 1"}]`))
 				Expect(fakeCatalog.SearchCallCount()).To(Equal(1))
 				actualProfileName := fakeCatalog.SearchArgsForCall(0)
 				Expect(actualProfileName).To(Equal("nginx"))
@@ -62,7 +65,7 @@ var _ = Describe("Api", func() {
 
 		When("a no matching profiles are found", func() {
 			BeforeEach(func() {
-				fakeCatalog.SearchReturns([]profilesv1.ProfileDescription{})
+				fakeCatalog.SearchReturns([]profilesv1.ProfileCatalogEntry{})
 			})
 
 			It("returns an empty array but does not 404", func() {
@@ -90,7 +93,7 @@ var _ = Describe("Api", func() {
 
 		When("no name query is provided", func() {
 			BeforeEach(func() {
-				fakeCatalog.SearchReturns([]profilesv1.ProfileDescription{})
+				fakeCatalog.SearchReturns([]profilesv1.ProfileCatalogEntry{})
 			})
 
 			It("returns a 400", func() {
@@ -118,9 +121,11 @@ var _ = Describe("Api", func() {
 
 		When("the requested profile exists", func() {
 			BeforeEach(func() {
-				fakeCatalog.GetReturns(&profilesv1.ProfileDescription{
-					Name:          "nginx-1",
-					Description:   "nginx 1",
+				fakeCatalog.GetReturns(&profilesv1.ProfileCatalogEntry{
+					ProfileDescription: profilesv1.ProfileDescription{
+						Name:        "nginx-1",
+						Description: "nginx 1",
+					},
 					CatalogSource: "catalog",
 				})
 			})
@@ -136,7 +141,7 @@ var _ = Describe("Api", func() {
 				handler.ServeHTTP(rr, req)
 
 				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(ContainSubstring(`{"name":"nginx-1","description":"nginx 1","catalog":"catalog"}`))
+				Expect(rr.Body.String()).To(ContainSubstring(`{"catalog":"catalog","name":"nginx-1","description":"nginx 1"}`))
 				Expect(fakeCatalog.GetCallCount()).To(Equal(1))
 				actualSourceName, actualProfileName := fakeCatalog.GetArgsForCall(0)
 				Expect(actualSourceName).To(Equal(sourceName))
@@ -216,11 +221,13 @@ var _ = Describe("Api", func() {
 
 		When("the requested profile exists", func() {
 			BeforeEach(func() {
-				fakeCatalog.GetWithVersionReturns(&profilesv1.ProfileDescription{
-					Name:          "nginx-1",
-					Description:   "nginx 1",
+				fakeCatalog.GetWithVersionReturns(&profilesv1.ProfileCatalogEntry{
+					ProfileDescription: profilesv1.ProfileDescription{
+						Name:        "nginx-1",
+						Description: "nginx 1",
+					},
 					CatalogSource: "catalog",
-					Version:       "v0.1.0",
+					Tag:           "v0.1.0",
 				})
 			})
 
@@ -235,10 +242,10 @@ var _ = Describe("Api", func() {
 				handler.ServeHTTP(rr, req)
 
 				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(ContainSubstring(`{"name":"nginx-1","description":"nginx 1","version":"v0.1.0","catalog":"catalog"}`))
+				Expect(rr.Body.String()).To(ContainSubstring(`{"tag":"v0.1.0","catalog":"catalog","name":"nginx-1","description":"nginx 1"}`))
 
 				Expect(fakeCatalog.GetWithVersionCallCount()).To(Equal(1))
-				actualSourceName, actualProfileName, actualCatalogVersion := fakeCatalog.GetWithVersionArgsForCall(0)
+				_, actualSourceName, actualProfileName, actualCatalogVersion := fakeCatalog.GetWithVersionArgsForCall(0)
 				Expect(actualSourceName).To(Equal(sourceName))
 				Expect(actualProfileName).To(Equal(profileName))
 				Expect(actualCatalogVersion).To(Equal(version))
@@ -262,7 +269,7 @@ var _ = Describe("Api", func() {
 
 				Expect(rr.Code).To(Equal(http.StatusNotFound))
 				Expect(fakeCatalog.GetWithVersionCallCount()).To(Equal(1))
-				actualSourceName, actualProfileName, actualCatalogVersion := fakeCatalog.GetWithVersionArgsForCall(0)
+				_, actualSourceName, actualProfileName, actualCatalogVersion := fakeCatalog.GetWithVersionArgsForCall(0)
 				Expect(actualSourceName).To(Equal(sourceName))
 				Expect(actualProfileName).To(Equal(profileName))
 				Expect(actualCatalogVersion).To(Equal(version))
@@ -335,12 +342,14 @@ var _ = Describe("Api", func() {
 
 		When("the requested profile has newer versions", func() {
 			BeforeEach(func() {
-				fakeCatalog.ProfilesGreaterThanVersionReturns([]profilesv1.ProfileDescription{
+				fakeCatalog.ProfilesGreaterThanVersionReturns([]profilesv1.ProfileCatalogEntry{
 					{
-						Name:          "nginx-1",
-						Description:   "nginx 1",
+						ProfileDescription: profilesv1.ProfileDescription{
+							Name:        "nginx-1",
+							Description: "nginx 1",
+						},
 						CatalogSource: "catalog",
-						Version:       "v0.1.1",
+						Tag:           "v0.1.1",
 					},
 				})
 			})
@@ -356,10 +365,10 @@ var _ = Describe("Api", func() {
 				handler.ServeHTTP(rr, req)
 
 				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(ContainSubstring(`[{"name":"nginx-1","description":"nginx 1","version":"v0.1.1","catalog":"catalog"}]`))
+				Expect(rr.Body.String()).To(ContainSubstring(`[{"tag":"v0.1.1","catalog":"catalog","name":"nginx-1","description":"nginx 1"}]`))
 
 				Expect(fakeCatalog.ProfilesGreaterThanVersionCallCount()).To(Equal(1))
-				actualSourceName, actualProfileName, actualCatalogVersion := fakeCatalog.ProfilesGreaterThanVersionArgsForCall(0)
+				_, actualSourceName, actualProfileName, actualCatalogVersion := fakeCatalog.ProfilesGreaterThanVersionArgsForCall(0)
 				Expect(actualSourceName).To(Equal(sourceName))
 				Expect(actualProfileName).To(Equal(profileName))
 				Expect(actualCatalogVersion).To(Equal(version))
@@ -368,7 +377,7 @@ var _ = Describe("Api", func() {
 
 		When("the requested profile does not exist", func() {
 			BeforeEach(func() {
-				fakeCatalog.ProfilesGreaterThanVersionReturns([]profilesv1.ProfileDescription{})
+				fakeCatalog.ProfilesGreaterThanVersionReturns([]profilesv1.ProfileCatalogEntry{})
 			})
 
 			It("returns a 404", func() {
@@ -383,7 +392,7 @@ var _ = Describe("Api", func() {
 
 				Expect(rr.Code).To(Equal(http.StatusNotFound))
 				Expect(fakeCatalog.ProfilesGreaterThanVersionCallCount()).To(Equal(1))
-				actualSourceName, actualProfileName, actualCatalogVersion := fakeCatalog.ProfilesGreaterThanVersionArgsForCall(0)
+				_, actualSourceName, actualProfileName, actualCatalogVersion := fakeCatalog.ProfilesGreaterThanVersionArgsForCall(0)
 				Expect(actualSourceName).To(Equal(sourceName))
 				Expect(actualProfileName).To(Equal(profileName))
 				Expect(actualCatalogVersion).To(Equal(version))
