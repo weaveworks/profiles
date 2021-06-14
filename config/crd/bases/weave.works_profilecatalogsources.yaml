@@ -69,6 +69,28 @@ spec:
                       type: string
                   type: object
                 type: array
+              repositories:
+                description: Repositories is the list of repositories to scan for
+                  profiles
+                items:
+                  properties:
+                    secretRef:
+                      description: The secret name containing the Git credentials.
+                        For HTTPS repositories the secret must contain username and
+                        password fields. For SSH repositories the secret must contain
+                        identity, identity.pub and known_hosts fields.
+                      properties:
+                        name:
+                          description: Name of the referent
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    url:
+                      description: URL is the URL of the repository
+                      type: string
+                  type: object
+                type: array
             type: object
           status:
             description: ProfileCatalogSourceStatus defines the observed state of

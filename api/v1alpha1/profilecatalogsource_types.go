@@ -19,13 +19,30 @@ package v1alpha1
 import (
 	"strings"
 
+	"github.com/fluxcd/pkg/apis/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ProfileCatalogSourceSpec defines the desired state of ProfileCatalogSource
 type ProfileCatalogSourceSpec struct {
 	// Profiles is the list of profiles exposed by the catalog
+	// +optional
 	Profiles []ProfileCatalogEntry `json:"profiles,omitempty"`
+	// Repositories is the list of repositories to scan for profiles
+	// +optional
+	Repos []Repository `json:"repositories,omitempty"`
+}
+
+type Repository struct {
+	// URL is the URL of the repository
+	URL string `json:"url,omitempty"`
+	// The secret name containing the Git credentials.
+	// For HTTPS repositories the secret must contain username and password
+	// fields.
+	// For SSH repositories the secret must contain identity, identity.pub and
+	// known_hosts fields.
+	// +optional
+	SecretRef *meta.LocalObjectReference `json:"secretRef,omitempty"`
 }
 
 // ProfileDescription defines details about a given profile.
