@@ -6,10 +6,16 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
+	"os/exec"
 	"path"
 
+	"github.com/fluxcd/pkg/apis/meta"
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
@@ -239,6 +245,139 @@ var _ = Describe("Acceptance", func() {
 						},
 					}
 					Expect(kClient.Create(context.Background(), &catalog)).To(MatchError(ContainSubstring("spec.profiles.tag in body should match")))
+				})
+			})
+
+			Context("when a creating from a repo URL", func() {
+				var namespace string
+
+				BeforeEach(func() {
+					namespace = uuid.New().String()
+					nsp := v1.Namespace{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: namespace,
+						},
+					}
+					Expect(kClient.Create(context.Background(), &nsp)).To(Succeed())
+				})
+
+				AfterEach(func() {
+					nsp := v1.Namespace{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: namespace,
+						},
+					}
+					_ = kClient.Delete(context.Background(), &nsp)
+				})
+
+				Context("public repo", func() {
+					It("works", func() {
+						catalog = profilesv1.ProfileCatalogSource{
+							TypeMeta: metav1.TypeMeta{
+								Kind:       "ProfileCatalogSource",
+								APIVersion: profileAPIVersion,
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      "repo",
+								Namespace: namespace,
+							},
+							Spec: profilesv1.ProfileCatalogSourceSpec{
+								Repos: []profilesv1.Repository{
+									{
+										URL: "https://github.com/weaveworks/profiles-examples",
+									},
+								},
+							},
+						}
+
+						Expect(kClient.Create(context.Background(), &catalog)).To(Succeed())
+						Eventually(func() profilesv1.ProfileCatalogEntry {
+							description, _ := getProfile("weaveworks-nginx", "repo", "v0.1.1")
+							return description
+						}, "60s", "5s").Should(Equal(profilesv1.ProfileCatalogEntry{
+							ProfileDescription: profilesv1.ProfileDescription{
+								Name:          "weaveworks-nginx",
+								Description:   "Profile for deploying nginx",
+								Maintainer:    "weaveworks",
+								Prerequisites: []string{"kubernetes 1.19"},
+							},
+							Tag:           "weaveworks-nginx/v0.1.1",
+							URL:           "https://github.com/weaveworks/profiles-examples",
+							CatalogSource: "repo",
+						}))
+					})
+				})
+
+				Context("private repo", func() {
+					var (
+						secretName = "ssh-secret"
+						secret     corev1.Secret
+					)
+
+					BeforeEach(func() {
+						if os.Getenv("TEST_SSH_PRIVATE_KEY") == "" {
+							Skip("SKIP, this test needs TEST_SSH_PRIVATE_KEY to work. You really should be running this test!")
+						}
+						cmd := exec.Command("ssh-keyscan", "github.com")
+						knownHosts, err := cmd.CombinedOutput()
+						Expect(err).NotTo(HaveOccurred())
+
+						secret = corev1.Secret{
+							TypeMeta: metav1.TypeMeta{
+								Kind:       "Secret",
+								APIVersion: "v1",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      secretName,
+								Namespace: namespace,
+							},
+							Data: map[string][]byte{
+								"identity":    []byte(os.Getenv("TEST_SSH_PRIVATE_KEY")),
+								"known_hosts": knownHosts,
+							},
+						}
+
+						Expect(kClient.Create(context.Background(), &secret)).To(Succeed())
+					})
+
+					It("works", func() {
+						catalog = profilesv1.ProfileCatalogSource{
+							TypeMeta: metav1.TypeMeta{
+								Kind:       "ProfileCatalogSource",
+								APIVersion: profileAPIVersion,
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      "repo",
+								Namespace: namespace,
+							},
+							Spec: profilesv1.ProfileCatalogSourceSpec{
+								Repos: []profilesv1.Repository{
+									{
+										URL: "ssh://git@github.com/weaveworks/profiles-examples-private",
+										SecretRef: &meta.LocalObjectReference{
+											Name: secretName,
+										},
+									},
+								},
+							},
+						}
+
+						Expect(kClient.Create(context.Background(), &catalog)).To(Succeed())
+						Eventually(func() profilesv1.ProfileCatalogEntry {
+							description, _ := getProfile("weaveworks-nginx", "repo", "v0.2.0")
+							return description
+						}, "60s", "5s").Should(Equal(profilesv1.ProfileCatalogEntry{
+							ProfileDescription: profilesv1.ProfileDescription{
+								Name:          "weaveworks-nginx",
+								Description:   "Profile for deploying nginx",
+								Maintainer:    "weaveworks",
+								Prerequisites: []string{"kubernetes 1.19"},
+							},
+							Tag:           "weaveworks-nginx/v0.2.0",
+							URL:           "ssh://git@github.com/weaveworks/profiles-examples-private",
+							CatalogSource: "repo",
+						}))
+					})
 				})
 			})
 		})

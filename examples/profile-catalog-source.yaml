@@ -4,10 +4,7 @@ metadata:
   name: nginx-catalog
 spec:
   repositories:
-    - url: https://github.com/weaveworks-nginx/profiles-examples
-    - url: https://github.com/weaveworks-nginx/profiles-examples-private
-      secretRef:
-        name: my-ssh-key
+    - url: https://github.com/weaveworks/profiles-examples
   profiles:
     - name: nginx
       description: This installs some other other nginx.

@@ -21,4 +21,5 @@ jobs:
             ~/go/pkg/mod/
           key: ${{ hashFiles('go.sum') }}
       - name: Lint
-        run: make lint
+        run: |
+          make lint
