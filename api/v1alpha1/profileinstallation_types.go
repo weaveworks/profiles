@@ -20,7 +20,6 @@ import (
 	"fmt"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -29,10 +28,6 @@ import (
 
 // ProfileInstallationSpec defines the desired state of a ProfileInstallation
 type ProfileInstallationSpec struct {
-	// Values holds the values for the Helm chart specified in the first artifact
-	// +optional
-	Values *apiextensionsv1.JSON `json:"values,omitempty"`
-
 	// ValuesFrom holds references to resources containing values for the Helm chart specified in the first artifact
 	// +optional
 	ValuesFrom []helmv2.ValuesReference `json:"valuesFrom,omitempty"`

@@ -82,10 +82,6 @@ spec:
                       repo
                     type: string
                 type: object
-              values:
-                description: Values holds the values for the Helm chart specified
-                  in the first artifact
-                x-kubernetes-preserve-unknown-fields: true
               valuesFrom:
                 description: ValuesFrom holds references to resources containing values
                   for the Helm chart specified in the first artifact
