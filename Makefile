@@ -109,8 +109,7 @@ deploy: manifests kustomize ## Deploy controller in the configured Kubernetes cl
 	kubectl -n profiles-system wait --for=condition=available deployment profiles-controller-manager --timeout 5m
 	kubectl -n profiles-system wait --for=condition=Ready --all pods --timeout 5m
 
-# UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
-undeploy:
+undeploy: ## UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
 	$(KUSTOMIZE) build config/prepare | kubectl delete --ignore-not-found=true -f -
 
 run: generate fmt vet manifests ## Run against the configured Kubernetes cluster in ~/.kube/config
