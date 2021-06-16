@@ -52,6 +52,18 @@ func (c *Catalog) Search(name string) []profilesv1.ProfileCatalogEntry {
 	return ret
 }
 
+// Search returns `all` profile descriptions.
+func (c *Catalog) Search() []profilesv1.ProfileDescription {
+	var ret []profilesv1.ProfileDescription
+	c.m.Range(func(key, value interface{}) bool {
+		for _, p := range value.([]profilesv1.ProfileDescription) {
+			ret = append(ret, p)
+		}
+		return true
+	})
+	return ret
+}
+
 // Get returns the profile description `profileName`.
 func (c *Catalog) Get(sourceName, profileName string) *profilesv1.ProfileCatalogEntry {
 	profiles, ok := c.m.Load(sourceName)

@@ -63,7 +63,7 @@ var _ = Describe("Api", func() {
 			})
 		})
 
-		When("a no matching profiles are found", func() {
+		When("no matching profiles are found", func() {
 			BeforeEach(func() {
 				fakeCatalog.SearchReturns([]profilesv1.ProfileCatalogEntry{})
 			})
@@ -90,22 +90,64 @@ var _ = Describe("Api", func() {
 				Expect(actualProfileName).To(Equal("nginx"))
 			})
 		})
+	})
 
-		When("no name query is provided", func() {
+	Context("/profiles", func() {
+		When("few profiles exist", func() {
 			BeforeEach(func() {
-				fakeCatalog.SearchReturns([]profilesv1.ProfileCatalogEntry{})
+				fakeCatalog.SearchReturns([]profilesv1.ProfileDescription{
+					{
+						Name:          "nginx-1",
+						Description:   "nginx 1",
+						CatalogSource: "foo",
+					},
+					{
+						Name:          "nginx-2",
+						Description:   "nginx 2",
+						CatalogSource: "foo",
+					},
+					{
+						Name:          "nginx-3",
+						Description:   "nginx 3",
+						CatalogSource: "foo",
+					},
+				})
 			})
 
-			It("returns a 400", func() {
+			It("returns all profiles from the catalog", func() {
 				req, err := http.NewRequest("GET", "/profiles", nil)
+				Expect(err).NotTo(HaveOccurred())
+				u, err := url.Parse("http://example.com")
 				Expect(err).NotTo(HaveOccurred())
 				rr := httptest.NewRecorder()
 				handler := http.HandlerFunc(catalogAPI.ProfilesHandler)
 
 				handler.ServeHTTP(rr, req)
 
-				Expect(rr.Code).To(Equal(http.StatusBadRequest))
-				Expect(fakeCatalog.SearchCallCount()).To(Equal(0))
+				Expect(rr.Code).To(Equal(http.StatusOK))
+				Expect(rr.Body.String()).To(ContainSubstring(`[{"name":"nginx-1","description":"nginx 1","catalog":"foo"}]`))
+				Expect(rr.Body.String()).To(ContainSubstring(`[{"name":"nginx-2","description":"nginx 2","catalog":"foo"}]`))
+				Expect(rr.Body.String()).To(ContainSubstring(`[{"name":"nginx-3","description":"nginx 3","catalog":"foo"}]`))
+			})
+		})
+
+		When("no matching profiles are found when searching for all profiles", func() {
+			BeforeEach(func() {
+				fakeCatalog.SearchReturns([]profilesv1.ProfileCatalogEntry{})
+			})
+
+			It("returns an empty array but does not 404", func() {
+				req, err := http.NewRequest("GET", "/profiles", nil)
+				Expect(err).NotTo(HaveOccurred())
+				u, err := url.Parse("http://example.com")
+				Expect(err).NotTo(HaveOccurred())
+				rr := httptest.NewRecorder()
+				handler := http.HandlerFunc(catalogAPI.ProfilesHandler)
+
+				handler.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusOK))
+				Expect(rr.Body.String()).To(ContainSubstring(`[]`))
 			})
 		})
 	})
