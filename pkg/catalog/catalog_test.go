@@ -31,10 +31,10 @@ var _ = Describe("Catalog", func() {
 		c.Update(catName, profiles...)
 
 		By("returning all the profiles available")
-		Expect(c.Search()).To(ConsistOf(
-			profilesv1.ProfileDescription{Name: "foo", CatalogSource: catName},
-			profilesv1.ProfileDescription{Name: "bar", CatalogSource: catName},
-			profilesv1.ProfileDescription{Name: "alsofoo", CatalogSource: catName},
+		Expect(c.SearchAll()).To(ConsistOf(
+			profilesv1.ProfileCatalogEntry{ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}, CatalogSource: catName},
+			profilesv1.ProfileCatalogEntry{ProfileDescription: profilesv1.ProfileDescription{Name: "bar"}, CatalogSource: catName},
+			profilesv1.ProfileCatalogEntry{ProfileDescription: profilesv1.ProfileDescription{Name: "alsofoo"}, CatalogSource: catName},
 		))
 
 		By("returning all matching profiles based on query string")

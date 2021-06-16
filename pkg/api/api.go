@@ -22,8 +22,8 @@ type Catalog interface {
 	ProfilesGreaterThanVersion(logger logr.Logger, sourceName, profileName, version string) []profilesv1.ProfileCatalogEntry
 	// Search will return a list of profiles which match query
 	Search(query string) []profilesv1.ProfileDescription
-	// Search will return a list of all profiles 
-	Search() []profilesv1.ProfileDescription
+	// Search will return a list of all profiles
+	SearchAll() []profilesv1.ProfileDescription
 }
 
 // API defines a catalog router.
@@ -53,11 +53,15 @@ func New(profileCatalog Catalog, logger logr.Logger) API {
 // ProfilesHandler is the handler for /profiles requests.
 func (a *API) ProfilesHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("name")
+	var result []profilesv1.ProfileDescription
 	logger := a.logger.WithValues("endpoint", r.URL.Path, "name", query)
+
 	if query == "" {
-		result := a.profileCatalog.Search()
+		result = a.profileCatalog.SearchAll()
+	} else {
+		result = a.profileCatalog.Search(query)
 	}
-	result := a.profileCatalog.Search(query)
+
 	logger.Info("found profiles", "profiles", result)
 	marshalResponse(w, logger, result)
 }
