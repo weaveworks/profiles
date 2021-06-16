@@ -39,10 +39,10 @@ func (c *Catalog) Remove(sourceName string) {
 }
 
 // Search returns profile descriptions that contain `name` in their names.
-func (c *Catalog) Search(name string) []profilesv1.ProfileCatalogEntry {
-	var ret []profilesv1.ProfileCatalogEntry
+func (c *Catalog) Search(name string) []profilesv1.ProfileDescription {
+	var ret []profilesv1.ProfileDescription
 	c.m.Range(func(key, value interface{}) bool {
-		for _, p := range value.([]profilesv1.ProfileCatalogEntry) {
+		for _, p := range value.([]profilesv1.ProfileDescription) {
 			if strings.Contains(p.Name, name) {
 				ret = append(ret, p)
 			}
@@ -53,10 +53,10 @@ func (c *Catalog) Search(name string) []profilesv1.ProfileCatalogEntry {
 }
 
 // Search returns `all` profile descriptions.
-func (c *Catalog) SearchAll() []profilesv1.ProfileCatalogEntry {
-	var ret []profilesv1.ProfileCatalogEntry
+func (c *Catalog) SearchAll() []profilesv1.ProfileDescription {
+	var ret []profilesv1.ProfileDescription
 	c.m.Range(func(key, value interface{}) bool {
-		for _, p := range value.([]profilesv1.ProfileCatalogEntry) {
+		for _, p := range value.([]profilesv1.ProfileDescription) {
 			ret = append(ret, p)
 		}
 		return true
