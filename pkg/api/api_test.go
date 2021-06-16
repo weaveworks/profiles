@@ -95,20 +95,26 @@ var _ = Describe("Api", func() {
 	Context("/profiles", func() {
 		When("few profiles exist", func() {
 			BeforeEach(func() {
-				fakeCatalog.SearchReturns([]profilesv1.ProfileDescription{
+				fakeCatalog.SearchAllReturns([]profilesv1.ProfileCatalogEntry{
 					{
-						Name:          "nginx-1",
-						Description:   "nginx 1",
+						ProfileDescription: profilesv1.ProfileDescription{
+							Name:        "nginx-1",
+							Description: "nginx 1",
+						},
 						CatalogSource: "foo",
 					},
 					{
-						Name:          "nginx-2",
-						Description:   "nginx 2",
+						ProfileDescription: profilesv1.ProfileDescription{
+							Name:        "nginx-2",
+							Description: "nginx 2",
+						},
 						CatalogSource: "foo",
 					},
 					{
-						Name:          "nginx-3",
-						Description:   "nginx 3",
+						ProfileDescription: profilesv1.ProfileDescription{
+							Name:        "nginx-3",
+							Description: "nginx 3",
+						},
 						CatalogSource: "foo",
 					},
 				})
@@ -117,7 +123,7 @@ var _ = Describe("Api", func() {
 			It("returns all profiles from the catalog", func() {
 				req, err := http.NewRequest("GET", "/profiles", nil)
 				Expect(err).NotTo(HaveOccurred())
-				u, err := url.Parse("http://example.com")
+				_, err = url.Parse("http://example.com")
 				Expect(err).NotTo(HaveOccurred())
 				rr := httptest.NewRecorder()
 				handler := http.HandlerFunc(catalogAPI.ProfilesHandler)
@@ -133,13 +139,13 @@ var _ = Describe("Api", func() {
 
 		When("no matching profiles are found when searching for all profiles", func() {
 			BeforeEach(func() {
-				fakeCatalog.SearchReturns([]profilesv1.ProfileCatalogEntry{})
+				fakeCatalog.SearchAllReturns([]profilesv1.ProfileCatalogEntry{})
 			})
 
 			It("returns an empty array but does not 404", func() {
 				req, err := http.NewRequest("GET", "/profiles", nil)
 				Expect(err).NotTo(HaveOccurred())
-				u, err := url.Parse("http://example.com")
+				_, err = url.Parse("http://example.com")
 				Expect(err).NotTo(HaveOccurred())
 				rr := httptest.NewRecorder()
 				handler := http.HandlerFunc(catalogAPI.ProfilesHandler)
