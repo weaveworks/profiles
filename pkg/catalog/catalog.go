@@ -52,13 +52,11 @@ func (c *Catalog) Search(name string) []profilesv1.ProfileCatalogEntry {
 	return ret
 }
 
-// Search returns `all` profile descriptions.
+// SearchAll returns `all` profile descriptions.
 func (c *Catalog) SearchAll() []profilesv1.ProfileCatalogEntry {
 	var ret []profilesv1.ProfileCatalogEntry
 	c.m.Range(func(key, value interface{}) bool {
-		for _, p := range value.([]profilesv1.ProfileCatalogEntry) {
-			ret = append(ret, p)
-		}
+		ret = append(ret, value.([]profilesv1.ProfileCatalogEntry)...)
 		return true
 	})
 	return ret

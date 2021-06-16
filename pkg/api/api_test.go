@@ -131,9 +131,9 @@ var _ = Describe("Api", func() {
 				handler.ServeHTTP(rr, req)
 
 				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(ContainSubstring(`[{"name":"nginx-1","description":"nginx 1","catalog":"foo"}]`))
-				Expect(rr.Body.String()).To(ContainSubstring(`[{"name":"nginx-2","description":"nginx 2","catalog":"foo"}]`))
-				Expect(rr.Body.String()).To(ContainSubstring(`[{"name":"nginx-3","description":"nginx 3","catalog":"foo"}]`))
+				Expect(rr.Body.String()).To(ContainSubstring(`{"catalog":"foo","name":"nginx-1","description":"nginx 1"}`))
+				Expect(rr.Body.String()).To(ContainSubstring(`{"catalog":"foo","name":"nginx-2","description":"nginx 2"}`))
+				Expect(rr.Body.String()).To(ContainSubstring(`{"catalog":"foo","name":"nginx-3","description":"nginx 3"}`))
 			})
 		})
 
