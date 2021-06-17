@@ -25,6 +25,17 @@ jobs:
       - name: Setup Ginkgo
         run: |
           go get -u github.com/onsi/ginkgo/ginkgo
+      - name: Setup lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.41.0
+      - name: install libgit
+        run: |
+          export LIBGIT2_VER=1.1.0
+          curl -L https://github.com/libgit2/libgit2/releases/download/v$LIBGIT2_VER/libgit2-$LIBGIT2_VER.tar.gz -o /tmp/libgit2.tar.gz
+          tar -xvf /tmp/libgit2.tar.gz -C /tmp/
+          mkdir /tmp/libgit2-$LIBGIT2_VER/build && cd /tmp/libgit2-$LIBGIT2_VER/build
+          cmake .. -DCMAKE_INSTALL_PREFIX=/usr
+          sudo cmake --build . --target install
       - name: Test
         run: |
           PATH=$PATH:$(go env GOPATH)/bin make test
