@@ -77,7 +77,9 @@ func (r *ProfileCatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl
 	logger.Info("updating catalog entries", "profiles", pCatalog.Spec.Profiles)
 	r.Profiles.Update(pCatalog.Name, pCatalog.Spec.Profiles...)
 
-	gitRepoManager := gitrepository.NewManager(ctx, pCatalog.Namespace, r.Client, time.Minute*2, time.Second*5)
+	timeout := time.Minute * 2
+	interval := time.Second * 5
+	gitRepoManager := gitrepository.NewManager(ctx, pCatalog.Namespace, r.Client, timeout, interval)
 	scanner := scanner.New(gitRepoManager, &git.Client{}, http.DefaultClient, logger)
 	for _, repo := range pCatalog.Spec.Repos {
 		logger.Info("scan repo for profiles", "repo", repo)
