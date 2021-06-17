@@ -145,8 +145,7 @@ func extractProfileFromTarball(gzipStream io.Reader) (*profilesv1.ProfileDefinit
 			return nil, fmt.Errorf("failed to read tarball file: %w", err)
 		}
 
-		switch header.Typeflag {
-		case tar.TypeReg:
+		if header.Typeflag == tar.TypeReg {
 			decoder := yaml.NewYAMLOrJSONDecoder(tarReader, 10000)
 			var profileDef profilesv1.ProfileDefinition
 			err = decoder.Decode(&profileDef)
@@ -154,7 +153,6 @@ func extractProfileFromTarball(gzipStream io.Reader) (*profilesv1.ProfileDefinit
 				return nil, fmt.Errorf("failed to decode profile.yaml: %w", err)
 			}
 			return &profileDef, nil
-		default:
 		}
 	}
 }
