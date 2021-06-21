@@ -46,6 +46,11 @@ spec:
                       description: Chart defines properties to access a remote chart.
                         This is an optional value. It is ignored in case Path is defined.
                       properties:
+                        defaultValues:
+                          description: DefaultValues holds the default values for
+                            this Helm release Artifact. These can be overridden by
+                            the user, but will otherwise apply.
+                          type: string
                         name:
                           description: Name defines the name of the chart at the remote
                             repository

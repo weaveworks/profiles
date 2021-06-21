@@ -89,6 +89,10 @@ type Chart struct {
 	// This is an optional value. If defined, it takes precedence over other Chart fields.
 	// +optional
 	Path string `json:"path,omitempty"`
+	// DefaultValues holds the default values for this Helm release Artifact.
+	// These can be overridden by the user, but will otherwise apply.
+	// +optional
+	DefaultValues string `json:"defaultValues,omitempty"`
 }
 
 // Profile defines properties for accessing a profile
