@@ -20,44 +20,46 @@ import (
 	"fmt"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 // NOTE: Run "make" to regenerate code after modifying this file
 
-// ProfileSubscriptionSpec defines the desired state of a ProfileSubscription
-type ProfileSubscriptionSpec struct {
+// ProfileInstallationSpec defines the desired state of a ProfileInstallation
+type ProfileInstallationSpec struct {
+	// ValuesFrom holds references to resources containing values for the Helm chart specified in the first artifact
+	// +optional
+	ValuesFrom []helmv2.ValuesReference `json:"valuesFrom,omitempty"`
+
+	// Source defines properties of the source of the profile
+	Source *Source `json:"source,omitempty"`
+
+	// Catalog defines properties of the catalog reference
+	Catalog *Catalog `json:"catalog,omitempty"`
+}
+
+// Source defines the location of the profile
+type Source struct {
 	// ProfileURL is a fully qualified URL to a profile repo
-	ProfileURL string `json:"profileURL,omitempty"`
+	URL string `json:"url,omitempty"`
+
 	// Branch is the git repo branch containing the profile definition (default: main)
 	// +kubebuilder:default:=main
 	// +optional
 	Branch string `json:"branch,omitempty"`
 
-	// Path is the location in the git repo containing the profile definition. Only used in combination with Branch
+	// Path is the location in the git repo containing the profile definition
 	// +optional
 	Path string `json:"path,omitempty"`
 
-	// Values holds the values for the Helm chart specified in the first artifact
+	// Tag is the git tag containing the profile definition
 	// +optional
-	Values *apiextensionsv1.JSON `json:"values,omitempty"`
-
-	// Version is the git tag containing the profile definition
-	// +optional
-	Version string `json:"version,omitempty"`
-
-	// ValuesFrom holds references to resources containing values for the Helm chart specified in the first artifact
-	// +optional
-	ValuesFrom []helmv2.ValuesReference `json:"valuesFrom,omitempty"`
-
-	// ProfileCatalogDescription defines properties of the catalog this profile is from
-	ProfileCatalogDescription *ProfileCatalogDescription `json:"profile_catalog_description,omitempty"`
+	Tag string `json:"tag,omitempty"`
 }
 
-// ProfileCatalogDescription defines properties of the catalog this profile is from
-type ProfileCatalogDescription struct {
+// Catalog defines properties of the catalog this profile is from
+type Catalog struct {
 	// Version defines the version of the catalog to get the profile from
 	Version string `json:"version,omitempty"`
 
@@ -69,13 +71,13 @@ type ProfileCatalogDescription struct {
 }
 
 // GetProfileVersion constructs a profile version from the catalog description.
-func (p *ProfileCatalogDescription) GetProfileVersion() string {
+func (p *Catalog) GetProfileVersion() string {
 	return fmt.Sprintf("%s/%s", p.Catalog, p.Version)
 }
 
-// ProfileSubscriptionStatus defines the observed state of ProfileSubscription
-type ProfileSubscriptionStatus struct {
-	// Conditions holds the conditions for the ProfileSubscription
+// ProfileInstallationStatus defines the observed state of ProfileInstallation
+type ProfileInstallationStatus struct {
+	// Conditions holds the conditions for the ProfileInstallation
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
@@ -86,24 +88,24 @@ type ProfileSubscriptionStatus struct {
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].message",description=""
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description=""
 
-// ProfileSubscription is the Schema for the profilesubscriptions API
-type ProfileSubscription struct {
+// ProfileInstallation is the Schema for the profileinstallations API
+type ProfileInstallation struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ProfileSubscriptionSpec   `json:"spec,omitempty"`
-	Status ProfileSubscriptionStatus `json:"status,omitempty"`
+	Spec   ProfileInstallationSpec   `json:"spec,omitempty"`
+	Status ProfileInstallationStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// ProfileSubscriptionList contains a list of ProfileSubscription
-type ProfileSubscriptionList struct {
+// ProfileInstallationList contains a list of ProfileInstallation
+type ProfileInstallationList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []ProfileSubscription `json:"items"`
+	Items           []ProfileInstallation `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&ProfileSubscription{}, &ProfileSubscriptionList{})
+	SchemeBuilder.Register(&ProfileInstallation{}, &ProfileInstallationList{})
 }

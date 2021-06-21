@@ -18,7 +18,6 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"knative.dev/pkg/apis"
 )
 
 // HelmChartKind defines properties about the underlying helm chart for an artifact.
@@ -35,23 +34,29 @@ const ProfileKind = "Profile"
 
 // ProfileDefinitionSpec defines the desired state of ProfileDefinition
 type ProfileDefinitionSpec struct {
-	// Description is some text to allow a user to identify what this profile installs.
-	Description string `json:"description,omitempty"`
+	ProfileDescription `json:",inline"`
 	// Artifacts is a list of Profile artifacts
 	Artifacts []Artifact `json:"artifacts,omitempty"`
+}
+
+// ProfileDescription defines details about a given profile.
+type ProfileDescription struct {
+	// Profile name
+	Name string `json:"name,omitempty"`
+	// Profile description
+	Description string `json:"description,omitempty"`
+	// Maintainer is the name of the author(s)
+	// +optional
+	Maintainer string `json:"maintainer,omitempty"`
+	// Prerequisites are a list of dependencies required by the profile
+	// +optional
+	Prerequisites []string `json:"prerequisites,omitempty"`
 }
 
 // Artifact defines a bundled resource of the components for this profile.
 type Artifact struct {
 	// Name is the name of the Artifact
 	Name string `json:"name,omitempty"`
-	// Path is the local path to the Artifact in the Profile repo.
-	// This is an optional value. If defined, it takes precedence over Chart.
-	// +optional
-	Path string `json:"path,omitempty"`
-	// Kind is the kind of artifact: HelmChart or Kustomize
-	// +kubebuilder:validation:Enum=HelmChart;Kustomize
-	Kind string `json:"kind,omitempty"`
 	// Chart defines properties to access a remote chart.
 	// This is an optional value. It is ignored in case Path is defined.
 	// +optional
@@ -59,44 +64,41 @@ type Artifact struct {
 	// Profiles defines properties to access a remote profile.
 	// +optional
 	Profile *Profile `json:"profile,omitempty"`
+	// Kustomize defines properties to for a kustmize artifact.
+	// +optional
+	Kustomize *Kustomize `json:"kustomize,omitempty"`
 }
 
-// Validate will validate Artifacts properties.
-func (in Artifact) Validate() error {
-	if in.Chart != nil && in.Path != "" {
-		return apis.ErrMultipleOneOf("chart", "path")
-	}
-	if in.Chart != nil && in.Profile != nil {
-		return apis.ErrMultipleOneOf("chart", "profile")
-	}
-	if in.Profile != nil && in.Path != "" {
-		return apis.ErrMultipleOneOf("profile", "path")
-	}
-	return nil
+type Kustomize struct {
+	// Path is the local path to the Artifact in the Profile repo.
+	Path string `json:"path,omitempty"`
 }
 
 // Chart defines properties to access remote helm charts.
 type Chart struct {
 	// URL is the URL of the Helm repository containing a Helm chart and possible values
+	// +optional
 	URL string `json:"url,omitempty"`
 	// Name defines the name of the chart at the remote repository
+	// +optional
 	Name string `json:"name,omitempty"`
 	// Version defines the version of the chart at the remote repository
+	// +optional
 	Version string `json:"version,omitempty"`
+	// Path is the local path to the Artifact in the Profile repo.
+	// This is an optional value. If defined, it takes precedence over other Chart fields.
+	// +optional
+	Path string `json:"path,omitempty"`
+	// DefaultValues holds the default values for this Helm release Artifact.
+	// These can be overridden by the user, but will otherwise apply.
+	// +optional
+	DefaultValues string `json:"defaultValues,omitempty"`
 }
 
 // Profile defines properties for accessing a profile
 type Profile struct {
-	// URL is the URL of the profile
-	URL string `json:"url,omitempty"`
-	// Branch is the branch in the git repository the profile lives in
-	Branch string `json:"branch,omitempty"`
-	// Path is the location in the git repo containing the profile definition. Only used in combination with Branch
-	// +optional
-	Path string `json:"path,omitempty"`
-	// Version is the git tag containing the profile definition
-	// +optional
-	Version string `json:"version,omitempty"`
+	// Source defines properties of the source of the profile
+	Source *Source `json:"source,omitempty"`
 }
 
 // ProfileDefinitionStatus defines the observed state of ProfileDefinition

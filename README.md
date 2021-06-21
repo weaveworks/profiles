@@ -84,7 +84,7 @@ Steps:
 ### Dev Tags
 
 As part of pushing a new branch to profiles, a new dev tag will be created for that branch. This action is part of
-the procedure around working with profiles and [pctl](https://github.com/weaveworks/pctl), it's companion CLI tool. The details of this are
+the procedure around working with profiles and [pctl](https://github.com/weaveworks/pctl), its companion CLI tool. The details of this are
 explained in `pctl`'s README section [Working with Profiles](https://github.com/weaveworks/pctl#working-with-profiles).
 
 The dev tag's format is as follows: `<currentLatestReleaseTag>-<branch-name>`.

@@ -46,9 +46,19 @@ spec:
                       description: Chart defines properties to access a remote chart.
                         This is an optional value. It is ignored in case Path is defined.
                       properties:
+                        defaultValues:
+                          description: DefaultValues holds the default values for
+                            this Helm release Artifact. These can be overridden by
+                            the user, but will otherwise apply.
+                          type: string
                         name:
                           description: Name defines the name of the chart at the remote
                             repository
+                          type: string
+                        path:
+                          description: Path is the local path to the Artifact in the
+                            Profile repo. This is an optional value. If defined, it
+                            takes precedence over other Chart fields.
                           type: string
                         url:
                           description: URL is the URL of the Helm repository containing
@@ -59,47 +69,62 @@ spec:
                             the remote repository
                           type: string
                       type: object
-                    kind:
-                      description: 'Kind is the kind of artifact: HelmChart or Kustomize'
-                      enum:
-                      - HelmChart
-                      - Kustomize
-                      type: string
+                    kustomize:
+                      description: Kustomize defines properties to for a kustmize
+                        artifact.
+                      properties:
+                        path:
+                          description: Path is the local path to the Artifact in the
+                            Profile repo.
+                          type: string
+                      type: object
                     name:
                       description: Name is the name of the Artifact
-                      type: string
-                    path:
-                      description: Path is the local path to the Artifact in the Profile
-                        repo. This is an optional value. If defined, it takes precedence
-                        over Chart.
                       type: string
                     profile:
                       description: Profiles defines properties to access a remote
                         profile.
                       properties:
-                        branch:
-                          description: Branch is the branch in the git repository
-                            the profile lives in
-                          type: string
-                        path:
-                          description: Path is the location in the git repo containing
-                            the profile definition. Only used in combination with
-                            Branch
-                          type: string
-                        url:
-                          description: URL is the URL of the profile
-                          type: string
-                        version:
-                          description: Version is the git tag containing the profile
-                            definition
-                          type: string
+                        source:
+                          description: Source defines properties of the source of
+                            the profile
+                          properties:
+                            branch:
+                              default: main
+                              description: 'Branch is the git repo branch containing
+                                the profile definition (default: main)'
+                              type: string
+                            path:
+                              description: Path is the location in the git repo containing
+                                the profile definition
+                              type: string
+                            tag:
+                              description: Tag is the git tag containing the profile
+                                definition
+                              type: string
+                            url:
+                              description: ProfileURL is a fully qualified URL to
+                                a profile repo
+                              type: string
+                          type: object
                       type: object
                   type: object
                 type: array
               description:
-                description: Description is some text to allow a user to identify
-                  what this profile installs.
+                description: Profile description
                 type: string
+              maintainer:
+                description: Maintainer is the name of the author(s)
+                type: string
+              name:
+                description: Profile name
+                type: string
+              prerequisites:
+                description: Prerequisites are a list of dependencies required by
+                  the profile
+                items:
+                  type: string
+                type: array
             type: object
           status:
             description: ProfileDefinitionStatus defines the observed state of ProfileDefinition
