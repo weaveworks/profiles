@@ -57,8 +57,10 @@ func (a *API) ProfilesHandler(w http.ResponseWriter, r *http.Request) {
 	logger := a.logger.WithValues("endpoint", r.URL.Path, "name", query)
 
 	if query == "" {
+		logger.Info("Searching for all available profiles")
 		result = a.profileCatalog.SearchAll()
 	} else {
+		logger.Info("Searching for profiles with the name: " + query)
 		result = a.profileCatalog.Search(query)
 	}
 

@@ -93,7 +93,7 @@ var _ = Describe("Api", func() {
 	})
 
 	Context("/profiles", func() {
-		When("few profiles exist", func() {
+		When("profiles endpoint is called without a query string", func() {
 			BeforeEach(func() {
 				fakeCatalog.SearchAllReturns([]profilesv1.ProfileCatalogEntry{
 					{
