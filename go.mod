@@ -16,8 +16,8 @@ require (
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.13.0
 	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602 // indirect
-	k8s.io/api v0.21.1
-	k8s.io/apimachinery v0.21.1
-	k8s.io/client-go v0.21.1
+	k8s.io/api v0.21.2
+	k8s.io/apimachinery v0.21.2
+	k8s.io/client-go v0.21.2
 	sigs.k8s.io/controller-runtime v0.9.0
 )
