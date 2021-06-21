@@ -8,7 +8,7 @@ require (
 	github.com/fluxcd/helm-controller/api v0.11.0
 	github.com/fluxcd/kustomize-controller/api v0.13.0
 	github.com/fluxcd/pkg/version v0.1.0
-	github.com/fluxcd/source-controller/api v0.14.0
+	github.com/fluxcd/source-controller/api v0.15.1
 	github.com/go-logr/logr v0.4.0
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.2.0
