@@ -61,6 +61,16 @@ type FakeCatalog struct {
 	searchReturnsOnCall map[int]struct {
 		result1 []v1alpha1.ProfileCatalogEntry
 	}
+	SearchAllStub        func() []v1alpha1.ProfileCatalogEntry
+	searchAllMutex       sync.RWMutex
+	searchAllArgsForCall []struct {
+	}
+	searchAllReturns struct {
+		result1 []v1alpha1.ProfileCatalogEntry
+	}
+	searchAllReturnsOnCall map[int]struct {
+		result1 []v1alpha1.ProfileCatalogEntry
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
@@ -316,6 +326,59 @@ func (fake *FakeCatalog) SearchReturnsOnCall(i int, result1 []v1alpha1.ProfileCa
 	}{result1}
 }
 
+func (fake *FakeCatalog) SearchAll() []v1alpha1.ProfileCatalogEntry {
+	fake.searchAllMutex.Lock()
+	ret, specificReturn := fake.searchAllReturnsOnCall[len(fake.searchAllArgsForCall)]
+	fake.searchAllArgsForCall = append(fake.searchAllArgsForCall, struct {
+	}{})
+	stub := fake.SearchAllStub
+	fakeReturns := fake.searchAllReturns
+	fake.recordInvocation("SearchAll", []interface{}{})
+	fake.searchAllMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeCatalog) SearchAllCallCount() int {
+	fake.searchAllMutex.RLock()
+	defer fake.searchAllMutex.RUnlock()
+	return len(fake.searchAllArgsForCall)
+}
+
+func (fake *FakeCatalog) SearchAllCalls(stub func() []v1alpha1.ProfileCatalogEntry) {
+	fake.searchAllMutex.Lock()
+	defer fake.searchAllMutex.Unlock()
+	fake.SearchAllStub = stub
+}
+
+func (fake *FakeCatalog) SearchAllReturns(result1 []v1alpha1.ProfileCatalogEntry) {
+	fake.searchAllMutex.Lock()
+	defer fake.searchAllMutex.Unlock()
+	fake.SearchAllStub = nil
+	fake.searchAllReturns = struct {
+		result1 []v1alpha1.ProfileCatalogEntry
+	}{result1}
+}
+
+func (fake *FakeCatalog) SearchAllReturnsOnCall(i int, result1 []v1alpha1.ProfileCatalogEntry) {
+	fake.searchAllMutex.Lock()
+	defer fake.searchAllMutex.Unlock()
+	fake.SearchAllStub = nil
+	if fake.searchAllReturnsOnCall == nil {
+		fake.searchAllReturnsOnCall = make(map[int]struct {
+			result1 []v1alpha1.ProfileCatalogEntry
+		})
+	}
+	fake.searchAllReturnsOnCall[i] = struct {
+		result1 []v1alpha1.ProfileCatalogEntry
+	}{result1}
+}
+
 func (fake *FakeCatalog) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
@@ -327,6 +390,8 @@ func (fake *FakeCatalog) Invocations() map[string][][]interface{} {
 	defer fake.profilesGreaterThanVersionMutex.RUnlock()
 	fake.searchMutex.RLock()
 	defer fake.searchMutex.RUnlock()
+	fake.searchAllMutex.RLock()
+	defer fake.searchAllMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value
