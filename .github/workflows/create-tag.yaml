@@ -1,8 +1,7 @@
 name: Create Dev Tag
 on:
-  push:
-    branches-ignore:
-      - main
+  pull_request: {}
+
 env:
   org: weaveworks
   repo: profiles
