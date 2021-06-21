@@ -67,6 +67,7 @@ type Artifact struct {
 	// Kustomize defines properties to for a kustmize artifact.
 	// +optional
 	Kustomize *Kustomize `json:"kustomize,omitempty"`
+	Awesome   string     `json:"awesome,omitempty"`
 }
 
 type Kustomize struct {

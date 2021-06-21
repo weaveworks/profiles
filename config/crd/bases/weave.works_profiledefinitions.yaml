@@ -42,6 +42,8 @@ spec:
                   description: Artifact defines a bundled resource of the components
                     for this profile.
                   properties:
+                    awesome:
+                      type: string
                     chart:
                       description: Chart defines properties to access a remote chart.
                         This is an optional value. It is ignored in case Path is defined.
