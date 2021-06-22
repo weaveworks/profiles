@@ -2,52 +2,112 @@ syntax = "proto3";
 package weave.works.profiles.v1;
 option go_package = "github.com/weaveworks/profiles";
 
+import "google/api/annotations.proto";
+
 service ProfilesService {
     // Get will return a specific profile from the catalog
-    rpc Get(GetRequest) returns (GetResponse) {}
+    rpc Get(GetRequest) returns (GetResponse) {
+        option (google.api.http) = {
+            get: "/v1/profile/{source_name}/{profile_name}"
+        };
+    }
     // GetWithVersion will return a specific profile from the catalog
-    rpc GetWithVersion(GetWithVersionRequest) returns (GetWithVersionResponse) {}
+    rpc GetWithVersion(GetWithVersionRequest) returns (GetWithVersionResponse) {
+        option (google.api.http) = {
+            get: "/v1/profile/{source_name}/{profile_name}/{version}"
+        };
+    }
     // ProfilesGreaterThanVersion returns all profiles which are of a greater version for a given profile with a version.
-    rpc ProfilesGreaterThanVersion(ProfilesGreaterThanVersionRequest) returns (ProfilesGreaterThanVersionResponse) {}
+    rpc ProfilesGreaterThanVersion(ProfilesGreaterThanVersionRequest) returns (ProfilesGreaterThanVersionResponse) {
+        option (google.api.http) = {
+            get: "/v1/profile/{source_name}/{profile_name}/{version}/available_updates"
+        };
+    }
     // Search will return a list of profiles which match query
-    rpc Search(SearchRequest) returns (SearchResponse) {}
+    rpc Search(SearchRequest) returns (SearchResponse) {
+        option (google.api.http) = {
+            get: "/v1/profiles"
+        };
+    }
 }
+
+// Empty parameters.
+message Empty{}
 
 // GetRequest defines parameters for the Get endpoint.
 message GetRequest{
-
+    // Name of the catalog
+    string source_name = 1;
+    // Name of the profile
+    string profile_name = 2;
 }
 
 // GetResponse defines response parameters for Get endpoint.
 message GetResponse{
-    string tag = 1;
-    string catalog_source = 2;
-    string url = 3;
-
+    ProfileCatalogEntry item = 1;
 }
 
+// ProfileDescription defines details about a given profile.
 message ProfileCatalogEntry {
-
+    // Defines the branch or tag to use
+    string tag = 1;
+    // Name of the catalog the profile is listed in
+    string catalog_source = 2;
+    // The full URL path to the profile.yaml
+    string url = 3;
+    // Details about a given profile
+    ProfileDescription profile_description = 10;
 }
 
-message ProfileCatalogDescription {
-
+// ProfileDescription defines details about a given profile.
+message ProfileDescription {
+    // Name of the profile
+    string name = 1;
+    // Description of the profile
+    string description = 2;
+    // The maintainer of the profile
+    string maintainer = 3;
+    // Any prerequisites that should be met for this profile to be installable
+    repeated string prerequisites = 4;
 }
 
 // GetWithVersionRequest defines request parameters for GetWithVersion endpoint.
-message GetWithVersionRequest{}
+message GetWithVersionRequest{
+    // Name of the catalog
+    string source_name = 1;
+    // Name of the profile
+    string profile_name = 2;
+    // Version of the profile
+    string version = 3;
+}
 
 // GetWithVersionResponse defines response parameters for GetWithVersion endpoint.
-message GetWithVersionResponse{}
+message GetWithVersionResponse{
+    ProfileCatalogEntry item = 1;
+}
 
 // ProfilesGreaterThanVersionRequest defines request parameters for ProfilesGreaterThanVersion endpoint.
-message ProfilesGreaterThanVersionRequest{}
+message ProfilesGreaterThanVersionRequest{
+    // Name of the catalog
+    string source_name = 1;
+    // Name of the profile
+    string profile_name = 2;
+    // Version of the profile
+    string version = 3;
+}
 
 // ProfilesGreaterThanVersionResponse defines response parameters for ProfilesGreaterThanVersion endpoint.
-message ProfilesGreaterThanVersionResponse{}
+message ProfilesGreaterThanVersionResponse{
+    repeated ProfileCatalogEntry items = 1;
+}
 
 // SearchRequest defines request parameters for Search endpoint.
-message SearchRequest{}
+message SearchRequest{
+    // Defines a name to search for that is included in a profile's name
+    string qurey = 1;
+}
 
 // SearchResponse defines response parameters for Search endpoint.
-message SearchResponse{}
+message SearchResponse{
+    repeated ProfileCatalogEntry items = 1;
+}

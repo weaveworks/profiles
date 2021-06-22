@@ -1,0 +1,12 @@
+version: v1beta1
+name: buf.build/weaveworks/api-proposal
+deps:
+  - buf.build/beta/googleapis
+  - buf.build/grpc-ecosystem/grpc-gateway
+build:
+  roots:
+    - ./api
+lint:
+  except:
+    - PACKAGE_DIRECTORY_MATCH
+    - PACKAGE_SAME_DIRECTORY

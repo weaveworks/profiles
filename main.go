@@ -17,15 +17,25 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"log"
+	"net"
 	"net/http"
 	"os"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	gruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+
 	"github.com/weaveworks/profiles/pkg/api"
+	profiles "github.com/weaveworks/profiles/pkg/protos"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -60,10 +70,11 @@ func init() {
 
 func main() {
 	var enableLeaderElection bool
-	var metricsAddr, probeAddr, apiAddr string
+	var metricsAddr, probeAddr, apiAddr, grpcAddr string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.StringVar(&apiAddr, "profiles-api-bind-address", ":8000", "The address the profiles catalog api binds to.")
+	flag.StringVar(&grpcAddr, "profiles-grpc-bind-address", ":8001", "The address the profiles catalog grpc server binds to.")
 
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
@@ -113,8 +124,36 @@ func main() {
 	}
 
 	setupLog.Info(fmt.Sprintf("starting profiles api server at %s", apiAddr))
+
+	grpcLis, err := net.Listen("tcp", grpcAddr)
+	if err != nil {
+		log.Fatalf("failed to listen on address %s: %v", grpcAddr, err)
+	}
+	grpcSrv := grpc.NewServer(
+		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
+		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
+	)
+	reflection.Register(grpcSrv)
+	catalogGrpcServer := api.NewCatalog(profileCatalog, ctrl.Log.WithName("api"))
+	profiles.RegisterProfilesServiceServer(grpcSrv, catalogGrpcServer)
+
+	// Serve grpc apis
 	go func() {
-		if err := http.ListenAndServe(apiAddr, api.New(profileCatalog, ctrl.Log.WithName("api"))); err != nil {
+		if err := grpcSrv.Serve(grpcLis); err != nil {
+			setupLog.Error(err, "unable to start grpc api server")
+			os.Exit(1)
+		}
+	}()
+
+	// Connect grpc-gateway to the grpc server
+	mux := gruntime.NewServeMux()
+	gopts := []grpc.DialOption{grpc.WithInsecure()}
+	if err := profiles.RegisterProfilesServiceHandlerFromEndpoint(context.Background(), mux, grpcAddr, gopts); err != nil {
+		setupLog.Error(err, "failed to register service handler from endpoint")
+		os.Exit(1)
+	}
+	go func() {
+		if err := http.ListenAndServe(apiAddr, mux); err != nil {
 			setupLog.Error(err, "unable to start profiles api server")
 			os.Exit(1)
 		}
