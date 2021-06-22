@@ -19,20 +19,21 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
-//go:generate counterfeiter -o fakes/fake_git_client.go . GitClient
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+//counterfeiter:generate -o fakes/fake_git_client.go . GitClient
 //GitClient client for interacting with git
 type GitClient interface {
 	ListTags(url string, secret *corev1.Secret) ([]string, error)
 }
 
-//go:generate counterfeiter -o fakes/fake_repo_manager.go . GitRepositoryManager
+//counterfeiter:generate -o fakes/fake_repo_manager.go . GitRepositoryManager
 //GitRepositoryManager for managing gitrepositorys
 type GitRepositoryManager interface {
 	CreateAndWaitForResources(repo profilesv1.Repository, tags []gitrepository.Instance) ([]*sourcev1.GitRepository, error)
 	DeleteResources([]*sourcev1.GitRepository) error
 }
 
-//go:generate counterfeiter -o fakes/fake_http_client.go . HTTPClient
+//counterfeiter:generate -o fakes/fake_http_client.go . HTTPClient
 //HTTPClient for making HTTP requests
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)

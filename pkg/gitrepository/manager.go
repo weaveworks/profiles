@@ -27,7 +27,8 @@ type Instance struct {
 	Path string
 }
 
-//go:generate counterfeiter -o fakes/fake_kubernetes.go . Kubernetes
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+//counterfeiter:generate -o fakes/fake_kubernetes.go . Kubernetes
 //Kubernetes interface for itneracting with kubernetes
 type Kubernetes interface {
 	Get(ctx context.Context, key client.ObjectKey, obj client.Object) error
