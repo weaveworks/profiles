@@ -29,7 +29,7 @@ type Instance struct {
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 //counterfeiter:generate -o fakes/fake_kubernetes.go . Kubernetes
-//Kubernetes interface for itneracting with kubernetes
+//Kubernetes interface for interacting with Kubernetes
 type Kubernetes interface {
 	Get(ctx context.Context, key client.ObjectKey, obj client.Object) error
 	Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error
