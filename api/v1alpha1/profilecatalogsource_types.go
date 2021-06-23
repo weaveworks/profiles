@@ -28,7 +28,7 @@ type ProfileCatalogSourceSpec struct {
 	// Profiles is the list of profiles exposed by the catalog
 	// +optional
 	Profiles []ProfileCatalogEntry `json:"profiles,omitempty"`
-	// Repositories is the list of repositories to scan for profiles
+	// Repos contains a list of repositories to scan for profiles
 	// +optional
 	Repos []Repository `json:"repositories,omitempty"`
 }
