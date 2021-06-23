@@ -86,8 +86,8 @@ func (r *ProfileCatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl
 		var secret *corev1.Secret
 		if repo.SecretRef != nil {
 			secret = &corev1.Secret{}
-			err := r.Client.Get(ctx, client.ObjectKey{Name: repo.SecretRef.Name, Namespace: req.Namespace}, secret)
-			if err != nil {
+			objectKey := client.ObjectKey{Name: repo.SecretRef.Name, Namespace: req.Namespace}
+			if err := r.Client.Get(ctx, objectKey, secret); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to find secret for repo %v: %w", repo, err)
 			}
 		}

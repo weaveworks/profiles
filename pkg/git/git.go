@@ -1,11 +1,12 @@
 package git
 
 import (
+	"fmt"
+
 	"github.com/fluxcd/source-controller/pkg/git/gogit"
 	extgogit "github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport"
-
 	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/storage/memory"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -25,11 +26,11 @@ func (c *Client) ListTags(url string, secret *corev1.Secret) ([]string, error) {
 		authStrategy, err := gogit.AuthSecretStrategyForURL(url)
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to create auth strateg from URL %q : %w", url, err)
 		}
 		authMethod, err := authStrategy.Method(*secret)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get auth method: %w", err)
 		}
 		auth = authMethod.AuthMethod
 	}
@@ -39,7 +40,7 @@ func (c *Client) ListTags(url string, secret *corev1.Secret) ([]string, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list tags: %w", err)
 	}
 
 	var tags []string

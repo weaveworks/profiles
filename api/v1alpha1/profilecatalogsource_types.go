@@ -33,8 +33,12 @@ type ProfileCatalogSourceSpec struct {
 	Repos []Repository `json:"repositories,omitempty"`
 }
 
+// Repository defines the list of repositories to scan for profiles
 type Repository struct {
-	// URL is the URL of the repository
+	// URL is the URL of the repository. When using SSH credentials to access
+	// must be in format ssh://git@github.com/stefanprodan/podinfo
+	// When using username/password must be in format
+	// https://github.com/stefanprodan/podinfo
 	URL string `json:"url,omitempty"`
 	// The secret name containing the Git credentials.
 	// For HTTPS repositories the secret must contain username and password
@@ -45,7 +49,7 @@ type Repository struct {
 	SecretRef *meta.LocalObjectReference `json:"secretRef,omitempty"`
 }
 
-// ProfileDescription defines details about a given profile.
+// ProfileCatalogEntry defines details about a given profile.
 type ProfileCatalogEntry struct {
 	// Tag
 	// +optional

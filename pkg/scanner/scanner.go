@@ -3,7 +3,6 @@ package scanner
 import (
 	"archive/tar"
 	"compress/gzip"
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -45,8 +44,6 @@ type Scanner struct {
 	gitClient            GitClient
 	httpClient           HTTPClient
 	logger               logr.Logger
-	namespace            string
-	ctx                  context.Context
 }
 
 //New returns a Scanner
@@ -56,8 +53,6 @@ func New(gitRepositoryManager GitRepositoryManager, gitClient GitClient, httpCli
 		gitClient:            gitClient,
 		httpClient:           httpClient,
 		logger:               logger,
-		namespace:            "profiles-system",
-		ctx:                  context.TODO(),
 	}
 }
 
@@ -72,8 +67,7 @@ func (s *Scanner) ScanRepository(repo profilesv1.Repository, secret *corev1.Secr
 	var instances []gitrepository.Instance
 	for _, tag := range tags {
 		semver, path := getSemverAndPathFromTag(tag)
-		_, err := version.ParseVersion(semver)
-		if err == nil {
+		if _, err := version.ParseVersion(semver); err == nil {
 			instances = append(instances, gitrepository.Instance{
 				Tag:  tag,
 				Path: path,
@@ -88,8 +82,7 @@ func (s *Scanner) ScanRepository(repo profilesv1.Repository, secret *corev1.Secr
 	s.logger.Info("gitrepositorys created", "gitrepositories", gitRepositoryResources)
 
 	defer func() {
-		err := s.gitRepositoryManager.DeleteResources(gitRepositoryResources)
-		if err != nil {
+		if err := s.gitRepositoryManager.DeleteResources(gitRepositoryResources); err != nil {
 			s.logger.Error(err, "failed to cleanup git resources", "gitrepositories", gitRepositoryResources)
 		}
 	}()
@@ -149,8 +142,7 @@ func extractProfileFromTarball(gzipStream io.Reader) (*profilesv1.ProfileDefinit
 		if header.Typeflag == tar.TypeReg {
 			decoder := yaml.NewYAMLOrJSONDecoder(tarReader, 10000)
 			var profileDef profilesv1.ProfileDefinition
-			err = decoder.Decode(&profileDef)
-			if err != nil {
+			if err = decoder.Decode(&profileDef); err != nil {
 				return nil, fmt.Errorf("failed to decode profile.yaml: %w", err)
 			}
 			return &profileDef, nil

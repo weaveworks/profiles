@@ -40,7 +40,7 @@ spec:
               profiles:
                 description: Profiles is the list of profiles exposed by the catalog
                 items:
-                  description: ProfileDescription defines details about a given profile.
+                  description: ProfileCatalogEntry defines details about a given profile.
                   properties:
                     catalog:
                       description: CatalogSource is the name of the catalog the profile
@@ -70,9 +70,10 @@ spec:
                   type: object
                 type: array
               repositories:
-                description: Repositories is the list of repositories to scan for
-                  profiles
+                description: Repos contains a list of repositories to scan for profiles
                 items:
+                  description: Repository defines the list of repositories to scan
+                    for profiles
                   properties:
                     secretRef:
                       description: The secret name containing the Git credentials.
@@ -87,7 +88,9 @@ spec:
                       - name
                       type: object
                     url:
-                      description: URL is the URL of the repository
+                      description: URL is the URL of the repository. When using SSH
+                        credentials to access must be in format ssh://git@github.com/stefanprodan/podinfo
+                        When using username/password must be in format https://github.com/stefanprodan/podinfo
                       type: string
                   type: object
                 type: array
