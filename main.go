@@ -32,7 +32,7 @@ import (
 	gruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 
 	"github.com/weaveworks/profiles/pkg/api"
-	profiles "github.com/weaveworks/profiles/pkg/protos"
+	"github.com/weaveworks/profiles/pkg/protos"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -123,8 +123,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info(fmt.Sprintf("starting profiles api server at %s", apiAddr))
-
+	setupLog.Info(fmt.Sprintf("starting profiles grpc server at %s", grpcAddr))
 	grpcLis, err := net.Listen("tcp", grpcAddr)
 	if err != nil {
 		log.Fatalf("failed to listen on address %s: %v", grpcAddr, err)
@@ -135,9 +134,10 @@ func main() {
 	)
 	reflection.Register(grpcSrv)
 	catalogGrpcServer := api.NewCatalog(profileCatalog, ctrl.Log.WithName("api"))
-	profiles.RegisterProfilesServiceServer(grpcSrv, catalogGrpcServer)
+	protos.RegisterProfilesServiceServer(grpcSrv, catalogGrpcServer)
 
 	// Serve grpc apis
+	// TODO: think about graceful shutdown.
 	go func() {
 		if err := grpcSrv.Serve(grpcLis); err != nil {
 			setupLog.Error(err, "unable to start grpc api server")
@@ -145,10 +145,12 @@ func main() {
 		}
 	}()
 
+	setupLog.Info(fmt.Sprintf("starting profiles grpc-gateway server at %s", apiAddr))
 	// Connect grpc-gateway to the grpc server
 	mux := gruntime.NewServeMux()
 	gopts := []grpc.DialOption{grpc.WithInsecure()}
-	if err := profiles.RegisterProfilesServiceHandlerFromEndpoint(context.Background(), mux, grpcAddr, gopts); err != nil {
+	// TODO: try this with multiple instances to see if multiplexing works or something blows up.
+	if err := protos.RegisterProfilesServiceHandlerFromEndpoint(context.Background(), mux, grpcAddr, gopts); err != nil {
 		setupLog.Error(err, "failed to register service handler from endpoint")
 		os.Exit(1)
 	}

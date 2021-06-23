@@ -1,6 +1,6 @@
 syntax = "proto3";
 package weave.works.profiles.v1;
-option go_package = "github.com/weaveworks/profiles";
+option go_package = "github.com/weaveworks/profiles/pkg/protos";
 
 import "google/api/annotations.proto";
 
@@ -8,19 +8,19 @@ service ProfilesService {
     // Get will return a specific profile from the catalog
     rpc Get(GetRequest) returns (GetResponse) {
         option (google.api.http) = {
-            get: "/v1/profile/{source_name}/{profile_name}"
+            get: "/v1/profiles/{source_name}/{profile_name}"
         };
     }
     // GetWithVersion will return a specific profile from the catalog
     rpc GetWithVersion(GetWithVersionRequest) returns (GetWithVersionResponse) {
         option (google.api.http) = {
-            get: "/v1/profile/{source_name}/{profile_name}/{version}"
+            get: "/v1/profiles/{source_name}/{profile_name}/{version}"
         };
     }
     // ProfilesGreaterThanVersion returns all profiles which are of a greater version for a given profile with a version.
     rpc ProfilesGreaterThanVersion(ProfilesGreaterThanVersionRequest) returns (ProfilesGreaterThanVersionResponse) {
         option (google.api.http) = {
-            get: "/v1/profile/{source_name}/{profile_name}/{version}/available_updates"
+            get: "/v1/profiles/{source_name}/{profile_name}/{version}/available_updates"
         };
     }
     // Search will return a list of profiles which match query
@@ -55,20 +55,16 @@ message ProfileCatalogEntry {
     string catalog_source = 2;
     // The full URL path to the profile.yaml
     string url = 3;
-    // Details about a given profile
-    ProfileDescription profile_description = 10;
-}
 
-// ProfileDescription defines details about a given profile.
-message ProfileDescription {
+    // The fields below are inlined from ProfileDescription.
     // Name of the profile
-    string name = 1;
+    string name = 4;
     // Description of the profile
-    string description = 2;
+    string description = 5;
     // The maintainer of the profile
-    string maintainer = 3;
+    string maintainer = 6;
     // Any prerequisites that should be met for this profile to be installable
-    repeated string prerequisites = 4;
+    repeated string prerequisites = 7;
 }
 
 // GetWithVersionRequest defines request parameters for GetWithVersion endpoint.
@@ -104,7 +100,7 @@ message ProfilesGreaterThanVersionResponse{
 // SearchRequest defines request parameters for Search endpoint.
 message SearchRequest{
     // Defines a name to search for that is included in a profile's name
-    string qurey = 1;
+    string name = 1;
 }
 
 // SearchResponse defines response parameters for Search endpoint.

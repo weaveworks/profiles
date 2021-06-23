@@ -2,11 +2,11 @@
 // source: profiles.proto
 
 /*
-Package profiles is a reverse proxy.
+Package protos is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package profiles
+package protos
 
 import (
 	"context"
@@ -546,11 +546,11 @@ func RegisterProfilesServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 }
 
 var (
-	pattern_ProfilesService_Get_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "profile", "source_name", "profile_name"}, ""))
+	pattern_ProfilesService_Get_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "profiles", "source_name", "profile_name"}, ""))
 
-	pattern_ProfilesService_GetWithVersion_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4}, []string{"v1", "profile", "source_name", "profile_name", "version"}, ""))
+	pattern_ProfilesService_GetWithVersion_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4}, []string{"v1", "profiles", "source_name", "profile_name", "version"}, ""))
 
-	pattern_ProfilesService_ProfilesGreaterThanVersion_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"v1", "profile", "source_name", "profile_name", "version", "available_updates"}, ""))
+	pattern_ProfilesService_ProfilesGreaterThanVersion_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"v1", "profiles", "source_name", "profile_name", "version", "available_updates"}, ""))
 
 	pattern_ProfilesService_Search_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "profiles"}, ""))
 )

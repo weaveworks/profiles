@@ -203,10 +203,6 @@
                 </li>
               
                 <li>
-                  <a href="#weave.works.profiles.v1.ProfileDescription"><span class="badge">M</span>ProfileDescription</a>
-                </li>
-              
-                <li>
                   <a href="#weave.works.profiles.v1.ProfilesGreaterThanVersionRequest"><span class="badge">M</span>ProfilesGreaterThanVersionRequest</a>
                 </li>
               
@@ -400,34 +396,11 @@
                 </tr>
               
                 <tr>
-                  <td>profile_description</td>
-                  <td><a href="#weave.works.profiles.v1.ProfileDescription">ProfileDescription</a></td>
-                  <td></td>
-                  <td><p>Details about a given profile </p></td>
-                </tr>
-              
-            </tbody>
-          </table>
-
-          
-
-        
-      
-        <h3 id="weave.works.profiles.v1.ProfileDescription">ProfileDescription</h3>
-        <p>ProfileDescription defines details about a given profile.</p>
-
-        
-          <table class="field-table">
-            <thead>
-              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
-            </thead>
-            <tbody>
-              
-                <tr>
                   <td>name</td>
                   <td><a href="#string">string</a></td>
                   <td></td>
-                  <td><p>Name of the profile </p></td>
+                  <td><p>The fields below are inlined from ProfileDescription.
+Name of the profile </p></td>
                 </tr>
               
                 <tr>
@@ -531,7 +504,7 @@
             <tbody>
               
                 <tr>
-                  <td>qurey</td>
+                  <td>name</td>
                   <td><a href="#string">string</a></td>
                   <td></td>
                   <td><p>Defines a name to search for that is included in a profile&#39;s name </p></td>
@@ -633,7 +606,7 @@
               <tr>
                 <td>Get</td>
                 <td>GET</td>
-                <td>/v1/profile/{source_name}/{profile_name}</td>
+                <td>/v1/profiles/{source_name}/{profile_name}</td>
                 <td></td>
               </tr>
               
@@ -643,7 +616,7 @@
               <tr>
                 <td>GetWithVersion</td>
                 <td>GET</td>
-                <td>/v1/profile/{source_name}/{profile_name}/{version}</td>
+                <td>/v1/profiles/{source_name}/{profile_name}/{version}</td>
                 <td></td>
               </tr>
               
@@ -653,7 +626,7 @@
               <tr>
                 <td>ProfilesGreaterThanVersion</td>
                 <td>GET</td>
-                <td>/v1/profile/{source_name}/{profile_name}/{version}/available_updates</td>
+                <td>/v1/profiles/{source_name}/{profile_name}/{version}/available_updates</td>
                 <td></td>
               </tr>
               

@@ -13,11 +13,12 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0
+	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.4.0
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.13.0
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
-	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced // indirect
+	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
 	google.golang.org/grpc v1.38.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.26.0
