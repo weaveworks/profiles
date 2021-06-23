@@ -5,7 +5,7 @@ deps:
   - buf.build/grpc-ecosystem/grpc-gateway
 build:
   roots:
-    - ./api
+    - ./proto
 lint:
   except:
     - PACKAGE_DIRECTORY_MATCH

@@ -37,7 +37,7 @@ type ProfileCatalogEntry struct {
 	Tag string `json:"tag,omitempty"`
 	// CatalogSource is the name of the catalog the profile is listed in
 	// +optional
-	CatalogSource string `json:"catalog,omitempty"`
+	CatalogSource string `json:"catalogSource,omitempty"`
 	// URL is the full URL path to the profile.yaml
 	// +optional
 	URL                string `json:"url,omitempty"`

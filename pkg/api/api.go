@@ -1,14 +1,15 @@
 package api
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
-	"net/http"
 
 	"github.com/go-logr/logr"
-	"github.com/gorilla/mux"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
+	"github.com/weaveworks/profiles/pkg/protos"
 )
 
 //go:generate counterfeiter -o fakes/fake_catalog.go . Catalog
@@ -26,114 +27,98 @@ type Catalog interface {
 	SearchAll() []profilesv1.ProfileCatalogEntry
 }
 
-// API defines a catalog router.
-type API struct {
-	*mux.Router
+type CatalogAPI interface {
+	protos.ProfilesServiceServer
+}
+
+type ProfilesCatalogService struct {
 	profileCatalog Catalog
 	logger         logr.Logger
 }
 
-// New returns a new mux based api router.
-func New(profileCatalog Catalog, logger logr.Logger) API {
-	r := mux.NewRouter()
-	a := API{
-		Router:         r,
-		profileCatalog: profileCatalog,
-		logger:         logger,
+func (p *ProfilesCatalogService) Get(ctx context.Context, request *protos.GetRequest) (*protos.GetResponse, error) {
+	sourceName := request.GetSourceName()
+	profileName := request.GetProfileName()
+	logger := p.logger.WithValues("func", "Get", "catalog", sourceName, "profile", profileName)
+	if sourceName == "" || profileName == "" {
+		errMsg := fmt.Errorf("missing query param: sourceName: %q, profileName: %q", sourceName, profileName)
+		logger.Error(errMsg, "profile and/or catalog not set")
+		return nil, status.Errorf(codes.InvalidArgument, errMsg.Error())
 	}
-
-	r.HandleFunc("/profiles", a.ProfilesHandler)
-	r.HandleFunc("/profiles/{catalog}/{profile}", a.ProfileHandler)
-	r.HandleFunc("/profiles/{catalog}/{profile}/{version}", a.ProfileWithVersionHandler)
-	r.HandleFunc("/profiles/{catalog}/{profile}/{version}/available_updates", a.ProfileGreaterThanVersionHandler)
-
-	return a
+	result := p.profileCatalog.Get(sourceName, profileName)
+	if result == nil {
+		return nil, status.Errorf(codes.NotFound, "profile not found")
+	}
+	logger.Info("profile found", "profile", result)
+	return &protos.GetResponse{
+		Item: protos.TransformCatalogEntry(result),
+	}, nil
 }
 
-// ProfilesHandler is the handler for /profiles requests.
-func (a *API) ProfilesHandler(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query().Get("name")
-	var result []profilesv1.ProfileCatalogEntry
-	logger := a.logger.WithValues("endpoint", r.URL.Path, "name", query)
+func (p *ProfilesCatalogService) GetWithVersion(ctx context.Context, request *protos.GetWithVersionRequest) (*protos.GetWithVersionResponse, error) {
+	sourceName := request.GetSourceName()
+	profileName := request.GetProfileName()
+	version := request.GetVersion()
+	logger := p.logger.WithValues("func", "GetWithVersion", "catalog", sourceName, "profile", profileName, "version", version)
+	if sourceName == "" || profileName == "" || version == "" {
+		errMsg := fmt.Errorf("missing query param: sourceName: %q, profileName: %q, version: %q", sourceName, profileName, version)
+		logger.Error(errMsg, "catalog, profile and/or version not set")
+		return nil, status.Errorf(codes.InvalidArgument, errMsg.Error())
+	}
+	result := p.profileCatalog.GetWithVersion(logger, sourceName, profileName, version)
+	if result == nil {
+		return nil, status.Errorf(codes.NotFound, "profile not found")
+	}
+	logger.Info("profile found", "profile", result)
+	return &protos.GetWithVersionResponse{
+		Item: protos.TransformCatalogEntry(result),
+	}, nil
+}
 
+func (p *ProfilesCatalogService) ProfilesGreaterThanVersion(ctx context.Context, request *protos.ProfilesGreaterThanVersionRequest) (*protos.ProfilesGreaterThanVersionResponse, error) {
+	sourceName := request.GetSourceName()
+	profileName := request.GetProfileName()
+	version := request.GetVersion()
+	logger := p.logger.WithValues("func", "ProfilesGreaterThanVersion", "catalog", sourceName, "profile", profileName, "version", version)
+	if sourceName == "" || profileName == "" || version == "" {
+		errMsg := fmt.Errorf("missing query param: sourceName: %q, profileName: %q, version: %q", sourceName, profileName, version)
+		logger.Error(errMsg, "catalog, profile and/or version not set")
+		return nil, status.Errorf(codes.InvalidArgument, errMsg.Error())
+	}
+	result := p.profileCatalog.ProfilesGreaterThanVersion(logger, sourceName, profileName, version)
+	if result == nil {
+		return nil, status.Errorf(codes.NotFound, "profile not found")
+	}
+	logger.Info("profile found", "profile", result)
+	return &protos.ProfilesGreaterThanVersionResponse{
+		Items: protos.TransformCatalogEntryList(result),
+	}, nil
+}
+
+func (p *ProfilesCatalogService) Search(ctx context.Context, request *protos.SearchRequest) (*protos.SearchResponse, error) {
+	query := request.GetName()
+	logger := p.logger.WithValues("func", "Search", "name", query)
+	var result []profilesv1.ProfileCatalogEntry
 	if query == "" {
 		logger.Info("Searching for all available profiles")
-		result = a.profileCatalog.SearchAll()
+		result = p.profileCatalog.SearchAll()
 	} else {
 		logger.Info("Searching for profiles matching name", "name", query)
-		result = a.profileCatalog.Search(query)
+		result = p.profileCatalog.Search(query)
 	}
 
 	logger.Info("found profiles", "profiles", result)
-	marshalResponse(w, logger, result)
+	return &protos.SearchResponse{
+		Items: protos.TransformCatalogEntryList(result),
+	}, nil
 }
 
-// ProfileHandler is the handler for /profiles/{catalog}/{profile} requests.
-func (a *API) ProfileHandler(w http.ResponseWriter, r *http.Request) {
-	sourceName, profileName := mux.Vars(r)["catalog"], mux.Vars(r)["profile"]
-	logger := a.logger.WithValues("endpoint", r.URL.Path, "catalog", sourceName, "profile", profileName)
-	if sourceName == "" || profileName == "" {
-		a.logger.Error(fmt.Errorf("missing query param"), "profile and/or catalog not set")
-		a.logAndWriteHeader(w, http.StatusBadRequest)
-		return
-	}
-	result := a.profileCatalog.Get(sourceName, profileName)
-	if result == nil {
-		logger.Info("profile not found")
-		a.logAndWriteHeader(w, http.StatusNotFound)
-		return
-	}
-	logger.Info("profile found", "profile", result)
-	marshalResponse(w, logger, result)
-}
+var _ protos.ProfilesServiceServer = &ProfilesCatalogService{}
 
-// ProfileWithVersionHandler is the handler for /profiles/{catalog}/{profile}/{version} requests.
-func (a *API) ProfileWithVersionHandler(w http.ResponseWriter, r *http.Request) {
-	sourceName, profileName, catalogVersion := mux.Vars(r)["catalog"], mux.Vars(r)["profile"], mux.Vars(r)["version"]
-	logger := a.logger.WithValues("endpoint", r.URL.Path, "catalog", sourceName, "profile", profileName, "version", catalogVersion)
-	if sourceName == "" || profileName == "" || catalogVersion == "" {
-		a.logger.Error(fmt.Errorf("missing query param"), "catalog, profile and/or version not set")
-		a.logAndWriteHeader(w, http.StatusBadRequest)
-		return
+// NewCatalog .
+func NewCatalog(profileCatalog Catalog, logger logr.Logger) *ProfilesCatalogService {
+	return &ProfilesCatalogService{
+		profileCatalog: profileCatalog,
+		logger:         logger,
 	}
-	result := a.profileCatalog.GetWithVersion(logger, sourceName, profileName, catalogVersion)
-	if result == nil {
-		logger.Info("profile not found")
-		a.logAndWriteHeader(w, http.StatusNotFound)
-		return
-	}
-	logger.Info("profile found", "profile", result)
-	marshalResponse(w, logger, result)
-}
-
-// ProfileGreaterThanVersionHandler is the handler for /profiles/{catalog}/{profile}/{version}/available_updates requests.
-func (a *API) ProfileGreaterThanVersionHandler(w http.ResponseWriter, r *http.Request) {
-	sourceName, profileName, catalogVersion := mux.Vars(r)["catalog"], mux.Vars(r)["profile"], mux.Vars(r)["version"]
-	logger := a.logger.WithValues("endpoint", r.URL.Path, "catalog", sourceName, "profile", profileName, "version", catalogVersion)
-	if sourceName == "" || profileName == "" || catalogVersion == "" {
-		a.logger.Error(fmt.Errorf("missing query param"), "catalog, profile and/or version not set")
-		a.logAndWriteHeader(w, http.StatusBadRequest)
-		return
-	}
-	result := a.profileCatalog.ProfilesGreaterThanVersion(logger, sourceName, profileName, catalogVersion)
-	if len(result) == 0 {
-		logger.Info("profiles not found")
-		a.logAndWriteHeader(w, http.StatusNotFound)
-		return
-	}
-	logger.Info("profile found", "profile", result)
-	marshalResponse(w, logger, result)
-}
-
-func marshalResponse(w http.ResponseWriter, logger logr.Logger, v interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(v); err != nil {
-		w.WriteHeader(500)
-		logger.Error(err, "failed to encode response")
-	}
-}
-
-func (a *API) logAndWriteHeader(w http.ResponseWriter, statusCode int) {
-	a.logger.Info(fmt.Sprintf("returning %d", statusCode), "statuscode", statusCode)
-	w.WriteHeader(statusCode)
 }
