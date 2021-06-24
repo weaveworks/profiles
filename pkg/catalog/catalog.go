@@ -117,10 +117,7 @@ func (c *Catalog) ProfilesGreaterThanVersion(logger logr.Logger, sourceName, pro
 	if err != nil && profileVersion != "latest" {
 		return nil
 	}
-	var count int
 	for _, p := range profiles.([]profilesv1.ProfileCatalogEntry) {
-		count++
-		logger.Info("Profile: ", "count", count, "profile", p)
 		tag := profilesv1.GetVersionFromTag(p.Tag)
 		v, err := version.ParseVersion(tag)
 		if err != nil {
