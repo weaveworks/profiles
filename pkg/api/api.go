@@ -64,7 +64,6 @@ func (p *ProfilesCatalogService) GetWithVersion(ctx context.Context, request *pr
 	profileName := request.GetProfileName()
 	version := request.GetVersion()
 	logger := p.logger.WithValues("func", "GetWithVersion", "catalog", sourceName, "profile", profileName, "version", version)
-	logger.Info("Calling this method")
 	if sourceName == "" || profileName == "" || version == "" {
 		errMsg := fmt.Errorf("missing query param: sourceName: %q, profileName: %q, version: %q", sourceName, profileName, version)
 		logger.Error(errMsg, "catalog, profile and/or version not set")
@@ -85,7 +84,6 @@ func (p *ProfilesCatalogService) ProfilesGreaterThanVersion(ctx context.Context,
 	profileName := request.GetProfileName()
 	version := request.GetVersion()
 	logger := p.logger.WithValues("func", "ProfilesGreaterThanVersion", "catalog", sourceName, "profile", profileName, "version", version)
-	logger.Info("calling...")
 	if sourceName == "" || profileName == "" || version == "" {
 		errMsg := fmt.Errorf("missing query param: sourceName: %q, profileName: %q, version: %q", sourceName, profileName, version)
 		logger.Error(errMsg, "catalog, profile and/or version not set")

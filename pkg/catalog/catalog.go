@@ -112,7 +112,6 @@ func (c *Catalog) ProfilesGreaterThanVersion(logger logr.Logger, sourceName, pro
 	if !ok {
 		return nil
 	}
-	logger.Info("Parsing profilesVersion", "version", profileVersion)
 	cv, err := version.ParseVersion(profileVersion)
 	if err != nil && profileVersion != "latest" {
 		return nil
