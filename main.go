@@ -97,12 +97,12 @@ func main() {
 
 	profileCatalog := catalog.New()
 
-	if err = (&controllers.ProfileCatalogSourceReconciler{
-		Client:   mgr.GetClient(),
-		Log:      ctrl.Log.WithName("controllers").WithName("ProfileCatalogSource"),
-		Scheme:   mgr.GetScheme(),
-		Profiles: profileCatalog,
-	}).SetupWithManager(mgr); err != nil {
+	if err = controllers.NewCatalogSourceReconciler(
+		mgr.GetClient(),
+		ctrl.Log.WithName("controllers").WithName("ProfileCatalogSource"),
+		mgr.GetScheme(),
+		profileCatalog,
+	).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ProfileCatalogSource")
 		os.Exit(1)
 	}

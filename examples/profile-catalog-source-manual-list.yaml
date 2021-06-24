@@ -1,0 +1,13 @@
+apiVersion: weave.works/v1alpha1
+kind: ProfileCatalogSource
+metadata:
+  name: nginx-catalog
+spec:
+  profiles:
+    - name: nginx
+      description: This installs some other other nginx.
+      tag: v1.0.0
+      url: https://github.com/weaveworks/nginx-profile
+      maintainer: weaveworks (https://github.com/weaveworks/profiles)
+      prerequisites:
+      - Kubernetes 1.19+
