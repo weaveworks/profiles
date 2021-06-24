@@ -69,6 +69,31 @@ spec:
                       type: string
                   type: object
                 type: array
+              repositories:
+                description: Repos contains a list of repositories to scan for profiles
+                items:
+                  description: Repository defines the list of repositories to scan
+                    for profiles
+                  properties:
+                    secretRef:
+                      description: The secret name containing the Git credentials.
+                        For HTTPS repositories the secret must contain username and
+                        password fields. For SSH repositories the secret must contain
+                        identity, identity.pub and known_hosts fields.
+                      properties:
+                        name:
+                          description: Name of the referent
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    url:
+                      description: URL is the URL of the repository. When using SSH
+                        credentials to access must be in format ssh://git@github.com/stefanprodan/podinfo
+                        When using username/password must be in format https://github.com/stefanprodan/podinfo
+                      type: string
+                  type: object
+                type: array
             type: object
           status:
             description: ProfileCatalogSourceStatus defines the observed state of

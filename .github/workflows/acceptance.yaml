@@ -22,6 +22,9 @@ jobs:
             ~/.cache/go-build/
             ~/go/pkg/mod/
           key: ${{ hashFiles('go.sum') }}
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
       - name: Setup Kind CLI
         run: |
           sudo curl -sSLo /usr/local/bin/kind https://github.com/kubernetes-sigs/kind/releases/download/v0.10.0/kind-linux-amd64
@@ -34,6 +37,14 @@ jobs:
           go get -u github.com/onsi/ginkgo/ginkgo
       - name: Setup Flux v2 CLI
         uses: fluxcd/flux2/action@main
+      - name: install libgit
+        run: |
+          export LIBGIT2_VER=1.1.0
+          curl -L https://github.com/libgit2/libgit2/releases/download/v$LIBGIT2_VER/libgit2-$LIBGIT2_VER.tar.gz -o /tmp/libgit2.tar.gz
+          tar -xvf /tmp/libgit2.tar.gz -C /tmp/
+          mkdir /tmp/libgit2-$LIBGIT2_VER/build && cd /tmp/libgit2-$LIBGIT2_VER/build
+          cmake .. -DCMAKE_INSTALL_PREFIX=/usr
+          sudo cmake --build . --target install
       - name: Acceptance
         run: |
           PATH=$PATH:$(go env GOPATH)/bin make acceptance

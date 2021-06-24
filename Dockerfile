@@ -1,5 +1,7 @@
 # Build the manager binary
-FROM golang:1.16 as builder
+FROM golang:1.16-alpine as builder
+
+RUN apk add --no-cache gcc pkgconfig libc-dev binutils-gold musl~=1.2 libgit2-dev~=1.1
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -19,11 +21,14 @@ COPY pkg/ pkg/
 ARG TARGETARCH
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} GO111MODULE=on go build -a -o manager main.go
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} GO111MODULE=on go build -a -o manager main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM alpine:3.13
+
+RUN apk add --no-cache ca-certificates tini libgit2~=1.1 musl~=1.2
+
 WORKDIR /
 COPY --from=builder /workspace/manager .
 USER 65532:65532
