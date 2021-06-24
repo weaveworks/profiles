@@ -27,10 +27,12 @@ type Catalog interface {
 	SearchAll() []profilesv1.ProfileCatalogEntry
 }
 
+// CatalogAPI defines the GRPC profiles catalog service API.
 type CatalogAPI interface {
 	protos.ProfilesServiceServer
 }
 
+// ProfilesCatalogService is the profiles catalog service implementor.
 type ProfilesCatalogService struct {
 	profileCatalog Catalog
 	logger         logr.Logger
@@ -119,7 +121,7 @@ func (p *ProfilesCatalogService) Search(ctx context.Context, request *protos.Sea
 
 var _ protos.ProfilesServiceServer = &ProfilesCatalogService{}
 
-// NewCatalogAPI .
+// NewCatalogAPI returns a profiles catalog api implementation.
 func NewCatalogAPI(profileCatalog Catalog, logger logr.Logger) *ProfilesCatalogService {
 	return &ProfilesCatalogService{
 		profileCatalog: profileCatalog,

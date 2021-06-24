@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -33,6 +34,7 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	gruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/weaveworks/profiles/pkg/api"
 	"github.com/weaveworks/profiles/pkg/protos"
@@ -126,7 +128,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info(fmt.Sprintf("starting profiles grpc server at %s", grpcAddr))
+	// setup grpc server details
 	grpcLis, err := net.Listen("tcp", grpcAddr)
 	if err != nil {
 		log.Fatalf("failed to listen on address %s: %v", grpcAddr, err)
@@ -136,59 +138,95 @@ func main() {
 		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
 	)
 	reflection.Register(grpcSrv)
+
+	// create the catalog grpc server
 	catalogGrpcServer := api.NewCatalogAPI(profileCatalog, ctrl.Log.WithName("api"))
 	protos.RegisterProfilesServiceServer(grpcSrv, catalogGrpcServer)
 
-	//shutdownContext := ctrl.SetupSignalHandler()
-	shutdownContext, cancel := context.WithCancel(context.Background())
-	//defer cancel()
-	interruptChannel := make(chan os.Signal, 2)
-	signal.Notify(interruptChannel, os.Interrupt, syscall.SIGTERM)
+	// handle interrupts
+	shutdownContext, managerCancelFunc := context.WithCancel(context.Background())
+	g, gctx := errgroup.WithContext(context.Background())
 
-	// Serve grpc apis
-	go func() {
+	// serve grpc apis
+	setupLog.Info(fmt.Sprintf("starting profiles grpc server at %s", grpcAddr))
+	g.Go(func() error {
 		if err := grpcSrv.Serve(grpcLis); err != nil {
 			setupLog.Error(err, "unable to start grpc api server")
-			os.Exit(1)
+			return err
 		}
-	}()
+		return nil
+	})
 
-	setupLog.Info(fmt.Sprintf("starting profiles grpc-gateway server at %s", apiAddr))
-	// Connect grpc-gateway to the grpc server
+	// setup grpc-gateway to connect to the grpc server
 	mux := gruntime.NewServeMux()
 	gopts := []grpc.DialOption{grpc.WithInsecure()}
-	// TODO: try this with multiple instances to see if multiplexing works or something blows up.
 	if err := protos.RegisterProfilesServiceHandlerFromEndpoint(context.Background(), mux, grpcAddr, gopts); err != nil {
 		setupLog.Error(err, "failed to register service handler from endpoint")
 		os.Exit(1)
 	}
 
+	setupLog.Info(fmt.Sprintf("starting profiles grpc-gateway server at %s", apiAddr))
 	server := &http.Server{Addr: apiAddr, Handler: mux}
-	go func() {
-		if err := server.ListenAndServe(); err != nil {
+	g.Go(func() error {
+		// ignore server is closing error because the server receives that on graceful shutdown.
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			setupLog.Error(err, "unable to start profiles api server")
-			os.Exit(1)
+			return err
 		}
-	}()
-
-	// gracefully shutdown both servers when the manager receives and interrupt.
-	go func() {
-		<-interruptChannel
-		// shutdown the manager
-		cancel()
-		// shutdown grpc-gateway server
-		serverTimeoutContext, timeout := context.WithTimeout(context.Background(), 10*time.Second)
-		defer timeout()
-		if err := server.Shutdown(serverTimeoutContext); err != nil {
-			setupLog.Error(err, "Failed to gracefully shutdown server... terminating.")
-		}
-		// shutdown grpc server
-		grpcSrv.GracefulStop()
-	}()
+		return nil
+	})
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(shutdownContext); err != nil {
-		setupLog.Error(err, "problem running manager")
+	g.Go(func() error {
+		if err := mgr.Start(shutdownContext); err != nil {
+			setupLog.Error(err, "problem running manager")
+			return err
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		interruptChannel := make(chan os.Signal, 2)
+		signal.Notify(interruptChannel, os.Interrupt, syscall.SIGTERM)
+
+		select {
+		case <-interruptChannel:
+			done := make(chan struct{})
+			// start the timer for the shutdown sequence
+			go func() {
+				select {
+				case <-done:
+					return
+				case <-time.After(15 * time.Second):
+					setupLog.Error(errors.New("timeout"), "graceful shutdown timed out... forcing shutdown")
+					os.Exit(1)
+				}
+			}()
+			setupLog.Info("received shutdown signal... gracefully terminating servers...")
+			// shutdown the manager
+			managerCancelFunc()
+			// shutdown grpc-gateway server
+			serverTimeoutContext, timeout := context.WithTimeout(context.Background(), 10*time.Second)
+			defer timeout()
+			if err := server.Shutdown(serverTimeoutContext); err != nil {
+				setupLog.Error(err, "Failed to gracefully shutdown server... terminating.")
+			}
+			// shutdown grpc server
+			grpcSrv.GracefulStop()
+			setupLog.Info("all done. Goodbye.")
+		case <-gctx.Done():
+			setupLog.Info("closing signal handler")
+			return gctx.Err()
+		}
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		if errors.Is(err, context.Canceled) {
+			setupLog.Error(err, "context was cancelled")
+		} else {
+			setupLog.Error(err, "server error detected")
+		}
 		os.Exit(1)
 	}
 }
