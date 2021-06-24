@@ -11,7 +11,8 @@ import (
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 )
 
-//go:generate counterfeiter -o fakes/fake_catalog.go . Catalog
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+//counterfeiter:generate -o fakes/fake_catalog.go . Catalog
 // Catalog is an interface for the Catalog
 type Catalog interface {
 	// Get will return a specific profile from the catalog

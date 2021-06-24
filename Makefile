@@ -62,7 +62,7 @@ lint: ## Run lint against code
 ##@ Tests
 
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
-test: generate fmt vet manifests test_deps ## Run unit and integration tests
+test: lint generate fmt vet manifests test_deps ## Run unit and integration tests
 	source hack/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); ginkgo -r --skipPackage acceptance
 
 acceptance: local-env ## Run acceptance tests

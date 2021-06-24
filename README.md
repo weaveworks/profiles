@@ -29,6 +29,10 @@ and run: mdtoc -inplace README.md
 
 ## Getting started
 
+### Dependencies
+The dependency [libgit2](https://libgit2.org/) needs to be installed to be able to run
+the Controller or its test-suite locally. [Docs on install libgit2](https://github.com/fluxcd/source-controller/blob/main/CONTRIBUTING.md#installing-required-dependencies)
+
 ### Local environment using [Kind](https://kind.sigs.k8s.io/)
 
 1. Set up local environment: `make local-env`.

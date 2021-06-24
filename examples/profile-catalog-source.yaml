@@ -3,21 +3,9 @@ kind: ProfileCatalogSource
 metadata:
   name: nginx-catalog
 spec:
+  repositories:
+    - url: https://github.com/weaveworks/profiles-examples
   profiles:
-    - name: weaveworks-nginx
-      description: This installs nginx.
-      tag: weaveworks-nginx/v0.1.0
-      url: https://github.com/weaveworks/profiles-examples
-      maintainer: weaveworks (https://github.com/weaveworks/profiles)
-      prerequisites:
-      - Kubernetes 1.18+
-    - name: bitnami-nginx
-      description: This installs some other nginx.
-      tag: bitnami-nginx/v0.0.1
-      url: https://github.com/weaveworks/profiles-examples
-      maintainer: weaveworks (https://github.com/weaveworks/profiles)
-      prerequisites:
-      - Kubernetes 1.19+
     - name: nginx
       description: This installs some other other nginx.
       tag: v1.0.0
