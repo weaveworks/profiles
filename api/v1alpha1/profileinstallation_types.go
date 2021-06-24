@@ -19,7 +19,6 @@ package v1alpha1
 import (
 	"fmt"
 
-	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,9 +27,9 @@ import (
 
 // ProfileInstallationSpec defines the desired state of a ProfileInstallation
 type ProfileInstallationSpec struct {
-	// ValuesFrom holds references to resources containing values for the Helm chart specified in the first artifact
+	// ConfigMap is the name of the configmap to pull helm values from
 	// +optional
-	ValuesFrom []helmv2.ValuesReference `json:"valuesFrom,omitempty"`
+	ConfigMap string `json:"configMap,omitempty"`
 
 	// Source defines properties of the source of the profile
 	Source *Source `json:"source,omitempty"`
