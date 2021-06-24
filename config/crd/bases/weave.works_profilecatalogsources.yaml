@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ProfileCatalogSource is the Schema for the profilecatalogsources
+        description: ProfileCatalogSource is the Schema for the ProfileCatalogSources
           API
         properties:
           apiVersion:
@@ -40,7 +40,7 @@ spec:
               profiles:
                 description: Profiles is the list of profiles exposed by the catalog
                 items:
-                  description: ProfileDescription defines details about a given profile.
+                  description: ProfileCatalogEntry defines details about a given profile.
                   properties:
                     catalogSource:
                       description: CatalogSource is the name of the catalog the profile

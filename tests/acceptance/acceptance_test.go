@@ -109,7 +109,7 @@ var _ = Describe("Acceptance", func() {
 		Context("search", func() {
 			It("returns the matching catalogs", func() {
 				Eventually(func() []profilesv1.ProfileCatalogEntry {
-					req, err := http.NewRequest("GET", "http://localhost:8000/profiles", nil)
+					req, err := http.NewRequest("GET", "http://localhost:8000/v1/profiles", nil)
 					Expect(err).NotTo(HaveOccurred())
 					u, err := url.Parse("http://localhost:8000")
 					Expect(err).NotTo(HaveOccurred())
@@ -311,7 +311,7 @@ var _ = Describe("Acceptance", func() {
 })
 
 func getProfile(profileName, sourceName, version string) (profilesv1.ProfileCatalogEntry, error) {
-	u, err := url.Parse("http://localhost:8000/profiles")
+	u, err := url.Parse("http://localhost:8000/v1/profiles")
 	if err != nil {
 		return profilesv1.ProfileCatalogEntry{}, err
 	}
@@ -334,7 +334,7 @@ func getProfile(profileName, sourceName, version string) (profilesv1.ProfileCata
 }
 
 func getProfileUpdates(profileName, sourceName, version string) ([]profilesv1.ProfileCatalogEntry, error) {
-	u := fmt.Sprintf("http://localhost:8000/profiles/%s/%s/%s/available_updates", sourceName, profileName, version)
+	u := fmt.Sprintf("http://localhost:8000/v1/profiles/%s/%s/%s/available_updates", sourceName, profileName, version)
 	resp, err := http.Get(u)
 	if err != nil {
 		return nil, err

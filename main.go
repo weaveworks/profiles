@@ -74,7 +74,7 @@ func main() {
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.StringVar(&apiAddr, "profiles-api-bind-address", ":8000", "The address the profiles catalog api binds to.")
-	flag.StringVar(&grpcAddr, "profiles-grpc-bind-address", ":8001", "The address the profiles catalog grpc server binds to.")
+	flag.StringVar(&grpcAddr, "profiles-grpc-bind-address", ":50051", "The address the profiles catalog grpc server binds to.")
 
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+

@@ -112,14 +112,16 @@ func (c *Catalog) ProfilesGreaterThanVersion(logger logr.Logger, sourceName, pro
 	if !ok {
 		return nil
 	}
+	logger.Info("Parsing profilesVersion", "version", profileVersion)
 	cv, err := version.ParseVersion(profileVersion)
 	if err != nil && profileVersion != "latest" {
 		return nil
 	}
 	for _, p := range profiles.([]profilesv1.ProfileCatalogEntry) {
-		v, err := version.ParseVersion(profilesv1.GetVersionFromTag(p.Tag))
+		tag := profilesv1.GetVersionFromTag(p.Tag)
+		v, err := version.ParseVersion(tag)
 		if err != nil {
-			logger.Error(err, "failed to parse profile version", "profile", p)
+			logger.Error(err, "failed to parse profile version", "profile", p, "tag", tag, "pTag", p.Tag)
 			continue
 		}
 		if p.Name == profileName {
