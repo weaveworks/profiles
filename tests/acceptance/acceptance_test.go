@@ -120,16 +120,17 @@ var _ = Describe("Acceptance", func() {
 					resp, err := http.DefaultClient.Do(req)
 					Expect(err).NotTo(HaveOccurred())
 					Expect(resp.StatusCode).To(Equal(http.StatusOK))
-					var descriptions []profilesv1.ProfileCatalogEntry
+					var descriptions rpcCatalogItems
 					_ = json.NewDecoder(resp.Body).Decode(&descriptions)
-					return descriptions
+					return descriptions.Items
 				}).Should(ConsistOf(
 					expectedNginx1,
 					expectedNginx2,
 					profilesv1.ProfileCatalogEntry{
 						ProfileDescription: profilesv1.ProfileDescription{
-							Name:        "nginx-2",
-							Description: "nginx 1",
+							Name:          "nginx-2",
+							Description:   "nginx 1",
+							Prerequisites: []string{},
 						},
 						CatalogSource: sourceName,
 					},
@@ -286,8 +287,9 @@ var _ = Describe("Acceptance", func() {
 					return description
 				}).Should(Equal(profilesv1.ProfileCatalogEntry{
 					ProfileDescription: profilesv1.ProfileDescription{
-						Name:        "new-profile",
-						Description: "I am new here",
+						Name:          "new-profile",
+						Description:   "I am new here",
+						Prerequisites: []string{},
 					},
 					CatalogSource: sourceName,
 				}))
@@ -310,6 +312,10 @@ var _ = Describe("Acceptance", func() {
 	})
 })
 
+type rpcCatalogItem struct {
+	Item profilesv1.ProfileCatalogEntry
+}
+
 func getProfile(profileName, sourceName, version string) (profilesv1.ProfileCatalogEntry, error) {
 	u, err := url.Parse("http://localhost:8000/v1/profiles")
 	if err != nil {
@@ -326,11 +332,15 @@ func getProfile(profileName, sourceName, version string) (profilesv1.ProfileCata
 	if resp.StatusCode != http.StatusOK {
 		return profilesv1.ProfileCatalogEntry{}, fmt.Errorf("expected status code 200; got %d", resp.StatusCode)
 	}
-	var p profilesv1.ProfileCatalogEntry
+	var p rpcCatalogItem
 	if err := json.NewDecoder(resp.Body).Decode(&p); err != nil {
 		return profilesv1.ProfileCatalogEntry{}, err
 	}
-	return p, nil
+	return p.Item, nil
+}
+
+type rpcCatalogItems struct {
+	Items []profilesv1.ProfileCatalogEntry
 }
 
 func getProfileUpdates(profileName, sourceName, version string) ([]profilesv1.ProfileCatalogEntry, error) {
@@ -345,9 +355,9 @@ func getProfileUpdates(profileName, sourceName, version string) ([]profilesv1.Pr
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("expected status code 200; got %d", resp.StatusCode)
 	}
-	var p []profilesv1.ProfileCatalogEntry
+	var p rpcCatalogItems
 	if err := json.NewDecoder(resp.Body).Decode(&p); err != nil {
 		return nil, err
 	}
-	return p, nil
+	return p.Items, nil
 }

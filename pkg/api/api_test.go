@@ -23,7 +23,7 @@ var _ = Describe("API", func() {
 
 	BeforeEach(func() {
 		fakeCatalog = new(catfakes.FakeCatalog)
-		catalogAPI = api.NewCatalog(fakeCatalog, logr.Discard())
+		catalogAPI = api.NewCatalogAPI(fakeCatalog, logr.Discard())
 	})
 
 	Context("Get", func() {

@@ -24,6 +24,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
@@ -133,11 +136,16 @@ func main() {
 		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
 	)
 	reflection.Register(grpcSrv)
-	catalogGrpcServer := api.NewCatalog(profileCatalog, ctrl.Log.WithName("api"))
+	catalogGrpcServer := api.NewCatalogAPI(profileCatalog, ctrl.Log.WithName("api"))
 	protos.RegisterProfilesServiceServer(grpcSrv, catalogGrpcServer)
 
+	//shutdownContext := ctrl.SetupSignalHandler()
+	shutdownContext, cancel := context.WithCancel(context.Background())
+	//defer cancel()
+	interruptChannel := make(chan os.Signal, 2)
+	signal.Notify(interruptChannel, os.Interrupt, syscall.SIGTERM)
+
 	// Serve grpc apis
-	// TODO: think about graceful shutdown.
 	go func() {
 		if err := grpcSrv.Serve(grpcLis); err != nil {
 			setupLog.Error(err, "unable to start grpc api server")
@@ -154,15 +162,32 @@ func main() {
 		setupLog.Error(err, "failed to register service handler from endpoint")
 		os.Exit(1)
 	}
+
+	server := &http.Server{Addr: apiAddr, Handler: mux}
 	go func() {
-		if err := http.ListenAndServe(apiAddr, mux); err != nil {
+		if err := server.ListenAndServe(); err != nil {
 			setupLog.Error(err, "unable to start profiles api server")
 			os.Exit(1)
 		}
 	}()
 
+	// gracefully shutdown both servers when the manager receives and interrupt.
+	go func() {
+		<-interruptChannel
+		// shutdown the manager
+		cancel()
+		// shutdown grpc-gateway server
+		serverTimeoutContext, timeout := context.WithTimeout(context.Background(), 10*time.Second)
+		defer timeout()
+		if err := server.Shutdown(serverTimeoutContext); err != nil {
+			setupLog.Error(err, "Failed to gracefully shutdown server... terminating.")
+		}
+		// shutdown grpc server
+		grpcSrv.GracefulStop()
+	}()
+
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(shutdownContext); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}

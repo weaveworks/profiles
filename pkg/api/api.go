@@ -60,7 +60,8 @@ func (p *ProfilesCatalogService) GetWithVersion(ctx context.Context, request *pr
 	sourceName := request.GetSourceName()
 	profileName := request.GetProfileName()
 	version := request.GetVersion()
-	logger := p.logger.WithValues("func", "Get", "catalog", sourceName, "profile", profileName, "version", version)
+	logger := p.logger.WithValues("func", "GetWithVersion", "catalog", sourceName, "profile", profileName, "version", version)
+	logger.Info("Calling this method")
 	if sourceName == "" || profileName == "" || version == "" {
 		errMsg := fmt.Errorf("missing query param: sourceName: %q, profileName: %q, version: %q", sourceName, profileName, version)
 		logger.Error(errMsg, "catalog, profile and/or version not set")
@@ -81,13 +82,14 @@ func (p *ProfilesCatalogService) ProfilesGreaterThanVersion(ctx context.Context,
 	profileName := request.GetProfileName()
 	version := request.GetVersion()
 	logger := p.logger.WithValues("func", "ProfilesGreaterThanVersion", "catalog", sourceName, "profile", profileName, "version", version)
+	logger.Info("calling...")
 	if sourceName == "" || profileName == "" || version == "" {
 		errMsg := fmt.Errorf("missing query param: sourceName: %q, profileName: %q, version: %q", sourceName, profileName, version)
 		logger.Error(errMsg, "catalog, profile and/or version not set")
 		return nil, status.Errorf(codes.InvalidArgument, errMsg.Error())
 	}
 	result := p.profileCatalog.ProfilesGreaterThanVersion(logger, sourceName, profileName, version)
-	if result == nil {
+	if len(result) == 0 {
 		return nil, status.Errorf(codes.NotFound, "profile not found")
 	}
 	logger.Info("profile found", "profile", result)
@@ -117,8 +119,8 @@ func (p *ProfilesCatalogService) Search(ctx context.Context, request *protos.Sea
 
 var _ protos.ProfilesServiceServer = &ProfilesCatalogService{}
 
-// NewCatalog .
-func NewCatalog(profileCatalog Catalog, logger logr.Logger) *ProfilesCatalogService {
+// NewCatalogAPI .
+func NewCatalogAPI(profileCatalog Catalog, logger logr.Logger) *ProfilesCatalogService {
 	return &ProfilesCatalogService{
 		profileCatalog: profileCatalog,
 		logger:         logger,
