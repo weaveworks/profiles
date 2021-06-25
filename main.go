@@ -25,10 +25,11 @@ import (
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
-	"github.com/weaveworks/profiles/pkg/api"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/weaveworks/profiles/pkg/api"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -90,7 +91,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	profileCatalog := catalog.New()
+	profileCatalog := catalog.New(setupLog.WithName("catalog"))
 
 	if err = (&controllers.ProfileCatalogSourceReconciler{
 		Client:   mgr.GetClient(),

@@ -18,12 +18,12 @@ type Catalog interface {
 	// Get will return a specific profile from the catalog
 	Get(sourceName, profileName string) *profilesv1.ProfileCatalogEntry
 	// GetWithVersion will return a specific profile from the catalog
-	GetWithVersion(logger logr.Logger, sourceName, profileName, version string) *profilesv1.ProfileCatalogEntry
+	GetWithVersion(sourceName, profileName, version string) *profilesv1.ProfileCatalogEntry
 	// ProfilesGreaterThanVersion returns all profiles which are of a greater version for a given profile with a version.
-	ProfilesGreaterThanVersion(logger logr.Logger, sourceName, profileName, version string) []profilesv1.ProfileCatalogEntry
+	ProfilesGreaterThanVersion(sourceName, profileName, version string) []profilesv1.ProfileCatalogEntry
 	// Search will return a list of profiles which match query
 	Search(query string) []profilesv1.ProfileCatalogEntry
-	// Search will return a list of all profiles
+	// SearchAll will return a list of all profiles
 	SearchAll() []profilesv1.ProfileCatalogEntry
 }
 
@@ -97,7 +97,7 @@ func (a *API) ProfileWithVersionHandler(w http.ResponseWriter, r *http.Request) 
 		a.logAndWriteHeader(w, http.StatusBadRequest)
 		return
 	}
-	result := a.profileCatalog.GetWithVersion(logger, sourceName, profileName, catalogVersion)
+	result := a.profileCatalog.GetWithVersion(sourceName, profileName, catalogVersion)
 	if result == nil {
 		logger.Info("profile not found")
 		a.logAndWriteHeader(w, http.StatusNotFound)
@@ -116,7 +116,7 @@ func (a *API) ProfileGreaterThanVersionHandler(w http.ResponseWriter, r *http.Re
 		a.logAndWriteHeader(w, http.StatusBadRequest)
 		return
 	}
-	result := a.profileCatalog.ProfilesGreaterThanVersion(logger, sourceName, profileName, catalogVersion)
+	result := a.profileCatalog.ProfilesGreaterThanVersion(sourceName, profileName, catalogVersion)
 	if len(result) == 0 {
 		logger.Info("profiles not found")
 		a.logAndWriteHeader(w, http.StatusNotFound)

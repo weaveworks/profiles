@@ -15,13 +15,15 @@ import (
 // Catalog provides an in-memory cache of profiles from the cluster which can be queried easily.
 //type Catalog map[string][]profilesv1.ProfileCatalogEntry
 type Catalog struct {
-	m sync.Map
+	m      sync.Map
+	logger logr.Logger
 }
 
 // New creates a new, empty catalog.
-func New() *Catalog {
+func New(logger logr.Logger) *Catalog {
 	return &Catalog{
-		m: sync.Map{},
+		m:      sync.Map{},
+		logger: logger,
 	}
 }
 
@@ -77,14 +79,14 @@ func (c *Catalog) Get(sourceName, profileName string) *profilesv1.ProfileCatalog
 }
 
 // GetWithVersion returns the profile description `profileName` with the given version.
-func (c *Catalog) GetWithVersion(logger logr.Logger, sourceName, profileName, profileVersion string) *profilesv1.ProfileCatalogEntry {
+func (c *Catalog) GetWithVersion(sourceName, profileName, profileVersion string) *profilesv1.ProfileCatalogEntry {
 	profiles, ok := c.m.Load(sourceName)
 	if !ok {
 		return nil
 	}
 
 	if profileVersion == "latest" {
-		versions := c.ProfilesGreaterThanVersion(logger, sourceName, profileName, profileVersion)
+		versions := c.ProfilesGreaterThanVersion(sourceName, profileName, profileVersion)
 		if len(versions) == 0 {
 			return nil
 		}
@@ -106,7 +108,7 @@ type profileDescriptionWithVersion struct {
 
 // ProfilesGreaterThanVersion returns all profiles which are of a greater version for a given profile with a version.
 // If set to "latest" all versions are returned. Versions are ordered in descending order
-func (c *Catalog) ProfilesGreaterThanVersion(logger logr.Logger, sourceName, profileName, profileVersion string) []profilesv1.ProfileCatalogEntry {
+func (c *Catalog) ProfilesGreaterThanVersion(sourceName, profileName, profileVersion string) []profilesv1.ProfileCatalogEntry {
 	var profilesWithValidVersion []profileDescriptionWithVersion
 	profiles, ok := c.m.Load(sourceName)
 	if !ok {
@@ -119,7 +121,7 @@ func (c *Catalog) ProfilesGreaterThanVersion(logger logr.Logger, sourceName, pro
 	for _, p := range profiles.([]profilesv1.ProfileCatalogEntry) {
 		v, err := version.ParseVersion(profilesv1.GetVersionFromTag(p.Tag))
 		if err != nil {
-			logger.Error(err, "failed to parse profile version", "profile", p)
+			c.logger.Error(err, "failed to parse profile version", "profile", p)
 			continue
 		}
 		if p.Name == profileName {

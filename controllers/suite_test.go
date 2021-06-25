@@ -87,7 +87,7 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	profiles := catalog.New()
+	profiles := catalog.New(logf.Log)
 	catalogReconciler = &controllers.ProfileCatalogSourceReconciler{
 		Client:   k8sManager.GetClient(),
 		Log:      ctrl.Log.WithName("controllers").WithName("profilecatalog"),

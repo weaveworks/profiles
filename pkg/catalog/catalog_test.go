@@ -17,7 +17,7 @@ var _ = Describe("Catalog", func() {
 	)
 
 	BeforeEach(func() {
-		c = catalog.New()
+		c = catalog.New(logger)
 		catName = "whiskers"
 	})
 
@@ -70,7 +70,7 @@ var _ = Describe("Catalog", func() {
 				{ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}}}
 			c.Update(catName, profiles...)
 
-			Expect(c.GetWithVersion(logger, catName, "foo", "v0.1.0")).To(Equal(
+			Expect(c.GetWithVersion(catName, "foo", "v0.1.0")).To(Equal(
 				&profilesv1.ProfileCatalogEntry{ProfileDescription: profilesv1.ProfileDescription{Name: "foo", Description: "install foo"}, Tag: "v0.1.0", CatalogSource: catName},
 			))
 		})
@@ -80,13 +80,13 @@ var _ = Describe("Catalog", func() {
 				profiles := []profilesv1.ProfileCatalogEntry{{ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}, Tag: "foo/v0.1.0"}, {ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}, Tag: "foo/0.2.0"}, {ProfileDescription: profilesv1.ProfileDescription{Name: "bar"}, Tag: "bar/0.3.0"}, {ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}}}
 				c.Update(catName, profiles...)
 
-				Expect(c.GetWithVersion(logger, catName, "foo", "latest")).To(Equal(
+				Expect(c.GetWithVersion(catName, "foo", "latest")).To(Equal(
 					&profilesv1.ProfileCatalogEntry{ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}, Tag: "foo/0.2.0", CatalogSource: catName},
 				))
 
 				profiles = []profilesv1.ProfileCatalogEntry{{ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}, Tag: "0.2.0"}, {ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}, Tag: "v0.3.0"}, {ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}}}
 				c.Update(catName, profiles...)
-				Expect(c.GetWithVersion(logger, catName, "foo", "latest")).To(Equal(
+				Expect(c.GetWithVersion(catName, "foo", "latest")).To(Equal(
 					&profilesv1.ProfileCatalogEntry{ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}, Tag: "v0.3.0", CatalogSource: catName},
 				))
 			})
@@ -96,7 +96,7 @@ var _ = Describe("Catalog", func() {
 					profiles := []profilesv1.ProfileCatalogEntry{{ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}, Tag: "vsda012!.1.0"}, {ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}, Tag: "!0.!2.0"}, {ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}}}
 					c.Update(catName, profiles...)
 
-					Expect(c.GetWithVersion(logger, catName, "foo", "latest")).To(BeNil())
+					Expect(c.GetWithVersion(catName, "foo", "latest")).To(BeNil())
 				})
 			})
 		})
@@ -119,7 +119,7 @@ var _ = Describe("Catalog", func() {
 			}
 			c.Update(catName, profiles...)
 
-			Expect(c.ProfilesGreaterThanVersion(logger, catName, "foo", "v0.1.0")).To(Equal(
+			Expect(c.ProfilesGreaterThanVersion(catName, "foo", "v0.1.0")).To(Equal(
 				[]profilesv1.ProfileCatalogEntry{
 					{ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}, Tag: "v0.3.0", CatalogSource: catName},
 					{ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}, Tag: "v0.2.0", CatalogSource: catName},
