@@ -157,7 +157,21 @@ docker-push: ## Push the docker image
 bundle-build: ## Build the bundle image.
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 
+##@ Docs
+
+docs: mdtoc ## Update the Readme
+	mdtoc -inplace README.md
+
+mdtoc: ## Download mdtoc binary if necessary
+	GO111MODULE=off go get sigs.k8s.io/mdtoc || true
+
 ##@ Utilities
+
+generate-protoc: ## Generate the protobuf files
+	buf generate
+
+lint-protoc: ## lint the protocol files
+	buf lint
 
 .PHONY: help
 help:  ## Display this help. Thanks to https://www.thapaliya.com/en/writings/well-documented-makefiles/
@@ -181,4 +195,3 @@ GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
 endef
-

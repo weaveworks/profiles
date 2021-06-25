@@ -19,6 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
+	"github.com/weaveworks/profiles/pkg/protos"
 )
 
 const (
@@ -115,7 +116,7 @@ var _ = Describe("Acceptance", func() {
 		Context("search", func() {
 			It("returns the matching catalogs", func() {
 				Eventually(func() []profilesv1.ProfileCatalogEntry {
-					req, err := http.NewRequest("GET", "http://localhost:8000/profiles", nil)
+					req, err := http.NewRequest("GET", "http://localhost:8000/v1/profiles", nil)
 					Expect(err).NotTo(HaveOccurred())
 					u, err := url.Parse("http://localhost:8000")
 					Expect(err).NotTo(HaveOccurred())
@@ -126,16 +127,17 @@ var _ = Describe("Acceptance", func() {
 					resp, err := http.DefaultClient.Do(req)
 					Expect(err).NotTo(HaveOccurred())
 					Expect(resp.StatusCode).To(Equal(http.StatusOK))
-					var descriptions []profilesv1.ProfileCatalogEntry
+					var descriptions protos.GRPCProfileCatalogEntryList
 					_ = json.NewDecoder(resp.Body).Decode(&descriptions)
-					return descriptions
+					return descriptions.Items
 				}).Should(ConsistOf(
 					expectedNginx1,
 					expectedNginx2,
 					profilesv1.ProfileCatalogEntry{
 						ProfileDescription: profilesv1.ProfileDescription{
-							Name:        "nginx-2",
-							Description: "nginx 1",
+							Name:          "nginx-2",
+							Description:   "nginx 1",
+							Prerequisites: []string{},
 						},
 						CatalogSource: sourceName,
 					},
@@ -425,8 +427,9 @@ var _ = Describe("Acceptance", func() {
 					return description
 				}).Should(Equal(profilesv1.ProfileCatalogEntry{
 					ProfileDescription: profilesv1.ProfileDescription{
-						Name:        "new-profile",
-						Description: "I am new here",
+						Name:          "new-profile",
+						Description:   "I am new here",
+						Prerequisites: []string{},
 					},
 					CatalogSource: sourceName,
 				}))
@@ -450,7 +453,7 @@ var _ = Describe("Acceptance", func() {
 })
 
 func getProfile(profileName, sourceName, version string) (profilesv1.ProfileCatalogEntry, error) {
-	u, err := url.Parse("http://localhost:8000/profiles")
+	u, err := url.Parse("http://localhost:8000/v1/profiles")
 	if err != nil {
 		return profilesv1.ProfileCatalogEntry{}, err
 	}
@@ -465,15 +468,15 @@ func getProfile(profileName, sourceName, version string) (profilesv1.ProfileCata
 	if resp.StatusCode != http.StatusOK {
 		return profilesv1.ProfileCatalogEntry{}, fmt.Errorf("expected status code 200; got %d", resp.StatusCode)
 	}
-	var p profilesv1.ProfileCatalogEntry
+	var p protos.GRPCProfileCatalogEntry
 	if err := json.NewDecoder(resp.Body).Decode(&p); err != nil {
 		return profilesv1.ProfileCatalogEntry{}, err
 	}
-	return p, nil
+	return p.Item, nil
 }
 
 func getProfileUpdates(profileName, sourceName, version string) ([]profilesv1.ProfileCatalogEntry, error) {
-	u := fmt.Sprintf("http://localhost:8000/profiles/%s/%s/%s/available_updates", sourceName, profileName, version)
+	u := fmt.Sprintf("http://localhost:8000/v1/profiles/%s/%s/%s/available_updates", sourceName, profileName, version)
 	resp, err := http.Get(u)
 	if err != nil {
 		return nil, err
@@ -484,9 +487,9 @@ func getProfileUpdates(profileName, sourceName, version string) ([]profilesv1.Pr
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("expected status code 200; got %d", resp.StatusCode)
 	}
-	var p []profilesv1.ProfileCatalogEntry
+	var p protos.GRPCProfileCatalogEntryList
 	if err := json.NewDecoder(resp.Body).Decode(&p); err != nil {
 		return nil, err
 	}
-	return p, nil
+	return p.Items, nil
 }

@@ -1,33 +1,185 @@
 package api_test
 
 import (
-	"net/http"
-	"net/http/httptest"
-	"net/url"
-
-	"github.com/gorilla/mux"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"context"
 
 	"github.com/go-logr/logr"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/pkg/api"
 	catfakes "github.com/weaveworks/profiles/pkg/api/fakes"
+	"github.com/weaveworks/profiles/pkg/protos"
 )
 
-var _ = Describe("Api", func() {
+var _ = Describe("API", func() {
 	var (
-		catalogAPI  api.API
+		catalogAPI  api.CatalogAPI
 		fakeCatalog *catfakes.FakeCatalog
 	)
 
 	BeforeEach(func() {
 		fakeCatalog = new(catfakes.FakeCatalog)
-		catalogAPI = api.New(fakeCatalog, logr.Discard())
+		catalogAPI = api.NewCatalogAPI(fakeCatalog, logr.Discard())
 	})
 
-	Context("/profiles", func() {
+	Context("Get", func() {
 		When("a matching profile exists", func() {
+			BeforeEach(func() {
+				fakeCatalog.GetReturns(&profilesv1.ProfileCatalogEntry{
+					ProfileDescription: profilesv1.ProfileDescription{
+						Name:        "nginx-1",
+						Description: "nginx 1",
+					},
+					CatalogSource: "foo",
+				})
+			})
+
+			It("returns the matching profiles from the catalog", func() {
+				result, err := catalogAPI.Get(context.Background(), &protos.GetRequest{
+					ProfileName: "nginx-1",
+					SourceName:  "foo",
+				})
+				Expect(err).NotTo(HaveOccurred())
+				expected := &protos.GetResponse{
+					Item: &protos.ProfileCatalogEntry{
+						CatalogSource: "foo",
+						Name:          "nginx-1",
+						Description:   "nginx 1",
+					},
+				}
+				Expect(result).To(Equal(expected))
+			})
+		})
+		When("there is no matching profile", func() {
+			It("return a not found error", func() {
+				result, err := catalogAPI.Get(context.Background(), &protos.GetRequest{
+					ProfileName: "invalid",
+					SourceName:  "invalid",
+				})
+				grpcErr, ok := status.FromError(err)
+				Expect(ok).To(BeTrue())
+				Expect(grpcErr.Message()).To(Equal("profile not found"))
+				Expect(grpcErr.Code()).To(Equal(codes.NotFound))
+				Expect(result).To(BeNil())
+			})
+		})
+		When("source name empty", func() {
+			It("returns a proper error", func() {
+				result, err := catalogAPI.Get(context.Background(), &protos.GetRequest{
+					ProfileName: "foo",
+				})
+				grpcErr, ok := status.FromError(err)
+				Expect(ok).To(BeTrue())
+				Expect(grpcErr.Message()).To(Equal("missing query param: sourceName: \"\", profileName: \"foo\""))
+				Expect(grpcErr.Code()).To(Equal(codes.InvalidArgument))
+				Expect(result).To(BeNil())
+			})
+		})
+		When("profile name empty", func() {
+			It("returns a proper error", func() {
+				result, err := catalogAPI.Get(context.Background(), &protos.GetRequest{
+					SourceName: "foo",
+				})
+				grpcErr, ok := status.FromError(err)
+				Expect(ok).To(BeTrue())
+				Expect(grpcErr.Message()).To(Equal("missing query param: sourceName: \"foo\", profileName: \"\""))
+				Expect(grpcErr.Code()).To(Equal(codes.InvalidArgument))
+				Expect(result).To(BeNil())
+			})
+		})
+	})
+	Context("GetWithVersion", func() {
+		When("a matching profile exists", func() {
+			BeforeEach(func() {
+				fakeCatalog.GetWithVersionReturns(&profilesv1.ProfileCatalogEntry{
+					ProfileDescription: profilesv1.ProfileDescription{
+						Name:        "nginx-1",
+						Description: "nginx 1",
+					},
+					CatalogSource: "foo",
+					Tag:           "v0.0.1",
+				})
+			})
+
+			It("returns the matching profiles from the catalog", func() {
+				result, err := catalogAPI.GetWithVersion(context.Background(), &protos.GetWithVersionRequest{
+					ProfileName: "nginx-1",
+					SourceName:  "foo",
+					Version:     "v0.0.1",
+				})
+				Expect(err).NotTo(HaveOccurred())
+				expected := &protos.GetWithVersionResponse{
+					Item: &protos.ProfileCatalogEntry{
+						CatalogSource: "foo",
+						Name:          "nginx-1",
+						Description:   "nginx 1",
+						Tag:           "v0.0.1",
+					},
+				}
+				Expect(result).To(Equal(expected))
+			})
+		})
+		When("there is no matching profile", func() {
+			It("return a not found error", func() {
+				result, err := catalogAPI.GetWithVersion(context.Background(), &protos.GetWithVersionRequest{
+					ProfileName: "invalid",
+					SourceName:  "invalid",
+					Version:     "invalid",
+				})
+				grpcErr, ok := status.FromError(err)
+				Expect(ok).To(BeTrue())
+				Expect(grpcErr.Message()).To(Equal("profile not found"))
+				Expect(grpcErr.Code()).To(Equal(codes.NotFound))
+				Expect(result).To(BeNil())
+			})
+		})
+		When("source name empty", func() {
+			It("returns a proper error", func() {
+				result, err := catalogAPI.GetWithVersion(context.Background(), &protos.GetWithVersionRequest{
+					ProfileName: "foo",
+					Version:     "whatever",
+				})
+				grpcErr, ok := status.FromError(err)
+				Expect(ok).To(BeTrue())
+				Expect(grpcErr.Message()).To(Equal("missing query param: sourceName: \"\", profileName: \"foo\", version: \"whatever\""))
+				Expect(grpcErr.Code()).To(Equal(codes.InvalidArgument))
+				Expect(result).To(BeNil())
+			})
+		})
+		When("profile name empty", func() {
+			It("returns a proper error", func() {
+				result, err := catalogAPI.GetWithVersion(context.Background(), &protos.GetWithVersionRequest{
+					SourceName: "foo",
+					Version:    "whatever",
+				})
+				grpcErr, ok := status.FromError(err)
+				Expect(ok).To(BeTrue())
+				Expect(grpcErr.Message()).To(Equal("missing query param: sourceName: \"foo\", profileName: \"\", version: \"whatever\""))
+				Expect(grpcErr.Code()).To(Equal(codes.InvalidArgument))
+				Expect(result).To(BeNil())
+			})
+		})
+		When("version name empty", func() {
+			It("returns a proper error", func() {
+				result, err := catalogAPI.GetWithVersion(context.Background(), &protos.GetWithVersionRequest{
+					SourceName:  "foo",
+					ProfileName: "bar",
+				})
+				grpcErr, ok := status.FromError(err)
+				Expect(ok).To(BeTrue())
+				Expect(grpcErr.Message()).To(Equal("missing query param: sourceName: \"foo\", profileName: \"bar\", version: \"\""))
+				Expect(grpcErr.Code()).To(Equal(codes.InvalidArgument))
+				Expect(result).To(BeNil())
+			})
+		})
+	})
+
+	Context("Search", func() {
+		When("a query matches some profiles", func() {
 			BeforeEach(func() {
 				fakeCatalog.SearchReturns([]profilesv1.ProfileCatalogEntry{
 					{
@@ -39,61 +191,24 @@ var _ = Describe("Api", func() {
 					},
 				})
 			})
-
-			It("returns the matching profiles from the catalog", func() {
-				req, err := http.NewRequest("GET", "/profiles", nil)
+			It("returns valid results", func() {
+				result, err := catalogAPI.Search(context.Background(), &protos.SearchRequest{
+					Name: "nginx",
+				})
 				Expect(err).NotTo(HaveOccurred())
-				u, err := url.Parse("http://example.com")
-				Expect(err).NotTo(HaveOccurred())
-				q := u.Query()
-				q.Add("name", "nginx")
-				req.URL.RawQuery = q.Encode()
-				Expect(err).NotTo(HaveOccurred())
-
-				rr := httptest.NewRecorder()
-				handler := http.HandlerFunc(catalogAPI.ProfilesHandler)
-
-				handler.ServeHTTP(rr, req)
-
-				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(ContainSubstring(`[{"catalog":"foo","name":"nginx-1","description":"nginx 1"}]`))
-				Expect(fakeCatalog.SearchCallCount()).To(Equal(1))
-				actualProfileName := fakeCatalog.SearchArgsForCall(0)
-				Expect(actualProfileName).To(Equal("nginx"))
+				expected := &protos.SearchResponse{
+					Items: []*protos.ProfileCatalogEntry{
+						{
+							CatalogSource: "foo",
+							Name:          "nginx-1",
+							Description:   "nginx 1",
+						},
+					},
+				}
+				Expect(result).To(Equal(expected))
 			})
 		})
-
-		When("no matching profiles are found", func() {
-			BeforeEach(func() {
-				fakeCatalog.SearchReturns([]profilesv1.ProfileCatalogEntry{})
-			})
-
-			It("returns an empty array but does not 404", func() {
-				req, err := http.NewRequest("GET", "/profiles", nil)
-				Expect(err).NotTo(HaveOccurred())
-				u, err := url.Parse("http://example.com")
-				Expect(err).NotTo(HaveOccurred())
-				q := u.Query()
-				q.Add("name", "nginx")
-				req.URL.RawQuery = q.Encode()
-				Expect(err).NotTo(HaveOccurred())
-
-				rr := httptest.NewRecorder()
-				handler := http.HandlerFunc(catalogAPI.ProfilesHandler)
-
-				handler.ServeHTTP(rr, req)
-
-				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(ContainSubstring(`[]`))
-				Expect(fakeCatalog.SearchCallCount()).To(Equal(1))
-				actualProfileName := fakeCatalog.SearchArgsForCall(0)
-				Expect(actualProfileName).To(Equal("nginx"))
-			})
-		})
-	})
-
-	Context("/profiles", func() {
-		When("profiles endpoint is called without a query string", func() {
+		When("no query is provided", func() {
 			BeforeEach(func() {
 				fakeCatalog.SearchAllReturns([]profilesv1.ProfileCatalogEntry{
 					{
@@ -105,399 +220,124 @@ var _ = Describe("Api", func() {
 					},
 					{
 						ProfileDescription: profilesv1.ProfileDescription{
-							Name:        "nginx-2",
-							Description: "nginx 2",
-						},
-						CatalogSource: "foo",
-					},
-					{
-						ProfileDescription: profilesv1.ProfileDescription{
-							Name:        "nginx-3",
-							Description: "nginx 3",
+							Name:        "redis-1",
+							Description: "redis 1",
 						},
 						CatalogSource: "foo",
 					},
 				})
 			})
-
-			It("returns all profiles from the catalog", func() {
-				req, err := http.NewRequest("GET", "/profiles", nil)
+			It("returns all profiles", func() {
+				result, err := catalogAPI.Search(context.Background(), &protos.SearchRequest{})
 				Expect(err).NotTo(HaveOccurred())
-				_, err = url.Parse("http://example.com")
-				Expect(err).NotTo(HaveOccurred())
-				rr := httptest.NewRecorder()
-				handler := http.HandlerFunc(catalogAPI.ProfilesHandler)
-
-				handler.ServeHTTP(rr, req)
-
-				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(ContainSubstring(`{"catalog":"foo","name":"nginx-1","description":"nginx 1"}`))
-				Expect(rr.Body.String()).To(ContainSubstring(`{"catalog":"foo","name":"nginx-2","description":"nginx 2"}`))
-				Expect(rr.Body.String()).To(ContainSubstring(`{"catalog":"foo","name":"nginx-3","description":"nginx 3"}`))
-			})
-		})
-
-		When("no matching profiles are found when searching for all profiles", func() {
-			BeforeEach(func() {
-				fakeCatalog.SearchAllReturns([]profilesv1.ProfileCatalogEntry{})
-			})
-
-			It("returns an empty array but does not 404", func() {
-				req, err := http.NewRequest("GET", "/profiles", nil)
-				Expect(err).NotTo(HaveOccurred())
-				_, err = url.Parse("http://example.com")
-				Expect(err).NotTo(HaveOccurred())
-				rr := httptest.NewRecorder()
-				handler := http.HandlerFunc(catalogAPI.ProfilesHandler)
-
-				handler.ServeHTTP(rr, req)
-
-				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(ContainSubstring(`[]`))
-			})
-		})
-	})
-
-	Context("/profiles/catalog/profile-name", func() {
-		var (
-			sourceName, profileName string
-		)
-
-		BeforeEach(func() {
-			sourceName, profileName = "catalog", "nginx-1"
-		})
-
-		When("the requested profile exists", func() {
-			BeforeEach(func() {
-				fakeCatalog.GetReturns(&profilesv1.ProfileCatalogEntry{
-					ProfileDescription: profilesv1.ProfileDescription{
-						Name:        "nginx-1",
-						Description: "nginx 1",
-					},
-					CatalogSource: "catalog",
-				})
-			})
-
-			It("returns the profile summary from the catalog", func() {
-				req, err := http.NewRequest("GET", "/profiles", nil)
-				req = mux.SetURLVars(req, map[string]string{"catalog": sourceName, "profile": profileName})
-				Expect(err).NotTo(HaveOccurred())
-
-				rr := httptest.NewRecorder()
-				handler := http.HandlerFunc(catalogAPI.ProfileHandler)
-
-				handler.ServeHTTP(rr, req)
-
-				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(ContainSubstring(`{"catalog":"catalog","name":"nginx-1","description":"nginx 1"}`))
-				Expect(fakeCatalog.GetCallCount()).To(Equal(1))
-				actualSourceName, actualProfileName := fakeCatalog.GetArgsForCall(0)
-				Expect(actualSourceName).To(Equal(sourceName))
-				Expect(actualProfileName).To(Equal(profileName))
-			})
-		})
-
-		When("the requested profile does not exist", func() {
-			BeforeEach(func() {
-				fakeCatalog.GetReturns(nil)
-			})
-
-			It("returns a 404", func() {
-				req, err := http.NewRequest("GET", "/profiles", nil)
-				req = mux.SetURLVars(req, map[string]string{"catalog": sourceName, "profile": profileName})
-				Expect(err).NotTo(HaveOccurred())
-
-				rr := httptest.NewRecorder()
-				handler := http.HandlerFunc(catalogAPI.ProfileHandler)
-
-				handler.ServeHTTP(rr, req)
-
-				Expect(rr.Code).To(Equal(http.StatusNotFound))
-				Expect(fakeCatalog.GetCallCount()).To(Equal(1))
-				actualSourceName, actualProfileName := fakeCatalog.GetArgsForCall(0)
-				Expect(actualSourceName).To(Equal(sourceName))
-				Expect(actualProfileName).To(Equal(profileName))
-			})
-		})
-
-		When("a query param is missing", func() {
-			BeforeEach(func() {
-				fakeCatalog.GetReturns(nil)
-			})
-			Context("profileName", func() {
-				It("returns a 400", func() {
-					req, err := http.NewRequest("GET", "/profiles", nil)
-					req = mux.SetURLVars(req, map[string]string{"catalog": sourceName})
-					Expect(err).NotTo(HaveOccurred())
-
-					rr := httptest.NewRecorder()
-					handler := http.HandlerFunc(catalogAPI.ProfileHandler)
-
-					handler.ServeHTTP(rr, req)
-
-					Expect(rr.Code).To(Equal(http.StatusBadRequest))
-					Expect(fakeCatalog.GetCallCount()).To(Equal(0))
-				})
-			})
-
-			Context("profileName", func() {
-				It("returns a 400", func() {
-					req, err := http.NewRequest("GET", "/profiles", nil)
-					req = mux.SetURLVars(req, map[string]string{"profileName": sourceName})
-					Expect(err).NotTo(HaveOccurred())
-
-					rr := httptest.NewRecorder()
-					handler := http.HandlerFunc(catalogAPI.ProfileHandler)
-
-					handler.ServeHTTP(rr, req)
-
-					Expect(rr.Code).To(Equal(http.StatusBadRequest))
-					Expect(fakeCatalog.GetCallCount()).To(Equal(0))
-				})
-			})
-		})
-	})
-
-	Context("/profiles/catalog/profile-name/version", func() {
-		var (
-			sourceName, profileName, version string
-		)
-
-		BeforeEach(func() {
-			sourceName, profileName, version = "catalog", "nginx-1", "v0.1.0"
-		})
-
-		When("the requested profile exists", func() {
-			BeforeEach(func() {
-				fakeCatalog.GetWithVersionReturns(&profilesv1.ProfileCatalogEntry{
-					ProfileDescription: profilesv1.ProfileDescription{
-						Name:        "nginx-1",
-						Description: "nginx 1",
-					},
-					CatalogSource: "catalog",
-					Tag:           "v0.1.0",
-				})
-			})
-
-			It("returns the profile summary from the catalog", func() {
-				req, err := http.NewRequest("GET", "/profile/catalog/nginx-1/v0.1.0", nil)
-				req = mux.SetURLVars(req, map[string]string{"catalog": sourceName, "profile": profileName, "version": version})
-				Expect(err).NotTo(HaveOccurred())
-
-				rr := httptest.NewRecorder()
-				handler := http.HandlerFunc(catalogAPI.ProfileWithVersionHandler)
-
-				handler.ServeHTTP(rr, req)
-
-				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(ContainSubstring(`{"tag":"v0.1.0","catalog":"catalog","name":"nginx-1","description":"nginx 1"}`))
-
-				Expect(fakeCatalog.GetWithVersionCallCount()).To(Equal(1))
-				_, actualSourceName, actualProfileName, actualCatalogVersion := fakeCatalog.GetWithVersionArgsForCall(0)
-				Expect(actualSourceName).To(Equal(sourceName))
-				Expect(actualProfileName).To(Equal(profileName))
-				Expect(actualCatalogVersion).To(Equal(version))
-			})
-		})
-
-		When("the requested profile does not exist", func() {
-			BeforeEach(func() {
-				fakeCatalog.GetWithVersionReturns(nil)
-			})
-
-			It("returns a 404", func() {
-				req, err := http.NewRequest("GET", "/profile/catalog/nginx-1/v0.3.0", nil)
-				req = mux.SetURLVars(req, map[string]string{"catalog": sourceName, "profile": profileName, "version": version})
-				Expect(err).NotTo(HaveOccurred())
-
-				rr := httptest.NewRecorder()
-				handler := http.HandlerFunc(catalogAPI.ProfileWithVersionHandler)
-
-				handler.ServeHTTP(rr, req)
-
-				Expect(rr.Code).To(Equal(http.StatusNotFound))
-				Expect(fakeCatalog.GetWithVersionCallCount()).To(Equal(1))
-				_, actualSourceName, actualProfileName, actualCatalogVersion := fakeCatalog.GetWithVersionArgsForCall(0)
-				Expect(actualSourceName).To(Equal(sourceName))
-				Expect(actualProfileName).To(Equal(profileName))
-				Expect(actualCatalogVersion).To(Equal(version))
-			})
-		})
-
-		When("a querry param is missing", func() {
-			BeforeEach(func() {
-				fakeCatalog.GetWithVersionReturns(nil)
-			})
-
-			Context("catalog param", func() {
-				It("returns a 404", func() {
-					req, err := http.NewRequest("GET", "/profile/catalog/nginx-1/v0.3.0", nil)
-					req = mux.SetURLVars(req, map[string]string{"profile": profileName, "version": version})
-					Expect(err).NotTo(HaveOccurred())
-
-					rr := httptest.NewRecorder()
-					handler := http.HandlerFunc(catalogAPI.ProfileWithVersionHandler)
-
-					handler.ServeHTTP(rr, req)
-
-					Expect(rr.Code).To(Equal(http.StatusBadRequest))
-					Expect(fakeCatalog.GetWithVersionCallCount()).To(Equal(0))
-				})
-			})
-
-			Context("profile param", func() {
-				It("returns a 404", func() {
-					req, err := http.NewRequest("GET", "/profile/catalog/nginx-1/v0.3.0", nil)
-					req = mux.SetURLVars(req, map[string]string{"catalog": sourceName, "version": version})
-					Expect(err).NotTo(HaveOccurred())
-
-					rr := httptest.NewRecorder()
-					handler := http.HandlerFunc(catalogAPI.ProfileWithVersionHandler)
-
-					handler.ServeHTTP(rr, req)
-
-					Expect(rr.Code).To(Equal(http.StatusBadRequest))
-					Expect(fakeCatalog.GetWithVersionCallCount()).To(Equal(0))
-				})
-			})
-
-			Context("version param", func() {
-				It("returns a 404", func() {
-					req, err := http.NewRequest("GET", "/profile/catalog/nginx-1/v0.3.0", nil)
-					req = mux.SetURLVars(req, map[string]string{"profile": profileName, "catalog": sourceName})
-					Expect(err).NotTo(HaveOccurred())
-
-					rr := httptest.NewRecorder()
-					handler := http.HandlerFunc(catalogAPI.ProfileWithVersionHandler)
-
-					handler.ServeHTTP(rr, req)
-
-					Expect(rr.Code).To(Equal(http.StatusBadRequest))
-					Expect(fakeCatalog.GetWithVersionCallCount()).To(Equal(0))
-				})
-			})
-		})
-	})
-
-	Context("/profiles/catalog/profile-name/version/available_updates", func() {
-		var (
-			sourceName, profileName, version string
-		)
-
-		BeforeEach(func() {
-			sourceName, profileName, version = "catalog", "nginx-1", "v0.1.0"
-		})
-
-		When("the requested profile has newer versions", func() {
-			BeforeEach(func() {
-				fakeCatalog.ProfilesGreaterThanVersionReturns([]profilesv1.ProfileCatalogEntry{
-					{
-						ProfileDescription: profilesv1.ProfileDescription{
-							Name:        "nginx-1",
-							Description: "nginx 1",
+				expected := &protos.SearchResponse{
+					Items: []*protos.ProfileCatalogEntry{
+						{
+							CatalogSource: "foo",
+							Name:          "nginx-1",
+							Description:   "nginx 1",
 						},
-						CatalogSource: "catalog",
-						Tag:           "v0.1.1",
+						{
+							CatalogSource: "foo",
+							Name:          "redis-1",
+							Description:   "redis 1",
+						},
 					},
-				})
-			})
-
-			It("returns the profiles with newer versions", func() {
-				req, err := http.NewRequest("GET", "/profile/catalog/nginx-1/v0.1.0/available_updates", nil)
-				req = mux.SetURLVars(req, map[string]string{"catalog": sourceName, "profile": profileName, "version": version})
-				Expect(err).NotTo(HaveOccurred())
-
-				rr := httptest.NewRecorder()
-				handler := http.HandlerFunc(catalogAPI.ProfileGreaterThanVersionHandler)
-
-				handler.ServeHTTP(rr, req)
-
-				Expect(rr.Code).To(Equal(http.StatusOK))
-				Expect(rr.Body.String()).To(ContainSubstring(`[{"tag":"v0.1.1","catalog":"catalog","name":"nginx-1","description":"nginx 1"}]`))
-
-				Expect(fakeCatalog.ProfilesGreaterThanVersionCallCount()).To(Equal(1))
-				_, actualSourceName, actualProfileName, actualCatalogVersion := fakeCatalog.ProfilesGreaterThanVersionArgsForCall(0)
-				Expect(actualSourceName).To(Equal(sourceName))
-				Expect(actualProfileName).To(Equal(profileName))
-				Expect(actualCatalogVersion).To(Equal(version))
+				}
+				Expect(result).To(Equal(expected))
 			})
 		})
-
-		When("the requested profile does not exist", func() {
-			BeforeEach(func() {
-				fakeCatalog.ProfilesGreaterThanVersionReturns([]profilesv1.ProfileCatalogEntry{})
-			})
-
-			It("returns a 404", func() {
-				req, err := http.NewRequest("GET", "/profile/catalog/nginx-1/v0.3.0/available_updates", nil)
-				req = mux.SetURLVars(req, map[string]string{"catalog": sourceName, "profile": profileName, "version": version})
+		When("there are no profiles", func() {
+			It("returns an empty response", func() {
+				result, err := catalogAPI.Search(context.Background(), &protos.SearchRequest{})
 				Expect(err).NotTo(HaveOccurred())
-
-				rr := httptest.NewRecorder()
-				handler := http.HandlerFunc(catalogAPI.ProfileGreaterThanVersionHandler)
-
-				handler.ServeHTTP(rr, req)
-
-				Expect(rr.Code).To(Equal(http.StatusNotFound))
-				Expect(fakeCatalog.ProfilesGreaterThanVersionCallCount()).To(Equal(1))
-				_, actualSourceName, actualProfileName, actualCatalogVersion := fakeCatalog.ProfilesGreaterThanVersionArgsForCall(0)
-				Expect(actualSourceName).To(Equal(sourceName))
-				Expect(actualProfileName).To(Equal(profileName))
-				Expect(actualCatalogVersion).To(Equal(version))
+				Expect(result.Items).To(BeEmpty())
 			})
 		})
+	})
 
-		When("a querry param is missing", func() {
+	Context("ProfilesGreaterThanVersion", func() {
+		When("there are higher versions for a profile available", func() {
 			BeforeEach(func() {
-				fakeCatalog.GetWithVersionReturns(nil)
+				fakeCatalog.ProfilesGreaterThanVersionReturns([]profilesv1.ProfileCatalogEntry{{
+					ProfileDescription: profilesv1.ProfileDescription{
+						Name:        "nginx-1",
+						Description: "nginx 1",
+					},
+					CatalogSource: "foo",
+					Tag:           "v0.0.2",
+				}})
 			})
 
-			Context("catalog param", func() {
-				It("returns a 404", func() {
-					req, err := http.NewRequest("GET", "/profile/catalog/nginx-1/v0.3.0/available_updates", nil)
-					req = mux.SetURLVars(req, map[string]string{"profile": profileName, "version": version})
-					Expect(err).NotTo(HaveOccurred())
-
-					rr := httptest.NewRecorder()
-					handler := http.HandlerFunc(catalogAPI.ProfileGreaterThanVersionHandler)
-
-					handler.ServeHTTP(rr, req)
-
-					Expect(rr.Code).To(Equal(http.StatusBadRequest))
-					Expect(fakeCatalog.ProfilesGreaterThanVersionCallCount()).To(Equal(0))
+			It("returns the profile with the higher version from the catalog", func() {
+				result, err := catalogAPI.ProfilesGreaterThanVersion(context.Background(), &protos.ProfilesGreaterThanVersionRequest{
+					ProfileName: "nginx-1",
+					SourceName:  "foo",
+					Version:     "v0.0.1",
 				})
+				Expect(err).NotTo(HaveOccurred())
+				expected := &protos.ProfilesGreaterThanVersionResponse{
+					Items: []*protos.ProfileCatalogEntry{{
+						CatalogSource: "foo",
+						Name:          "nginx-1",
+						Description:   "nginx 1",
+						Tag:           "v0.0.2",
+					}},
+				}
+				Expect(result).To(Equal(expected))
 			})
-
-			Context("profile param", func() {
-				It("returns a 404", func() {
-					req, err := http.NewRequest("GET", "/profile/catalog/nginx-1/v0.3.0/available_updates", nil)
-					req = mux.SetURLVars(req, map[string]string{"catalog": sourceName, "version": version})
-					Expect(err).NotTo(HaveOccurred())
-
-					rr := httptest.NewRecorder()
-					handler := http.HandlerFunc(catalogAPI.ProfileGreaterThanVersionHandler)
-
-					handler.ServeHTTP(rr, req)
-
-					Expect(rr.Code).To(Equal(http.StatusBadRequest))
-					Expect(fakeCatalog.ProfilesGreaterThanVersionCallCount()).To(Equal(0))
+		})
+		When("there is no matching profile", func() {
+			It("return a not found error", func() {
+				result, err := catalogAPI.ProfilesGreaterThanVersion(context.Background(), &protos.ProfilesGreaterThanVersionRequest{
+					ProfileName: "invalid",
+					SourceName:  "invalid",
+					Version:     "invalid",
 				})
+				grpcErr, ok := status.FromError(err)
+				Expect(ok).To(BeTrue())
+				Expect(grpcErr.Message()).To(Equal("profile not found"))
+				Expect(grpcErr.Code()).To(Equal(codes.NotFound))
+				Expect(result).To(BeNil())
 			})
-
-			Context("version param", func() {
-				It("returns a 404", func() {
-					req, err := http.NewRequest("GET", "/profile/catalog/nginx-1/v0.3.0/available_updates", nil)
-					req = mux.SetURLVars(req, map[string]string{"profile": profileName, "catalog": sourceName})
-					Expect(err).NotTo(HaveOccurred())
-
-					rr := httptest.NewRecorder()
-					handler := http.HandlerFunc(catalogAPI.ProfileGreaterThanVersionHandler)
-
-					handler.ServeHTTP(rr, req)
-
-					Expect(rr.Code).To(Equal(http.StatusBadRequest))
-					Expect(fakeCatalog.ProfilesGreaterThanVersionCallCount()).To(Equal(0))
+		})
+		When("source name empty", func() {
+			It("returns a proper error", func() {
+				result, err := catalogAPI.ProfilesGreaterThanVersion(context.Background(), &protos.ProfilesGreaterThanVersionRequest{
+					ProfileName: "foo",
+					Version:     "whatever",
 				})
+				grpcErr, ok := status.FromError(err)
+				Expect(ok).To(BeTrue())
+				Expect(grpcErr.Message()).To(Equal("missing query param: sourceName: \"\", profileName: \"foo\", version: \"whatever\""))
+				Expect(grpcErr.Code()).To(Equal(codes.InvalidArgument))
+				Expect(result).To(BeNil())
+			})
+		})
+		When("profile name empty", func() {
+			It("returns a proper error", func() {
+				result, err := catalogAPI.ProfilesGreaterThanVersion(context.Background(), &protos.ProfilesGreaterThanVersionRequest{
+					SourceName: "foo",
+					Version:    "whatever",
+				})
+				grpcErr, ok := status.FromError(err)
+				Expect(ok).To(BeTrue())
+				Expect(grpcErr.Message()).To(Equal("missing query param: sourceName: \"foo\", profileName: \"\", version: \"whatever\""))
+				Expect(grpcErr.Code()).To(Equal(codes.InvalidArgument))
+				Expect(result).To(BeNil())
+			})
+		})
+		When("version name empty", func() {
+			It("returns a proper error", func() {
+				result, err := catalogAPI.ProfilesGreaterThanVersion(context.Background(), &protos.ProfilesGreaterThanVersionRequest{
+					SourceName:  "foo",
+					ProfileName: "bar",
+				})
+				grpcErr, ok := status.FromError(err)
+				Expect(ok).To(BeTrue())
+				Expect(grpcErr.Message()).To(Equal("missing query param: sourceName: \"foo\", profileName: \"bar\", version: \"\""))
+				Expect(grpcErr.Code()).To(Equal(codes.InvalidArgument))
+				Expect(result).To(BeNil())
 			})
 		})
 	})

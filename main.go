@@ -19,16 +19,20 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net/http"
 	"os"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
-	"github.com/weaveworks/profiles/pkg/api"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/weaveworks/profiles/pkg/gateway"
+	pgrpc "github.com/weaveworks/profiles/pkg/grpc"
+	"github.com/weaveworks/profiles/pkg/interrupt"
+	"github.com/weaveworks/profiles/pkg/manager"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -60,10 +64,11 @@ func init() {
 
 func main() {
 	var enableLeaderElection bool
-	var metricsAddr, probeAddr, apiAddr string
+	var metricsAddr, probeAddr, apiAddr, grpcAddr string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.StringVar(&apiAddr, "profiles-api-bind-address", ":8000", "The address the profiles catalog api binds to.")
+	flag.StringVar(&grpcAddr, "profiles-grpc-bind-address", ":50051", "The address the profiles catalog grpc server binds to.")
 
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
@@ -112,17 +117,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info(fmt.Sprintf("starting profiles api server at %s", apiAddr))
-	go func() {
-		if err := http.ListenAndServe(apiAddr, api.New(profileCatalog, ctrl.Log.WithName("api"))); err != nil {
-			setupLog.Error(err, "unable to start profiles api server")
-			os.Exit(1)
-		}
-	}()
+	grpcServer := pgrpc.NewServer(setupLog, profileCatalog, grpcAddr)
+	setupLog.Info(fmt.Sprintf("starting profiles grpc server at %s", grpcAddr))
+
+	setupLog.Info(fmt.Sprintf("starting gateway server at: %s", apiAddr))
+	gatewayServer := gateway.NewServer(setupLog, apiAddr, grpcAddr)
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
+	managerServer := manager.NewServer(setupLog, mgr)
+
+	handler := interrupt.NewInterruptHandler(setupLog, grpcServer, gatewayServer, managerServer)
+	if err := handler.ListenAndGracefulShutdown(); err != nil {
+		setupLog.Error(err, "failed to listen and graceful shutdown services")
 	}
 }

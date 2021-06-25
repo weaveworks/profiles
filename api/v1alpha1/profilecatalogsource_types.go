@@ -58,7 +58,7 @@ type ProfileCatalogEntry struct {
 	Tag string `json:"tag,omitempty"`
 	// CatalogSource is the name of the catalog the profile is listed in
 	// +optional
-	CatalogSource string `json:"catalog,omitempty"`
+	CatalogSource string `json:"catalogSource,omitempty"`
 	// URL is the full URL path to the profile.yaml
 	// +optional
 	URL                string `json:"url,omitempty"`
@@ -72,7 +72,7 @@ type ProfileCatalogSourceStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
-// ProfileCatalogSource is the Schema for the profilecatalogsources API
+// ProfileCatalogSource is the Schema for the ProfileCatalogSources API
 type ProfileCatalogSource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
