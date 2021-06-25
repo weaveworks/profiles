@@ -144,7 +144,7 @@ func main() {
 	})
 
 	setupLog.Info("starting interrupt handler")
-	handler := interrupt.NewInterruptHandler(setupLog, grpcServer, gatewayServer, managerCancelFunc)
+	handler := interrupt.NewInterruptHandler(setupLog, grpcServer.Stop, gatewayServer.Stop, func() { managerCancelFunc() })
 	g.Go(func() error {
 		handler.HandleInterrupts()
 		return nil

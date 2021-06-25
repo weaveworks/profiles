@@ -1,7 +1,6 @@
 package interrupt
 
 import (
-	"context"
 	"errors"
 	"os"
 	"os/signal"
@@ -9,29 +8,25 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-
-	"github.com/weaveworks/profiles/pkg/gateway"
-	"github.com/weaveworks/profiles/pkg/grpc"
 )
 
 const timeout = 15 * time.Second
 
+// Stop defines a function type which is called for all services the handler monitors.
+type Stop func()
+
 // Handler collects all services it handles interrupts for.
 type Handler struct {
-	logger            logr.Logger
-	grpcServer        *grpc.Server
-	gatewayServer     *gateway.Server
-	managerCancelFunc context.CancelFunc
+	logger   logr.Logger
+	services []Stop
 }
 
 // NewInterruptHandler return a new interrupt handler for the given services.
-func NewInterruptHandler(logger logr.Logger, grpcServer *grpc.Server, gatewayServer *gateway.Server, managerCancelFunc context.CancelFunc) *Handler {
+func NewInterruptHandler(logger logr.Logger, services ...Stop) *Handler {
 	logger = logger.WithName("handler")
 	return &Handler{
-		logger:            logger,
-		grpcServer:        grpcServer,
-		gatewayServer:     gatewayServer,
-		managerCancelFunc: managerCancelFunc,
+		logger:   logger,
+		services: services,
 	}
 }
 
@@ -54,12 +49,9 @@ func (h *Handler) HandleInterrupts() {
 		}
 	}()
 	h.logger.Info("received shutdown signal... gracefully terminating servers...")
-	// shutdown the manager
-	h.managerCancelFunc()
-	// shutdown grpc-gateway server
-	h.gatewayServer.Stop()
-	// shutdown grpc server
-	h.grpcServer.Stop()
+	for _, s := range h.services {
+		s()
+	}
 	h.logger.Info("all done. Goodbye.")
 	done <- struct{}{}
 }
