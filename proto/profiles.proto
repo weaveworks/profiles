@@ -31,9 +31,6 @@ service ProfilesService {
     }
 }
 
-// Empty parameters.
-message Empty{}
-
 // GetRequest defines parameters for the Get endpoint.
 message GetRequest{
     // Name of the catalog
