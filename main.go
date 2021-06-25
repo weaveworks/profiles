@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -25,15 +24,15 @@ import (
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
-	"golang.org/x/sync/errgroup"
-
-	"github.com/weaveworks/profiles/pkg/gateway"
-	pgrpc "github.com/weaveworks/profiles/pkg/grpc"
-	"github.com/weaveworks/profiles/pkg/interrupt"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/weaveworks/profiles/pkg/gateway"
+	pgrpc "github.com/weaveworks/profiles/pkg/grpc"
+	"github.com/weaveworks/profiles/pkg/interrupt"
+	"github.com/weaveworks/profiles/pkg/manager"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -118,40 +117,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	// create error group handler
-	g, _ := errgroup.WithContext(context.Background())
-
-	grpcServer := pgrpc.NewGRPCServer(setupLog, profileCatalog, grpcAddr)
+	grpcServer := pgrpc.NewServer(setupLog, profileCatalog, grpcAddr)
 	setupLog.Info(fmt.Sprintf("starting profiles grpc server at %s", grpcAddr))
-	g.Go(func() error {
-		return grpcServer.Start()
-	})
 
 	setupLog.Info(fmt.Sprintf("starting gateway server at: %s", apiAddr))
-	gatewayServer := gateway.NewGatewayServer(setupLog, apiAddr, grpcAddr)
-	g.Go(func() error {
-		return gatewayServer.Start()
-	})
+	gatewayServer := gateway.NewServer(setupLog, apiAddr, grpcAddr)
 
 	setupLog.Info("starting manager")
-	shutdownContext, managerCancelFunc := context.WithCancel(context.Background())
-	g.Go(func() error {
-		if err := mgr.Start(shutdownContext); err != nil {
-			setupLog.Error(err, "problem running manager")
-			return err
-		}
-		return nil
-	})
+	managerServer := manager.NewServer(setupLog, mgr)
 
-	setupLog.Info("starting interrupt handler")
-	handler := interrupt.NewInterruptHandler(setupLog, grpcServer.Stop, gatewayServer.Stop, func() { managerCancelFunc() })
-	g.Go(func() error {
-		handler.HandleInterrupts()
-		return nil
-	})
-
-	if err := g.Wait(); err != nil {
-		setupLog.Error(err, "error occurred during server procedures")
-		os.Exit(1)
+	handler := interrupt.NewInterruptHandler(setupLog, grpcServer, gatewayServer, managerServer)
+	if err := handler.ListenAndGracefulShutdown(); err != nil {
+		setupLog.Error(err, "failed to listen and graceful shutdown services")
 	}
 }

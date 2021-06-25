@@ -23,11 +23,10 @@ type Server struct {
 	server   *http.Server
 	apiAddr  string
 	grpcAddr string
-	cancel   context.CancelFunc
 }
 
-// NewGatewayServer creates a new grpc-gateway server.
-func NewGatewayServer(logger logr.Logger, apiAddr string, grpcAddr string) *Server {
+// NewServer creates a new grpc-gateway server.
+func NewServer(logger logr.Logger, apiAddr string, grpcAddr string) *Server {
 	logger = logger.WithName("gateway-server")
 	return &Server{
 		logger:   logger,
@@ -37,7 +36,7 @@ func NewGatewayServer(logger logr.Logger, apiAddr string, grpcAddr string) *Serv
 }
 
 // Start starts the grpc-gateway server using from Endpoint.
-func (s *Server) Start() error {
+func (s *Server) Start(ctx context.Context) error {
 	// setup grpc-gateway to connect to the grpc server
 	mux := gruntime.NewServeMux()
 	gopts := []grpc.DialOption{grpc.WithInsecure()}
@@ -49,8 +48,6 @@ func (s *Server) Start() error {
 	s.logger.Info(fmt.Sprintf("starting profiles grpc-gateway server at %s", s.apiAddr))
 	server := &http.Server{Addr: s.apiAddr, Handler: mux}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	s.cancel = cancel
 	g, _ := errgroup.WithContext(ctx)
 	g.Go(func() error {
 		// ignore server is closing error because the server receives that on graceful shutdown.
@@ -71,6 +68,5 @@ func (s *Server) Stop() {
 	if err := s.server.Shutdown(serverTimeoutContext); err != nil {
 		s.logger.Error(err, "Failed to gracefully shutdown server... terminating.")
 	}
-	s.cancel()
 	s.logger.Info("server stopped")
 }

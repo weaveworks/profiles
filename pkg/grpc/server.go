@@ -22,11 +22,10 @@ type Server struct {
 	grpcAddr string
 	server   *grpc.Server
 	catalog  *catalog.Catalog
-	cancel   context.CancelFunc
 }
 
-// NewGRPCServer returns a new grpc server.
-func NewGRPCServer(logger logr.Logger, catalog *catalog.Catalog, grpcAddr string) *Server {
+// NewServer returns a new grpc server.
+func NewServer(logger logr.Logger, catalog *catalog.Catalog, grpcAddr string) *Server {
 	logger = logger.WithName("grpc")
 	return &Server{
 		logger:   logger,
@@ -36,40 +35,37 @@ func NewGRPCServer(logger logr.Logger, catalog *catalog.Catalog, grpcAddr string
 }
 
 // Start starts the grpc server on the given address and saves the servers state for later termination.
-func (g *Server) Start() error {
+func (s *Server) Start(ctx context.Context) error {
 	// setup grpc server details
-	grpcLis, err := net.Listen("tcp", g.grpcAddr)
+	grpcLis, err := net.Listen("tcp", s.grpcAddr)
 	if err != nil {
-		return fmt.Errorf("failed to listen on address %s: %v", g.grpcAddr, err)
+		return fmt.Errorf("failed to listen on address %s: %v", s.grpcAddr, err)
 	}
 	grpcSrv := grpc.NewServer(
 		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
 		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
 	)
-	g.server = grpcSrv
+	s.server = grpcSrv
 	reflection.Register(grpcSrv)
 
 	// create the catalog grpc server
-	catalogGrpcServer := api.NewCatalogAPI(g.catalog, g.logger.WithName("api"))
+	catalogGrpcServer := api.NewCatalogAPI(s.catalog, s.logger.WithName("api"))
 	protos.RegisterProfilesServiceServer(grpcSrv, catalogGrpcServer)
 	// serve grpc apis
-	g.logger.Info(fmt.Sprintf("starting profiles grpc server at %s", g.grpcAddr))
-	ctx, cancel := context.WithCancel(context.Background())
-	g.cancel = cancel
-	e, _ := errgroup.WithContext(ctx)
-	e.Go(func() error {
+	s.logger.Info(fmt.Sprintf("starting profiles grpc server at %s", s.grpcAddr))
+	g, _ := errgroup.WithContext(ctx)
+	g.Go(func() error {
 		if err := grpcSrv.Serve(grpcLis); err != nil {
-			g.logger.Error(err, "unable to start grpc api server")
+			s.logger.Error(err, "unable to start grpc api server")
 			return err
 		}
 		return nil
 	})
-	return e.Wait()
+	return g.Wait()
 }
 
 // Stop does a graceful shutdown of the grpc server.
-func (g *Server) Stop() {
-	g.server.GracefulStop()
-	g.cancel()
-	g.logger.Info("server stopped")
+func (s *Server) Stop() {
+	s.server.GracefulStop()
+	s.logger.Info("server stopped")
 }
