@@ -99,16 +99,8 @@ func (r *ProfileCatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl
 
 	gitRepoManager := gitrepository.NewManager(ctx, pCatalog.Namespace, r.Client, r.timeout, r.interval)
 	scanner := r.newScanner(gitRepoManager, &git.Client{}, http.DefaultClient, logger)
-	if r.Profiles.CatalogExists(pCatalog.Name) {
-		logger.Info("updating catalog", "catalog", pCatalog.Name)
-		return ctrl.Result{}, r.updateCatalogWithRepositories(ctx, &pCatalog, scanner, logger)
-	}
+	catalogExists := r.Profiles.CatalogExists(pCatalog.Name)
 
-	logger.Info("creating catalog", "catalog", pCatalog.Name)
-	return ctrl.Result{}, r.createCatalogWithRepositories(ctx, &pCatalog, scanner, logger)
-}
-
-func (r *ProfileCatalogSourceReconciler) createCatalogWithRepositories(ctx context.Context, pCatalog *profilesv1.ProfileCatalogSource, scanner scanner.RepoScanner, logger logr.Logger) error {
 	for _, repo := range pCatalog.Spec.Repos {
 		logger.Info("scan repo for profiles", "repo", repo)
 		var secret *corev1.Secret
@@ -116,24 +108,47 @@ func (r *ProfileCatalogSourceReconciler) createCatalogWithRepositories(ctx conte
 			secret = &corev1.Secret{}
 			objectKey := client.ObjectKey{Name: repo.SecretRef.Name, Namespace: pCatalog.Namespace}
 			if err := r.Client.Get(ctx, objectKey, secret); err != nil {
-				return fmt.Errorf("failed to find secret for repo %v: %w", repo, err)
+				return ctrl.Result{}, fmt.Errorf("failed to find secret for repo %v: %w", repo, err)
 			}
 		}
 
-		profiles, newTags, err := scanner.ScanRepository(repo, secret, nil)
-		if err != nil {
-			return err
+		var alreadyScannedTags []string
+		if catalogExists {
+			for _, scannedRepo := range pCatalog.Status.ScannedRepositories {
+				if scannedRepo.URL == repo.URL {
+					alreadyScannedTags = scannedRepo.Tags
+				}
+			}
 		}
 
-		createOrReplaceScannedRepositoryStatus(pCatalog, repo, newTags)
+		profiles, newTags, err := scanner.ScanRepository(repo, secret, alreadyScannedTags)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		if catalogExists {
+			createOrAppendScannedRepositoryStatus(&pCatalog, repo, newTags)
+		} else {
+			createOrReplaceScannedRepositoryStatus(&pCatalog, repo, newTags)
+		}
 		logger.Info("updating catalog with scanning reuslts", "profiles", profiles)
 		r.Profiles.Append(pCatalog.Name, profiles...)
 	}
 
-	if err := r.Client.Status().Update(ctx, pCatalog); err != nil {
-		return fmt.Errorf("failed to patch status: %w", err)
+	logger.Info("updating status", "status", pCatalog.Status)
+	return ctrl.Result{}, r.updateStatus(ctx, req, pCatalog.Status)
+}
+
+func (r *ProfileCatalogSourceReconciler) updateStatus(ctx context.Context, req ctrl.Request, newStatus profilesv1.ProfileCatalogSourceStatus) error {
+	var latestCatalog profilesv1.ProfileCatalogSource
+	if err := r.Get(ctx, req.NamespacedName, &latestCatalog); err != nil {
+		return err
 	}
-	return nil
+
+	patch := client.MergeFrom(latestCatalog.DeepCopy())
+	latestCatalog.Status = newStatus
+
+	return r.Status().Patch(ctx, &latestCatalog, patch)
 }
 
 func createOrReplaceScannedRepositoryStatus(pCatalog *profilesv1.ProfileCatalogSource, repo profilesv1.Repository, newTags []string) {
@@ -147,40 +162,6 @@ func createOrReplaceScannedRepositoryStatus(pCatalog *profilesv1.ProfileCatalogS
 		URL:  repo.URL,
 		Tags: newTags,
 	})
-}
-
-func (r *ProfileCatalogSourceReconciler) updateCatalogWithRepositories(ctx context.Context, pCatalog *profilesv1.ProfileCatalogSource, scanner scanner.RepoScanner, logger logr.Logger) error {
-	for _, repo := range pCatalog.Spec.Repos {
-		logger.Info("scan repo for profiles", "repo", repo)
-		var secret *corev1.Secret
-		if repo.SecretRef != nil {
-			secret = &corev1.Secret{}
-			objectKey := client.ObjectKey{Name: repo.SecretRef.Name, Namespace: pCatalog.Namespace}
-			if err := r.Client.Get(ctx, objectKey, secret); err != nil {
-				return fmt.Errorf("failed to find secret for repo %v: %w", repo, err)
-			}
-		}
-		var alreadyScannedTags []string
-		for _, scannedRepo := range pCatalog.Status.ScannedRepositories {
-			if scannedRepo.URL == repo.URL {
-				alreadyScannedTags = scannedRepo.Tags
-			}
-		}
-
-		profiles, newTags, err := scanner.ScanRepository(repo, secret, alreadyScannedTags)
-		if err != nil {
-			return err
-		}
-
-		createOrAppendScannedRepositoryStatus(pCatalog, repo, newTags)
-		logger.Info("updating catalog with scanning reuslts", "profiles", profiles)
-		r.Profiles.Append(pCatalog.Name, profiles...)
-	}
-
-	if err := r.Client.Status().Update(ctx, pCatalog); err != nil {
-		return fmt.Errorf("failed to patch status: %w", err)
-	}
-	return nil
 }
 
 func createOrAppendScannedRepositoryStatus(pCatalog *profilesv1.ProfileCatalogSource, repo profilesv1.Repository, newTags []string) {

@@ -102,7 +102,7 @@ spec:
               scannedRepositories:
                 items:
                   description: ScannedRepository contains the list of repositories
-                    that have been scanned and what tags have bene processed
+                    that have been scanned and what tags have been processed
                   properties:
                     tags:
                       description: Tags is the list of tags that have been scanned

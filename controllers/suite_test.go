@@ -23,7 +23,6 @@ import (
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
-	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -38,7 +37,6 @@ import (
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/controllers"
 	"github.com/weaveworks/profiles/pkg/catalog"
-	"github.com/weaveworks/profiles/pkg/scanner"
 	"github.com/weaveworks/profiles/pkg/scanner/fakes"
 	// +kubebuilder:scaffold:imports
 )
@@ -97,12 +95,6 @@ var _ = BeforeSuite(func() {
 		ctrl.Log.WithName("controllers").WithName("profilecatalog"),
 		scheme.Scheme,
 		profiles,
-	)
-	fakeRepoScanner = new(fakes.FakeRepoScanner)
-	catalogReconciler.SetNewScanner(
-		func(gitRepositoryManager scanner.GitRepositoryManager, gitClient scanner.GitClient, httpClients scanner.HTTPClient, logger logr.Logger) scanner.RepoScanner {
-			return fakeRepoScanner
-		},
 	)
 
 	err = catalogReconciler.SetupWithManager(k8sManager)

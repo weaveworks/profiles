@@ -71,7 +71,7 @@ type ProfileCatalogSourceStatus struct {
 }
 
 // ScannedRepository contains the list of repositories that have been scanned and
-// what tags have bene processed
+// what tags have been processed
 type ScannedRepository struct {
 	// URL is the repository URL
 	URL string `json:"url,omitempty"`

@@ -25,7 +25,7 @@ func New() *Catalog {
 	}
 }
 
-// Append appends the existing profiles with new profiles
+// Append the existing profiles with new profiles
 func (c *Catalog) Append(sourceName string, profiles ...profilesv1.ProfileCatalogEntry) {
 	existingProfiles, ok := c.m.Load(sourceName)
 	if !ok {
