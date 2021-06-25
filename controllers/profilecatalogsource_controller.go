@@ -126,11 +126,7 @@ func (r *ProfileCatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl
 			return ctrl.Result{}, err
 		}
 
-		if catalogExists {
-			createOrAppendScannedRepositoryStatus(&pCatalog, repo, newTags)
-		} else {
-			createOrReplaceScannedRepositoryStatus(&pCatalog, repo, newTags)
-		}
+		updateScannedRepositoryStatus(&pCatalog, repo, newTags, catalogExists)
 		logger.Info("updating catalog with scanning reuslts", "profiles", profiles)
 		r.Profiles.Append(pCatalog.Name, profiles...)
 	}
@@ -151,23 +147,14 @@ func (r *ProfileCatalogSourceReconciler) updateStatus(ctx context.Context, req c
 	return r.Status().Patch(ctx, &latestCatalog, patch)
 }
 
-func createOrReplaceScannedRepositoryStatus(pCatalog *profilesv1.ProfileCatalogSource, repo profilesv1.Repository, newTags []string) {
+func updateScannedRepositoryStatus(pCatalog *profilesv1.ProfileCatalogSource, repo profilesv1.Repository, newTags []string, appendToExisting bool) {
 	for i, scannedRepo := range pCatalog.Status.ScannedRepositories {
 		if scannedRepo.URL == repo.URL {
-			pCatalog.Status.ScannedRepositories[i].Tags = newTags
-			return
-		}
-	}
-	pCatalog.Status.ScannedRepositories = append(pCatalog.Status.ScannedRepositories, profilesv1.ScannedRepository{
-		URL:  repo.URL,
-		Tags: newTags,
-	})
-}
-
-func createOrAppendScannedRepositoryStatus(pCatalog *profilesv1.ProfileCatalogSource, repo profilesv1.Repository, newTags []string) {
-	for i, scannedRepo := range pCatalog.Status.ScannedRepositories {
-		if scannedRepo.URL == repo.URL {
-			pCatalog.Status.ScannedRepositories[i].Tags = append(scannedRepo.Tags, newTags...)
+			if appendToExisting {
+				pCatalog.Status.ScannedRepositories[i].Tags = append(scannedRepo.Tags, newTags...)
+			} else {
+				pCatalog.Status.ScannedRepositories[i].Tags = newTags
+			}
 			return
 		}
 	}
