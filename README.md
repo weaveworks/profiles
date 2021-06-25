@@ -32,8 +32,11 @@ and run: mdtoc -inplace README.md
 ## Getting started
 
 ### Dependencies
+
 The dependency [libgit2](https://libgit2.org/) needs to be installed to be able to run
 the Controller or its test-suite locally. [Docs on install libgit2](https://github.com/fluxcd/source-controller/blob/main/CONTRIBUTING.md#installing-required-dependencies)
+
+[buf](https://buf.build) is needed to generate and lint protoc code. For more details check out [Generating the protocol files](#generating-the-protocol-files).
 
 ### Local environment using [Kind](https://kind.sigs.k8s.io/)
 

@@ -39,6 +39,16 @@ type ProfilesCatalogService struct {
 	logger         logr.Logger
 }
 
+var _ protos.ProfilesServiceServer = &ProfilesCatalogService{}
+
+// NewCatalogAPI returns a profiles catalog api implementation.
+func NewCatalogAPI(profileCatalog Catalog, logger logr.Logger) *ProfilesCatalogService {
+	return &ProfilesCatalogService{
+		profileCatalog: profileCatalog,
+		logger:         logger,
+	}
+}
+
 // Get will return a specific profile from the catalog
 func (p *ProfilesCatalogService) Get(ctx context.Context, request *protos.GetRequest) (*protos.GetResponse, error) {
 	sourceName := request.GetSourceName()
@@ -116,14 +126,4 @@ func (p *ProfilesCatalogService) Search(ctx context.Context, request *protos.Sea
 	return &protos.SearchResponse{
 		Items: protos.TransformCatalogEntryList(result),
 	}, nil
-}
-
-var _ protos.ProfilesServiceServer = &ProfilesCatalogService{}
-
-// NewCatalogAPI returns a profiles catalog api implementation.
-func NewCatalogAPI(profileCatalog Catalog, logger logr.Logger) *ProfilesCatalogService {
-	return &ProfilesCatalogService{
-		profileCatalog: profileCatalog,
-		logger:         logger,
-	}
 }
