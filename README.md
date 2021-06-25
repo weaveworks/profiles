@@ -8,12 +8,14 @@ and run: mdtoc -inplace README.md
 
  <!-- toc -->
 - [Getting started](#getting-started)
+  - [Dependencies](#dependencies)
   - [Local environment using <a href="https://kind.sigs.k8s.io/">Kind</a>](#local-environment-using-kind)
   - [Installing Profiles](#installing-profiles)
 - [Development](#development)
   - [Tests](#tests)
   - [Release process](#release-process)
   - [Dev Tags](#dev-tags)
+  - [Generating the protocol files](#generating-the-protocol-files)
 - [Terminology](#terminology)
   - [Profile](#profile)
   - [Catalog](#catalog)
@@ -92,6 +94,21 @@ the procedure around working with profiles and [pctl](https://github.com/weavewo
 explained in `pctl`'s README section [Working with Profiles](https://github.com/weaveworks/pctl#working-with-profiles).
 
 The dev tag's format is as follows: `<currentLatestReleaseTag>-<branch-name>`.
+
+### Generating the protocol files
+
+`profiles` is using [buf](https://buf.build/) to generate and lint protobuf implementations. The protocol descriptor file
+can be found here [profiles.proto](./proto/profiles.proto). To update these files, install `buf` and run the make target
+`make generate-protoc`. Profiles, using the [tools](https://github.com/golang/go/wiki/Modules#how-can-i-track-tool-dependencies-for-a-module) way to track dependencies,
+and should already have all the necessary protoc tools installed.
+
+When running `buf` for the first time, install all the necessary libraries by running `buf beta mod update`. This will install
+dependencies defined in [buf.yaml](./buf.yaml) file.
+
+What gets generated is defined by [buf.gen.yaml](./buf.gen.yaml) file. For the document target to work, install `protoc-gen-doc`
+by running `go get -u github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc`.
+
+Documentation about the protoc files can be found under [docs/index.html](./docs/index.html).
 
 ## Terminology
 
