@@ -19,6 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
+	"github.com/weaveworks/profiles/pkg/protos"
 )
 
 const (
@@ -126,7 +127,7 @@ var _ = Describe("Acceptance", func() {
 					resp, err := http.DefaultClient.Do(req)
 					Expect(err).NotTo(HaveOccurred())
 					Expect(resp.StatusCode).To(Equal(http.StatusOK))
-					var descriptions rpcCatalogItems
+					var descriptions protos.GRPCProfileCatalogEntryList
 					_ = json.NewDecoder(resp.Body).Decode(&descriptions)
 					return descriptions.Items
 				}).Should(ConsistOf(
@@ -451,10 +452,6 @@ var _ = Describe("Acceptance", func() {
 	})
 })
 
-type rpcCatalogItem struct {
-	Item profilesv1.ProfileCatalogEntry
-}
-
 func getProfile(profileName, sourceName, version string) (profilesv1.ProfileCatalogEntry, error) {
 	u, err := url.Parse("http://localhost:8000/v1/profiles")
 	if err != nil {
@@ -471,15 +468,11 @@ func getProfile(profileName, sourceName, version string) (profilesv1.ProfileCata
 	if resp.StatusCode != http.StatusOK {
 		return profilesv1.ProfileCatalogEntry{}, fmt.Errorf("expected status code 200; got %d", resp.StatusCode)
 	}
-	var p rpcCatalogItem
+	var p protos.GRPCProfileCatalogEntry
 	if err := json.NewDecoder(resp.Body).Decode(&p); err != nil {
 		return profilesv1.ProfileCatalogEntry{}, err
 	}
 	return p.Item, nil
-}
-
-type rpcCatalogItems struct {
-	Items []profilesv1.ProfileCatalogEntry
 }
 
 func getProfileUpdates(profileName, sourceName, version string) ([]profilesv1.ProfileCatalogEntry, error) {
@@ -494,7 +487,7 @@ func getProfileUpdates(profileName, sourceName, version string) ([]profilesv1.Pr
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("expected status code 200; got %d", resp.StatusCode)
 	}
-	var p rpcCatalogItems
+	var p protos.GRPCProfileCatalogEntryList
 	if err := json.NewDecoder(resp.Body).Decode(&p); err != nil {
 		return nil, err
 	}
