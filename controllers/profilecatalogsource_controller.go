@@ -23,26 +23,42 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/pkg/catalog"
 	"github.com/weaveworks/profiles/pkg/git"
 	"github.com/weaveworks/profiles/pkg/gitrepository"
 	"github.com/weaveworks/profiles/pkg/scanner"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // ProfileCatalogSourceReconciler reconciles a ProfileCatalogSource object
 type ProfileCatalogSourceReconciler struct {
 	client.Client
-	Log      logr.Logger
-	Scheme   *runtime.Scheme
-	Profiles *catalog.Catalog
+	log        logr.Logger
+	s          *runtime.Scheme
+	Profiles   *catalog.Catalog
+	newScanner NewScanner
+	timeout    time.Duration
+	interval   time.Duration
 }
+
+func NewCatalogSourceReconciler(c client.Client, log logr.Logger, scheme *runtime.Scheme, profiles *catalog.Catalog) *ProfileCatalogSourceReconciler {
+	return &ProfileCatalogSourceReconciler{
+		Client:     c,
+		log:        log,
+		s:          scheme,
+		Profiles:   profiles,
+		newScanner: scanner.New,
+		timeout:    time.Minute * 2,
+		interval:   time.Second * 5,
+	}
+}
+
+type NewScanner func(gitRepositoryManager scanner.GitRepositoryManager, gitClient scanner.GitClient, httpClients scanner.HTTPClient, logger logr.Logger) scanner.RepoScanner
 
 // +kubebuilder:rbac:groups=weave.works,resources=profilecatalogsources,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=weave.works,resources=profilecatalogsources/status,verbs=get;update;patch
@@ -60,7 +76,7 @@ type ProfileCatalogSourceReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
 func (r *ProfileCatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := r.Log.WithValues("profilecatalogsource", req.NamespacedName)
+	logger := r.log.WithValues("profilecatalogsource", req.NamespacedName)
 
 	pCatalog := profilesv1.ProfileCatalogSource{}
 	err := r.Client.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, &pCatalog)
@@ -74,32 +90,78 @@ func (r *ProfileCatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl
 		return ctrl.Result{}, err
 	}
 
-	logger.Info("updating catalog entries", "profiles", pCatalog.Spec.Profiles)
-	r.Profiles.Update(pCatalog.Name, pCatalog.Spec.Profiles...)
+	//can configre spec.Profiles or spec.Repositories, not both.
+	if len(pCatalog.Spec.Profiles) > 0 {
+		logger.Info("updating catalog entries", "profiles", pCatalog.Spec.Profiles)
+		r.Profiles.AddOrReplace(pCatalog.Name, pCatalog.Spec.Profiles...)
+		return ctrl.Result{}, nil
+	}
 
-	timeout := time.Minute * 2
-	interval := time.Second * 5
-	gitRepoManager := gitrepository.NewManager(ctx, pCatalog.Namespace, r.Client, timeout, interval)
-	scanner := scanner.New(gitRepoManager, &git.Client{}, http.DefaultClient, logger)
+	gitRepoManager := gitrepository.NewManager(ctx, pCatalog.Namespace, r.Client, r.timeout, r.interval)
+	scanner := r.newScanner(gitRepoManager, &git.Client{}, http.DefaultClient, logger)
+	catalogExists := r.Profiles.CatalogExists(pCatalog.Name)
+
 	for _, repo := range pCatalog.Spec.Repos {
 		logger.Info("scan repo for profiles", "repo", repo)
 		var secret *corev1.Secret
 		if repo.SecretRef != nil {
 			secret = &corev1.Secret{}
-			objectKey := client.ObjectKey{Name: repo.SecretRef.Name, Namespace: req.Namespace}
+			objectKey := client.ObjectKey{Name: repo.SecretRef.Name, Namespace: pCatalog.Namespace}
 			if err := r.Client.Get(ctx, objectKey, secret); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to find secret for repo %v: %w", repo, err)
 			}
 		}
 
-		profiles, err := scanner.ScanRepository(repo, secret)
+		var alreadyScannedTags []string
+		if catalogExists {
+			for _, scannedRepo := range pCatalog.Status.ScannedRepositories {
+				if scannedRepo.URL == repo.URL {
+					alreadyScannedTags = scannedRepo.Tags
+				}
+			}
+		}
+
+		profiles, newTags, err := scanner.ScanRepository(repo, secret, alreadyScannedTags)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		r.Profiles.Update(pCatalog.Name, profiles...)
+
+		updateScannedRepositoryStatus(&pCatalog, repo, newTags, catalogExists)
+		logger.Info("updating catalog with scanning reuslts", "profiles", profiles)
+		r.Profiles.Append(pCatalog.Name, profiles...)
 	}
 
-	return ctrl.Result{}, nil
+	logger.Info("updating status", "status", pCatalog.Status)
+	return ctrl.Result{}, r.updateStatus(ctx, req, pCatalog.Status)
+}
+
+func (r *ProfileCatalogSourceReconciler) updateStatus(ctx context.Context, req ctrl.Request, newStatus profilesv1.ProfileCatalogSourceStatus) error {
+	var latestCatalog profilesv1.ProfileCatalogSource
+	if err := r.Get(ctx, req.NamespacedName, &latestCatalog); err != nil {
+		return err
+	}
+
+	patch := client.MergeFrom(latestCatalog.DeepCopy())
+	latestCatalog.Status = newStatus
+
+	return r.Status().Patch(ctx, &latestCatalog, patch)
+}
+
+func updateScannedRepositoryStatus(pCatalog *profilesv1.ProfileCatalogSource, repo profilesv1.Repository, newTags []string, appendToExisting bool) {
+	for i, scannedRepo := range pCatalog.Status.ScannedRepositories {
+		if scannedRepo.URL == repo.URL {
+			if appendToExisting {
+				pCatalog.Status.ScannedRepositories[i].Tags = append(scannedRepo.Tags, newTags...)
+			} else {
+				pCatalog.Status.ScannedRepositories[i].Tags = newTags
+			}
+			return
+		}
+	}
+	pCatalog.Status.ScannedRepositories = append(pCatalog.Status.ScannedRepositories, profilesv1.ScannedRepository{
+		URL:  repo.URL,
+		Tags: newTags,
+	})
 }
 
 // SetupWithManager sets up the controller with the Manager.

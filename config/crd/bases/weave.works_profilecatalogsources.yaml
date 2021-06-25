@@ -98,6 +98,22 @@ spec:
           status:
             description: ProfileCatalogSourceStatus defines the observed state of
               ProfileCatalogSource
+            properties:
+              scannedRepositories:
+                items:
+                  description: ScannedRepository contains the list of repositories
+                    that have been scanned and what tags have been processed
+                  properties:
+                    tags:
+                      description: Tags is the list of tags that have been scanned
+                      items:
+                        type: string
+                      type: array
+                    url:
+                      description: URL is the repository URL
+                      type: string
+                  type: object
+                type: array
             type: object
         type: object
     served: true

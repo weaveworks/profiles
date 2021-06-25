@@ -24,7 +24,7 @@ import (
 
 var _ = Describe("Scanner", func() {
 	var (
-		s              *scanner.Scanner
+		s              scanner.RepoScanner
 		gitClient      *fakes.FakeGitClient
 		gitRepoManager *fakes.FakeGitRepositoryManager
 		httpClient     *fakes.FakeHTTPClient
@@ -50,7 +50,7 @@ var _ = Describe("Scanner", func() {
 
 	Context("when the repo has matching tags", func() {
 		BeforeEach(func() {
-			gitClient.ListTagsReturns([]string{"name/v0.1.0", "v1.0.0", "some-notsemver"}, nil)
+			gitClient.ListTagsReturns([]string{"name/v0.0.1", "name/v0.1.0", "v1.0.0", "some-notsemver"}, nil)
 			gitRepoManager.CreateAndWaitForResourcesReturns([]*sourcev1.GitRepository{
 				{
 					ObjectMeta: metav1.ObjectMeta{
@@ -105,7 +105,7 @@ spec:
 		})
 
 		It("returns a list of profiles", func() {
-			profiles, err := s.ScanRepository(repo, repoSecret)
+			profiles, tags, err := s.ScanRepository(repo, repoSecret, []string{"name/v0.0.1"})
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(gitClient.ListTagsCallCount()).To(Equal(1))
@@ -185,6 +185,7 @@ spec:
 				Tag: "v0.1.0",
 				URL: "github.com/example/repo",
 			}))
+			Expect(tags).To(ConsistOf("name/v0.1.0", "v1.0.0", "some-notsemver"))
 		})
 	})
 
@@ -194,7 +195,7 @@ spec:
 		})
 
 		It("returns an error", func() {
-			_, err := s.ScanRepository(repo, repoSecret)
+			_, _, err := s.ScanRepository(repo, repoSecret, nil)
 			Expect(err).To(MatchError("failed to list tags: listfail"))
 
 		})
@@ -206,7 +207,7 @@ spec:
 		})
 
 		It("returns an error", func() {
-			_, err := s.ScanRepository(repo, repoSecret)
+			_, _, err := s.ScanRepository(repo, repoSecret, nil)
 			Expect(err).To(MatchError("failed to create gitrepository resources: createfail"))
 		})
 	})
@@ -235,7 +236,7 @@ spec:
 		})
 
 		It("returns an error", func() {
-			_, err := s.ScanRepository(repo, repoSecret)
+			_, _, err := s.ScanRepository(repo, repoSecret, nil)
 			Expect(err).To(MatchError(ContainSubstring("failed to create request:")))
 		})
 	})
@@ -265,7 +266,7 @@ spec:
 		})
 
 		It("returns an error", func() {
-			_, err := s.ScanRepository(repo, repoSecret)
+			_, _, err := s.ScanRepository(repo, repoSecret, nil)
 			Expect(err).To(MatchError("failed to GET \"tarball.one\": dofail"))
 		})
 	})
@@ -298,7 +299,7 @@ spec:
 		})
 
 		It("returns an error", func() {
-			_, err := s.ScanRepository(repo, repoSecret)
+			_, _, err := s.ScanRepository(repo, repoSecret, nil)
 			Expect(err).To(MatchError("request failed status code 400"))
 		})
 	})
@@ -331,7 +332,7 @@ spec:
 		})
 
 		It("returns an error", func() {
-			_, err := s.ScanRepository(repo, repoSecret)
+			_, _, err := s.ScanRepository(repo, repoSecret, nil)
 			Expect(err).To(MatchError(ContainSubstring("failed to parse tarball:")))
 		})
 	})
@@ -363,7 +364,7 @@ spec:
 		})
 
 		It("returns an error", func() {
-			_, err := s.ScanRepository(repo, repoSecret)
+			_, _, err := s.ScanRepository(repo, repoSecret, nil)
 			Expect(err).To(MatchError(ContainSubstring("failed to decode profile.yaml:")))
 		})
 	})

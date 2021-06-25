@@ -37,6 +37,7 @@ import (
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/controllers"
 	"github.com/weaveworks/profiles/pkg/catalog"
+	"github.com/weaveworks/profiles/pkg/scanner/fakes"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -45,6 +46,7 @@ var (
 	k8sClient         client.Client
 	testEnv           *envtest.Environment
 	catalogReconciler *controllers.ProfileCatalogSourceReconciler
+	fakeRepoScanner   *fakes.FakeRepoScanner
 )
 
 func TestAPIs(t *testing.T) {
@@ -88,11 +90,12 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	profiles := catalog.New()
-	catalogReconciler = &controllers.ProfileCatalogSourceReconciler{
-		Client:   k8sManager.GetClient(),
-		Log:      ctrl.Log.WithName("controllers").WithName("profilecatalog"),
-		Profiles: profiles,
-	}
+	catalogReconciler = controllers.NewCatalogSourceReconciler(
+		k8sManager.GetClient(),
+		ctrl.Log.WithName("controllers").WithName("profilecatalog"),
+		scheme.Scheme,
+		profiles,
+	)
 
 	err = catalogReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())

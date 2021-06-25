@@ -17,6 +17,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	profilesv1 "github.com/weaveworks/profiles/api/v1alpha1"
 	"github.com/weaveworks/profiles/pkg/protos"
@@ -307,6 +308,18 @@ var _ = Describe("Acceptance", func() {
 							URL:           "https://github.com/weaveworks/profiles-examples",
 							CatalogSource: "repo",
 						}))
+
+						Expect(kClient.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: "repo"}, &catalog)).To(Succeed())
+						Expect(catalog.Status.ScannedRepositories).To(HaveLen(1))
+						Expect(catalog.Status.ScannedRepositories[0].URL).To(Equal("https://github.com/weaveworks/profiles-examples"))
+						Expect(catalog.Status.ScannedRepositories[0].Tags).To(ConsistOf(
+							"weaveworks-nginx/v0.1.1",
+							"weaveworks-nginx/v0.1.0",
+							"bitnami-nginx/v0.0.2",
+							"bitnami-nginx/v0.0.1",
+							"nested-nginx-2/v0.0.1",
+							"nested-nginx-1/v0.0.1",
+						))
 					})
 				})
 

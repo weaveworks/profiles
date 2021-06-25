@@ -67,6 +67,16 @@ type ProfileCatalogEntry struct {
 
 // ProfileCatalogSourceStatus defines the observed state of ProfileCatalogSource
 type ProfileCatalogSourceStatus struct {
+	ScannedRepositories []ScannedRepository `json:"scannedRepositories,omitempty"`
+}
+
+// ScannedRepository contains the list of repositories that have been scanned and
+// what tags have been processed
+type ScannedRepository struct {
+	// URL is the repository URL
+	URL string `json:"url,omitempty"`
+	// Tags is the list of tags that have been scanned
+	Tags []string `json:"tags,omitempty"`
 }
 
 // +kubebuilder:object:root=true
