@@ -109,6 +109,7 @@ type profileDescriptionWithVersion struct {
 // ProfilesGreaterThanVersion returns all profiles which are of a greater version for a given profile with a version.
 // If set to "latest" all versions are returned. Versions are ordered in descending order
 func (c *Catalog) ProfilesGreaterThanVersion(sourceName, profileName, profileVersion string) []profilesv1.ProfileCatalogEntry {
+	logger := c.logger.WithValues("sourceName", sourceName, "profileName", profileName, "version", profileVersion)
 	var profilesWithValidVersion []profileDescriptionWithVersion
 	profiles, ok := c.m.Load(sourceName)
 	if !ok {
@@ -121,7 +122,7 @@ func (c *Catalog) ProfilesGreaterThanVersion(sourceName, profileName, profileVer
 	for _, p := range profiles.([]profilesv1.ProfileCatalogEntry) {
 		v, err := version.ParseVersion(profilesv1.GetVersionFromTag(p.Tag))
 		if err != nil {
-			c.logger.Error(err, "failed to parse profile version", "profile", p)
+			logger.Error(err, "failed to parse profile version", "profile", p)
 			continue
 		}
 		if p.Name == profileName {
