@@ -21,7 +21,7 @@ module.exports = {
       },
       items: [
         {
-          to: '/docs/tutorial-basics/installation',
+          to: '/docs/tutorial-basics/setup',
           position: 'left',
           label: 'Getting started',
         },
@@ -42,7 +42,7 @@ module.exports = {
           items: [
             {
               label: 'Getting Started',
-              to: '/docs/tutorial-basics/installation',
+              to: '/docs/tutorial-basics/setup',
             },
             {
               label: 'Developer Docs: Profile Author',
