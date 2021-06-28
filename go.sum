@@ -235,8 +235,9 @@ github.com/fluxcd/kustomize-controller/api v0.13.0/go.mod h1:hh8LG9D89cLeXJJv3z7
 github.com/fluxcd/pkg/apis/kustomize v0.1.0/go.mod h1:gEl+W5cVykCC3RfrCaqe+Pz+j4lKl2aeR4dxsom/zII=
 github.com/fluxcd/pkg/apis/kustomize v0.2.0 h1:jhu2QHvs+j3Zo9rR6w8hkO3LSC6h3M37zY5ejufOmxY=
 github.com/fluxcd/pkg/apis/kustomize v0.2.0/go.mod h1:gEl+W5cVykCC3RfrCaqe+Pz+j4lKl2aeR4dxsom/zII=
-github.com/fluxcd/pkg/apis/meta v0.10.0 h1:N7wVGHC1cyPdT87hrDC7UwCwRwnZdQM46PBSLjG2rlE=
 github.com/fluxcd/pkg/apis/meta v0.10.0/go.mod h1:CW9X9ijMTpNe7BwnokiUOrLl/h13miwVr/3abEQLbKE=
+github.com/fluxcd/pkg/apis/meta v0.10.1 h1:zISenRlqNG7WK8TP3HxZTvv+1Z7JZOUIQvZrOr6pQ2w=
+github.com/fluxcd/pkg/apis/meta v0.10.1/go.mod h1:yUblM2vg+X8TE3A2VvJfdhkGmg+uqBlSPkLk7dxi0UM=
 github.com/fluxcd/pkg/gittestserver v0.3.0/go.mod h1:8j36Z6B0BuKNZZ6exAWoyDEpyQoFcjz1IX3WBT7PZNg=
 github.com/fluxcd/pkg/gitutil v0.1.0 h1:VO3kJY/CKOCO4ysDNqfdpTg04icAKBOSb3lbR5uE/IE=
 github.com/fluxcd/pkg/gitutil v0.1.0/go.mod h1:Ybz50Ck5gkcnvF0TagaMwtlRy3X3wXuiri1HVsK5id4=
