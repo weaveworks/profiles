@@ -82,6 +82,10 @@ module.exports = {
               label: 'Contributing',
               href: '/docs/contributing',
             },
+            {
+              label: 'Report a problem with Profiles',
+              href: 'https://github.com/weaveworks/profiles/issues',
+            },
           ],
         },
       ],
