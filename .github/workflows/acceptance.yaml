@@ -25,10 +25,6 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '^1.16'
-      - name: Setup Kind CLI
-        run: |
-          sudo curl -sSLo /usr/local/bin/kind https://github.com/kubernetes-sigs/kind/releases/download/v0.10.0/kind-linux-amd64
-          sudo chmod +x /usr/local/bin/kind
       - name: Setup Kubectl
         uses: azure/setup-kubectl@v1
         id: install
