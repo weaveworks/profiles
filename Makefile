@@ -106,8 +106,8 @@ deploy: manifests kustomize ## Deploy controller in the configured Kubernetes cl
 	cd config/manager && $(KUSTOMIZE) edit set image weaveworks/profiles-controller=localhost:5000/${IMG}
 	$(KUSTOMIZE) build config/prepare | kubectl apply -f -
 	echo "waiting for controller to be ready"
-	kubectl -n profiles-system wait --for=condition=available deployment profiles-controller-manager --timeout 5m
-	kubectl -n profiles-system wait --for=condition=Ready --all pods --timeout 5m
+	kubectl -n profiles-system wait --for=condition=available deployment profiles-controller-manager --timeout 15m
+	kubectl -n profiles-system wait --for=condition=Ready --all pods --timeout 15m
 
 undeploy: ## UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
 	$(KUSTOMIZE) build config/prepare | kubectl delete --ignore-not-found=true -f -
