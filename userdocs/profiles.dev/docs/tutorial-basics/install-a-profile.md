@@ -13,21 +13,13 @@ Please refer back to the [set up docs](/docs/tutorial-basics/setup) if not.
 
 To install a profile, we use `pctl`.
 
-First, take care to ensure that you are in your GitOps repo directory on your local
-filesystem. Your GitOps repo is the one you synced to Flux in your cluster in the
-[environment setup](/docs/tutorial-basics/setup#a-github-repo-synced-to-flux) section of this tutorial.
-
-```bash
-git clone <URL to your cluster gitops repo> # if this does not exist locally yet
-cd <path to repository dir>
-```
-
-Once in the correct directory, we can run `pctl` to install a profile.
-_(A breakdown of each flag is provided below.)_
-
 With the following command `pctl` will generate a set of manifests for each profile artifact,
 commit those manifests to a branch in your GitOps repo, push that branch and open a
 PR on your repo to merge the changes.
+Your GitOps repo is the one you synced to Flux in your cluster in the
+[environment setup](/docs/tutorial-basics/setup#a-github-repo-synced-to-flux) section of this tutorial.
+
+_(A breakdown of each flag is provided below.)_
 
 ```bash
 pctl install \
@@ -49,10 +41,16 @@ Above we use the following flags:
   one you created in the previous section, there is just one profile, and the `profile.yaml`
   is located at the top level: `.`.
 - `--create-pr`. This directs `pctl` to open a PR against the main branch of your GitOps repo.
+  _Note that this flag is only supported for GitHub._
 - `--pr-repo`. The partial URL of your GitOps repo synced to your cluster, in the format
   `username/repo-name`.
 - `--pr-branch`. The name of the branch `pctl` will create in your GitOps repo to push
   changes to and open a PR against your main branch.
+
+:::caution Private repos
+If either your GitOps repo or the repo containing the profile you wish to install
+are private, remember to ensure that your local git environment is configured correctly.
+:::
 
 Once you have run the command, navigate to your GitOps repo and approve the PR.
 Flux will then sync the new files and the profile will be applied to your cluster.

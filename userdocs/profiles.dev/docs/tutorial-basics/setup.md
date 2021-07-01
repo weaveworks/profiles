@@ -30,33 +30,34 @@ In order to install profiles, you need to have the following set up:
 For local testing, we recommend using [kind](https://kind.sigs.k8s.io/docs/user/quick-start/).
 The cluster must be version 1.16 or newer.
 
-### Flux components
+### Profiles CRDs and Flux CRDs
 
-While profiles can be installed manually, it is recommended to install them in a GitOps fashion,
-and that means using Flux.
+While profiles can be installed manually, it is recommended to install them in a GitOps fashion.
+Profiles uses Flux to do this.
 
-The Flux binary is not required, but several CRDs must be present on the cluster.
-These are:
-- buckets.source.toolkit.fluxcd.io
-- gitrepositories.source.toolkit.fluxcd.io
-- helmcharts.source.toolkit.fluxcd.io
-- helmreleases.helm.toolkit.fluxcd.io
-- helmrepositories.source.toolkit.fluxcd.io
-- kustomizations.kustomize.toolkit.fluxcd.io
+To install both the profiles CRD and the required Flux CRDs, run:
 
-For simplicity, we recommend that you install the standard set of Flux components into your cluster.
-This can be done by running [`flux check --pre`](https://fluxcd.io/docs/cmd/flux_check/) followed by [`flux install`](https://fluxcd.io/docs/cmd/flux_install/).
-Those with more familiarity with Flux are free to fine-tune their installation and only install
-what is necessary.
+```bash
+pctl prepare
+```
+
+This will install the latest version of the profiles CRD, which may not always be stable.
+To specify a [specific version](https://github.com/weaveworks/profiles/releases), use the `--version` flag.
 
 ### A GitHub repo, synced to Flux
 
-This tutorial will require a GitHub account. (More git providers will be added soon.)
+This tutorial will require a GitHub account. (More git providers will be added in the future.)
 
 The repo can be public or private (note: you will not be asked to push any sensitive information) and must
 be linked to the Flux instance running in your cluster.
 
 You can do this by running [`flux bootstrap github`](https://fluxcd.io/docs/installation/#github-and-github-enterprise) with the relevant arguments.
+
+:::caution Private repos
+If you choose to use a private repo, please ensure that your local git environment is set
+up correctly for the rest of the tutorial.
+:::
+
 
 ### pctl: the Profiles CLI
 
@@ -81,7 +82,7 @@ Check you have everything on this list and go back if something is missing.
 
  :white_check_mark: [Cluster](#kubernetes-cluster)
 
- :white_check_mark: [Flux CRDs](#flux-components)
+ :white_check_mark: [Profiles CRDs and Flux CRDs](#profiles-crds-and-flux-crds)
 
  :white_check_mark: [GitHub repo](#a-github-repo-synced-to-flux)
 
@@ -89,4 +90,4 @@ Check you have everything on this list and go back if something is missing.
 
  :white_check_mark: [GitHub token](#personal-access-token)
 
-Once you have completed the prerequisites installation you can start writing a Profile!
+Once you have completed the prerequisites installation you can start writing a profile!

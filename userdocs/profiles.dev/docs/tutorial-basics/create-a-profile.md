@@ -39,6 +39,7 @@ kind: ProfileDefinition
 metadata:
   name: nginx
 spec:
+  description: A profile which deploys an nginx server
   artifacts:
     - name: bitnami-nginx
       chart:
@@ -51,15 +52,16 @@ The section of note here is `spec.artifacts`. Each artifact represents a compone
 Artifacts can be one of:
 - Helm Chart
 - Raw Kubernetes yaml
-- Kustomise patch
+- Kustomize patch
 - Another profile
 
 In this example we are creating a Profile with just one artifact: a remote Helm Chart.
 The artifact type is denoted here by the `chart` key, and we provide further details for the
-specific chart with the the `url`, `version` and `name` fields.
+specific chart with the `url`, `version` and `name` fields.
 
 Write the above snippet to `profile.yaml` inside your profile repository. Commit the file
 and push to the remote.
 
-You have now created a very basic profile which can be consumed by those who have access.
+You have now created a very basic profile which can be consumed by those who have access
+to the repository.
 In the next section of this tutorial we will be installing that profile on a cluster.

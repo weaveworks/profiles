@@ -22,18 +22,18 @@ In short, a profile is a Kubernetes package. Much as you would expect from anoth
 manager (`brew`, `apt`, etc), the Profiles mechanism allows Kubernetes operators
 to manage their clusters in the same way they manage their host systems. Available
 packages are listed somewhere searchable; they are versioned; they are tested and verified;
-they are installable by way of a single simple command; they are updatable and upgradable.
+they are installable by way of a simple command; they are updatable and upgradable.
 Moreover they are reliable and uniformly manageable through a simple intuitive cli tool.
 
 Sticking with the `apt` analogy, let's look at one of the most basic and ubiquitous
 packages: `coreutils`. By installing `coreutils`, users understand that they are
 installing a bulk set of the most commonly used and useful tools on their unix system.
-They don't care much what the full roster is, just that the thing is now more operable
+They don't care much what the full roster is, just that their system is now more operable
 than it was before; that the various pieces work; that the whole thing can be updated
 or removed just as simply.
 
 Profiles provides the same service for cluster operators. On spinning up a new cluster or
-fleet of clusters, operators can then apply a standard set of profiles to get things
+fleet of clusters, operators can then apply an approved set of profiles to get things
 to a uniform, operable standard. They could choose to install, say, a standard Observability
 package, maybe a Logging set too. If they have some in-house collections, they are able to create
 their own custom profiles to bundle these up, and apply them across their infrastructure.
@@ -41,7 +41,7 @@ They even have the option of creating a single "install all the things" profile 
 their most commonly used collections under one reliable and reusable package, giving them just one
 thing to do to bootstrap a new cluster to their org specifications.
 
-As part of the WeaveGitOps ecosystem, Profiles is designed from its core to follow the best practices
+Profiles is designed from its core to follow the best practices
 of GitOps, that is; managing infrastructure as code. Profiles therefore uses [Flux](https://fluxcd.io/)
 to fit into users' existing cluster management practices.
 
@@ -61,7 +61,7 @@ No worries, here's the breakdown:
 
 ### GitOps
 
-GitOps is a way of managing your infrastructure and applications so that whole
+GitOps is a way of managing your infrastructure and applications so that the whole
 system is described declaratively and version controlled (most likely in a Git repository),
 and having an automated process that ensures that the deployed environment matches the state specified in a repository.
 
@@ -109,9 +109,9 @@ For more information, see the [Installer documentation](/docs/installer-docs/sim
 
 ### Catalog
 
-A Catalog is an in-cluster cache of Profile references. The mechanism allows cluster admins to whitelist
+A Catalog is an in-cluster cache of Profile references. The mechanism allows cluster admins to define
 a list of profiles which may be applied to a cluster, and also provides users with another
-method if installation.
+method of installation.
 
 Users can also see when newer versions of profiles are published, as well as query the cache
 for more profiles which may meet their needs.
