@@ -10,6 +10,8 @@ yarn install
 
 ## Local Development
 
+Ensure you are in `userdocs/profiles.dev`.
+
 ```console
 yarn start
 ```
