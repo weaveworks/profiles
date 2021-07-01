@@ -106,7 +106,7 @@ deploy: manifests kustomize ## Deploy controller in the configured Kubernetes cl
 	cd config/manager && $(KUSTOMIZE) edit set image weaveworks/profiles-controller=localhost:5000/${IMG}
 	$(KUSTOMIZE) build config/prepare | kubectl apply -f -
 	echo "waiting for controller to be ready"
-	for i in `seq 1 30`; do sleep 1 && kubectl get pods -A; done
+	for i in `seq 1 30`; do sleep 1 && kubectl get pods --selector=k8s-app=kube-proxy -A -o name | xargs -I{} kubectl logs {} -n kube-system; done
 	kubectl -n profiles-system wait --for=condition=available deployment profiles-controller-manager --timeout 5m
 	kubectl -n profiles-system wait --for=condition=Ready --all pods --timeout 5m
 
