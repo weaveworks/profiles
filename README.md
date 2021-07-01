@@ -1,6 +1,8 @@
 # profiles
 Gitops native package management.
 
+Some trivial edit.
+
 <!--
 To update the TOC, install https://github.com/kubernetes-sigs/mdtoc
 and run: mdtoc -inplace README.md
