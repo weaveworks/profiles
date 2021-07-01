@@ -47,5 +47,6 @@ jobs:
           sudo cmake --build . --target install
       - name: Acceptance
         run: |
+          sudo sysctl net/netfilter/nf_conntrack_max=524288
           PATH=$PATH:$(go env GOPATH)/bin make acceptance
 
