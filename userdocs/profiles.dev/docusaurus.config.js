@@ -5,8 +5,8 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 module.exports = {
   title: 'Profiles',
   tagline: 'GitOps native package management',
-  url: 'https://profiles.dev/',
-  baseUrl: '/',
+  url: 'https://weaveworks.github.io/',
+  baseUrl: '/profiles/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
