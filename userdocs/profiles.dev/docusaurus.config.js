@@ -3,9 +3,9 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 module.exports = {
-  title: 'profiles',
-  tagline: 'It\'s GitOps baby',
-  url: 'https://profiles.dev',
+  title: 'Profiles',
+  tagline: 'GitOps native package management',
+  url: 'https://profiles.dev/',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -50,11 +50,11 @@ module.exports = {
             },
             {
               label: 'Developer Docs: Profile User',
-              to: '/docs/intro/simple-install',
+              to: '/docs/installer-docs/simple-install',
             },
             {
               label: 'Developer Docs: Catalog Manager',
-              to: '/docs/intro/simple-catalog',
+              to: '/docs/catalog-docs/simple-catalog',
             },
           ],
         },
