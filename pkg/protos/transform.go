@@ -8,7 +8,7 @@ func TransformCatalogEntry(origin *profilesv1.ProfileCatalogEntry) *ProfileCatal
 		Tag:           origin.Tag,
 		CatalogSource: origin.CatalogSource,
 		Url:           origin.URL,
-		Name:          origin.ProfileDescription.Name,
+		Name:          origin.Name,
 		Description:   origin.ProfileDescription.Description,
 		Maintainer:    origin.ProfileDescription.Maintainer,
 		Prerequisites: origin.ProfileDescription.Prerequisites,

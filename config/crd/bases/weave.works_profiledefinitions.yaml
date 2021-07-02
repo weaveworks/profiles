@@ -116,9 +116,6 @@ spec:
               maintainer:
                 description: Maintainer is the name of the author(s)
                 type: string
-              name:
-                description: Profile name
-                type: string
               prerequisites:
                 description: Prerequisites are a list of dependencies required by
                   the profile

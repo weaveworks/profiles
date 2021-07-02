@@ -31,9 +31,9 @@ var _ = Describe("API", func() {
 			BeforeEach(func() {
 				fakeCatalog.GetReturns(&profilesv1.ProfileCatalogEntry{
 					ProfileDescription: profilesv1.ProfileDescription{
-						Name:        "nginx-1",
 						Description: "nginx 1",
 					},
+					Name:          "nginx-1",
 					CatalogSource: "foo",
 				})
 			})
@@ -97,9 +97,9 @@ var _ = Describe("API", func() {
 			BeforeEach(func() {
 				fakeCatalog.GetWithVersionReturns(&profilesv1.ProfileCatalogEntry{
 					ProfileDescription: profilesv1.ProfileDescription{
-						Name:        "nginx-1",
 						Description: "nginx 1",
 					},
+					Name:          "nginx-1",
 					CatalogSource: "foo",
 					Tag:           "v0.0.1",
 				})
@@ -184,9 +184,9 @@ var _ = Describe("API", func() {
 				fakeCatalog.SearchReturns([]profilesv1.ProfileCatalogEntry{
 					{
 						ProfileDescription: profilesv1.ProfileDescription{
-							Name:        "nginx-1",
 							Description: "nginx 1",
 						},
+						Name:          "nginx-1",
 						CatalogSource: "foo",
 					},
 				})
@@ -213,16 +213,16 @@ var _ = Describe("API", func() {
 				fakeCatalog.SearchAllReturns([]profilesv1.ProfileCatalogEntry{
 					{
 						ProfileDescription: profilesv1.ProfileDescription{
-							Name:        "nginx-1",
 							Description: "nginx 1",
 						},
+						Name:          "nginx-1",
 						CatalogSource: "foo",
 					},
 					{
 						ProfileDescription: profilesv1.ProfileDescription{
-							Name:        "redis-1",
 							Description: "redis 1",
 						},
+						Name:          "redis-1",
 						CatalogSource: "foo",
 					},
 				})
@@ -261,9 +261,9 @@ var _ = Describe("API", func() {
 			BeforeEach(func() {
 				fakeCatalog.ProfilesGreaterThanVersionReturns([]profilesv1.ProfileCatalogEntry{{
 					ProfileDescription: profilesv1.ProfileDescription{
-						Name:        "nginx-1",
 						Description: "nginx 1",
 					},
+					Name:          "nginx-1",
 					CatalogSource: "foo",
 					Tag:           "v0.0.2",
 				}})

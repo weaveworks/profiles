@@ -103,11 +103,12 @@ func (s *Scanner) ScanRepository(repo profilesv1.Repository, secret *corev1.Secr
 		if err != nil {
 			return nil, nil, err
 		}
-		if profileDef != nil && profileDef.Spec.Name != "" {
+		if profileDef != nil && profileDef.Name != "" {
 			profiles = append(profiles, profilesv1.ProfileCatalogEntry{
 				ProfileDescription: profileDef.Spec.ProfileDescription,
 				Tag:                gitRepo.Spec.Reference.Tag,
 				URL:                repo.URL,
+				Name:               profileDef.Name,
 			})
 		}
 	}
