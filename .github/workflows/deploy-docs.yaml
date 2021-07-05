@@ -2,7 +2,8 @@ name: Deploy documentation
 
 on:
   push:
-    branches: [documentation]
+    branches:
+    - main
 
 jobs:
   gh-release:
