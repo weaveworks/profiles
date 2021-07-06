@@ -62,7 +62,7 @@ lint: ## Run lint against code
 ##@ Tests
 
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
-test: lint generate fmt vet manifests test_deps ## Run unit and integration tests
+test: docs lint generate fmt vet manifests test_deps ## Run unit and integration tests
 	source hack/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); ginkgo -r --skipPackage acceptance
 
 acceptance: local-env ## Run acceptance tests
@@ -159,8 +159,13 @@ bundle-build: ## Build the bundle image.
 
 ##@ Docs
 
-docs: mdtoc ## Update the Readme
+docs: mdtoc ## Build the docs
 	mdtoc -inplace README.md
+	pushd userdocs/profiles.dev/ && yarn install && yarn build && popd
+
+local-docs: docs
+	pushd userdocs/profiles.dev/ && yarn start && popd
+
 
 mdtoc: ## Download mdtoc binary if necessary
 	GO111MODULE=off go get sigs.k8s.io/mdtoc || true
