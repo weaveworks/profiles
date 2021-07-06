@@ -46,7 +46,7 @@ module.exports = {
             },
             {
               label: 'Developer Docs: Profile Author',
-              to: '/docs/author-docs/simple-profile',
+              to: '/docs/author-docs/profile-structure',
             },
             {
               label: 'Developer Docs: Profile User',
