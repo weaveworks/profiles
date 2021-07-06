@@ -41,8 +41,6 @@ type ProfileDefinitionSpec struct {
 
 // ProfileDescription defines details about a given profile.
 type ProfileDescription struct {
-	// Profile name
-	Name string `json:"name,omitempty"`
 	// Profile description
 	Description string `json:"description,omitempty"`
 	// Maintainer is the name of the author(s)

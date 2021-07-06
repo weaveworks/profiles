@@ -87,8 +87,9 @@ var _ = Describe("Scanner", func() {
 			httpClient.DoReturnsOnCall(0, &http.Response{
 				StatusCode: http.StatusOK,
 				Body: tarContents([]byte(`---
-spec:
+metadata:
   name: other-name
+spec:
   description: some desc
   maintainer: me
   Prerequisites:
@@ -96,8 +97,9 @@ spec:
 			httpClient.DoReturnsOnCall(1, &http.Response{
 				StatusCode: http.StatusOK,
 				Body: tarContents([]byte(`---
-spec:
+metadata:
   name: foo-name
+spec:
   description: some desc
   maintainer: me
   Prerequisites:
@@ -168,22 +170,22 @@ spec:
 
 			Expect(profiles).To(ConsistOf(profilesv1.ProfileCatalogEntry{
 				ProfileDescription: profilesv1.ProfileDescription{
-					Name:          "foo-name",
 					Description:   "some desc",
 					Maintainer:    "me",
 					Prerequisites: []string{"stuff"},
 				},
-				Tag: "foo/v1.0.0",
-				URL: "github.com/example/repo",
+				Name: "foo-name",
+				Tag:  "foo/v1.0.0",
+				URL:  "github.com/example/repo",
 			}, profilesv1.ProfileCatalogEntry{
 				ProfileDescription: profilesv1.ProfileDescription{
-					Name:          "other-name",
 					Description:   "some desc",
 					Maintainer:    "me",
 					Prerequisites: []string{"stuff"},
 				},
-				Tag: "v0.1.0",
-				URL: "github.com/example/repo",
+				Name: "other-name",
+				Tag:  "v0.1.0",
+				URL:  "github.com/example/repo",
 			}))
 			Expect(tags).To(ConsistOf("name/v0.1.0", "v1.0.0", "some-notsemver"))
 		})

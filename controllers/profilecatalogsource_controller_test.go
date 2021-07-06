@@ -51,9 +51,9 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 					Profiles: []profilesv1.ProfileCatalogEntry{
 						{
 							ProfileDescription: profilesv1.ProfileDescription{
-								Name:        "foo",
 								Description: "bar",
 							},
+							Name: "foo",
 						},
 					},
 				},
@@ -64,16 +64,16 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 			query := func() []profilesv1.ProfileCatalogEntry {
 				return catalogReconciler.Profiles.Search("foo")
 			}
-			Eventually(query, 2*time.Second).Should(ContainElement(profilesv1.ProfileCatalogEntry{ProfileDescription: profilesv1.ProfileDescription{Name: "foo", Description: "bar"}, CatalogSource: "catalog"}))
+			Eventually(query, 2*time.Second).Should(ContainElement(profilesv1.ProfileCatalogEntry{ProfileDescription: profilesv1.ProfileDescription{Description: "bar"}, Name: "foo", CatalogSource: "catalog"}))
 			Expect(k8sClient.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: "catalog"}, catalogSource)).To(Succeed())
 
 			By("adding more items to ProfileCatalogSource")
 			pName := fmt.Sprintf("new-profile-%s", uuid.New().String())
 			catalogSource.Spec.Profiles = append(catalogSource.Spec.Profiles, profilesv1.ProfileCatalogEntry{
 				ProfileDescription: profilesv1.ProfileDescription{
-					Name:        pName,
 					Description: "I am new here",
 				},
+				Name: pName,
 			})
 			Expect(k8sClient.Update(context.Background(), catalogSource)).To(Succeed())
 
@@ -81,9 +81,9 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 				return catalogReconciler.Profiles.Search(pName)
 			}, 2*time.Second).Should(ConsistOf(profilesv1.ProfileCatalogEntry{
 				ProfileDescription: profilesv1.ProfileDescription{
-					Name:        pName,
 					Description: "I am new here",
 				},
+				Name:          pName,
 				CatalogSource: "catalog",
 			}))
 
@@ -105,9 +105,7 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 			)
 			fakeRepoScanner.ScanRepositoryReturnsOnCall(0, []profilesv1.ProfileCatalogEntry{
 				{
-					ProfileDescription: profilesv1.ProfileDescription{
-						Name: "foo",
-					},
+					Name: "foo",
 				},
 			}, []string{"foo"}, nil)
 
@@ -157,7 +155,7 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 			query := func() []profilesv1.ProfileCatalogEntry {
 				return catalogReconciler.Profiles.Search("foo")
 			}
-			Eventually(query, 2*time.Second).Should(ContainElement(profilesv1.ProfileCatalogEntry{ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}, CatalogSource: "catalog-2"}))
+			Eventually(query, 2*time.Second).Should(ContainElement(profilesv1.ProfileCatalogEntry{Name: "foo", CatalogSource: "catalog-2"}))
 
 			By("only searching for new tags")
 			Eventually(func() int {
@@ -188,7 +186,7 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 				query := func() []profilesv1.ProfileCatalogEntry {
 					return catalogReconciler.Profiles.Search("foo")
 				}
-				Eventually(query, 2*time.Second).Should(ContainElement(profilesv1.ProfileCatalogEntry{ProfileDescription: profilesv1.ProfileDescription{Name: "foo"}, CatalogSource: "catalog-2"}))
+				Eventually(query, 2*time.Second).Should(ContainElement(profilesv1.ProfileCatalogEntry{Name: "foo", CatalogSource: "catalog-2"}))
 
 				Eventually(func() []profilesv1.ScannedRepository {
 					Expect(k8sClient.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: "catalog-2"}, catalogSource)).To(Succeed())
@@ -204,14 +202,10 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 				By("rescanning the repository when the catalog gets reset")
 				fakeRepoScanner.ScanRepositoryReturnsOnCall(2, []profilesv1.ProfileCatalogEntry{
 					{
-						ProfileDescription: profilesv1.ProfileDescription{
-							Name: "bar",
-						},
+						Name: "bar",
 					},
 					{
-						ProfileDescription: profilesv1.ProfileDescription{
-							Name: "baz",
-						},
+						Name: "baz",
 					},
 				}, []string{"bar", "baz"}, nil)
 
@@ -231,7 +225,7 @@ var _ = Describe("ProfileCatalogSourceController", func() {
 				query = func() []profilesv1.ProfileCatalogEntry {
 					return catalogReconciler.Profiles.Search("baz")
 				}
-				Eventually(query, 2*time.Second).Should(ContainElement(profilesv1.ProfileCatalogEntry{ProfileDescription: profilesv1.ProfileDescription{Name: "baz"}, CatalogSource: "catalog-2"}))
+				Eventually(query, 2*time.Second).Should(ContainElement(profilesv1.ProfileCatalogEntry{Name: "baz", CatalogSource: "catalog-2"}))
 				Eventually(func() []profilesv1.ScannedRepository {
 					Expect(k8sClient.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: "catalog-2"}, catalogSource)).To(Succeed())
 					return catalogSource.Status.ScannedRepositories

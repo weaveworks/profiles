@@ -50,35 +50,35 @@ var _ = Describe("Acceptance", func() {
 					Profiles: []profilesv1.ProfileCatalogEntry{
 						{
 							ProfileDescription: profilesv1.ProfileDescription{
-								Name:          profileName,
 								Description:   "nginx 1",
 								Maintainer:    "my aunt ethel",
 								Prerequisites: []string{"at least 20 years of kubernetes experience"},
 							},
-							URL: "foo.com/bar",
-							Tag: "0.0.1",
+							Name: profileName,
+							URL:  "foo.com/bar",
+							Tag:  "0.0.1",
 						},
 						{
 							ProfileDescription: profilesv1.ProfileDescription{
-								Name:          profileName,
 								Description:   "nginx 1 with super cool updates",
 								Maintainer:    "my latest version of aunt ethel",
 								Prerequisites: []string{"at least 20 years of kubernetes experience"},
 							},
-							Tag: "0.0.2",
-							URL: "foo.com/bar",
+							Name: profileName,
+							Tag:  "0.0.2",
+							URL:  "foo.com/bar",
 						},
 						{
 							ProfileDescription: profilesv1.ProfileDescription{
-								Name:        "nginx-2",
 								Description: "nginx 1",
 							},
+							Name: "nginx-2",
 						},
 						{
 							ProfileDescription: profilesv1.ProfileDescription{
-								Name:        "something-else",
 								Description: "something else",
 							},
+							Name: "something-else",
 						},
 					},
 				},
@@ -87,11 +87,11 @@ var _ = Describe("Acceptance", func() {
 
 			expectedNginx1 = profilesv1.ProfileCatalogEntry{
 				ProfileDescription: profilesv1.ProfileDescription{
-					Name:          profileName,
 					Description:   "nginx 1",
 					Maintainer:    "my aunt ethel",
 					Prerequisites: []string{"at least 20 years of kubernetes experience"},
 				},
+				Name:          profileName,
 				CatalogSource: sourceName,
 				Tag:           "0.0.1",
 				URL:           "foo.com/bar",
@@ -99,11 +99,11 @@ var _ = Describe("Acceptance", func() {
 
 			expectedNginx2 = profilesv1.ProfileCatalogEntry{
 				ProfileDescription: profilesv1.ProfileDescription{
-					Name:          profileName,
 					Description:   "nginx 1 with super cool updates",
 					Maintainer:    "my latest version of aunt ethel",
 					Prerequisites: []string{"at least 20 years of kubernetes experience"},
 				},
+				Name:          profileName,
 				CatalogSource: sourceName,
 				Tag:           "0.0.2",
 				URL:           "foo.com/bar",
@@ -136,10 +136,10 @@ var _ = Describe("Acceptance", func() {
 					expectedNginx2,
 					profilesv1.ProfileCatalogEntry{
 						ProfileDescription: profilesv1.ProfileDescription{
-							Name:          "nginx-2",
 							Description:   "nginx 1",
 							Prerequisites: []string{},
 						},
+						Name:          "nginx-2",
 						CatalogSource: sourceName,
 					},
 				))
@@ -167,53 +167,53 @@ var _ = Describe("Acceptance", func() {
 							Profiles: []profilesv1.ProfileCatalogEntry{
 								{
 									ProfileDescription: profilesv1.ProfileDescription{
-										Name:          profileName,
 										Description:   "nginx 1",
 										Maintainer:    "my aunt ethel",
 										Prerequisites: []string{"at least 20 years of kubernetes experience"},
 									},
-									Tag: "0.2.1",
-									URL: "foo.com/bar",
+									Name: profileName,
+									Tag:  "0.2.1",
+									URL:  "foo.com/bar",
 								},
 								{
 									ProfileDescription: profilesv1.ProfileDescription{
-										Name:          profileName,
 										Description:   "nginx 1",
 										Maintainer:    "my aunt ethel",
 										Prerequisites: []string{"at least 20 years of kubernetes experience"},
 									},
-									Tag: "v0.2.1",
-									URL: "foo.com/bar",
+									Name: profileName,
+									Tag:  "v0.2.1",
+									URL:  "foo.com/bar",
 								},
 								{
 									ProfileDescription: profilesv1.ProfileDescription{
-										Name:          profileName,
 										Description:   "nginx 1",
 										Maintainer:    "my aunt ethel",
 										Prerequisites: []string{"at least 20 years of kubernetes experience"},
 									},
-									Tag: "foo-bar/0.2.1",
-									URL: "foo.com/bar",
+									Name: profileName,
+									Tag:  "foo-bar/0.2.1",
+									URL:  "foo.com/bar",
 								},
 								{
 									ProfileDescription: profilesv1.ProfileDescription{
-										Name:          profileName,
 										Description:   "nginx 1",
 										Maintainer:    "my aunt ethel",
 										Prerequisites: []string{"at least 20 years of kubernetes experience"},
 									},
-									Tag: "foo-bar/v0.2.1",
-									URL: "foo.com/bar",
+									Name: profileName,
+									Tag:  "foo-bar/v0.2.1",
+									URL:  "foo.com/bar",
 								},
 								{
 									ProfileDescription: profilesv1.ProfileDescription{
-										Name:          profileName,
 										Description:   "nginx 1",
 										Maintainer:    "my aunt ethel",
 										Prerequisites: []string{"at least 20 years of kubernetes experience"},
 									},
-									Tag: "0.2.1-build.1",
-									URL: "foo.com/bar",
+									Name: profileName,
+									Tag:  "0.2.1-build.1",
+									URL:  "foo.com/bar",
 								},
 							},
 						},
@@ -236,13 +236,13 @@ var _ = Describe("Acceptance", func() {
 							Profiles: []profilesv1.ProfileCatalogEntry{
 								{
 									ProfileDescription: profilesv1.ProfileDescription{
-										Name:          profileName,
 										Description:   "nginx 1",
 										Maintainer:    "my aunt ethel",
 										Prerequisites: []string{"at least 20 years of kubernetes experience"},
 									},
-									Tag: "0.not.1",
-									URL: "foo.com/bar",
+									Name: profileName,
+									Tag:  "0.not.1",
+									URL:  "foo.com/bar",
 								},
 							},
 						},
@@ -299,11 +299,11 @@ var _ = Describe("Acceptance", func() {
 							return description
 						}, "60s", "5s").Should(Equal(profilesv1.ProfileCatalogEntry{
 							ProfileDescription: profilesv1.ProfileDescription{
-								Name:          "weaveworks-nginx",
 								Description:   "Profile for deploying nginx",
 								Maintainer:    "weaveworks",
 								Prerequisites: []string{"kubernetes 1.19"},
 							},
+							Name:          "weaveworks-nginx",
 							Tag:           "weaveworks-nginx/v0.1.1",
 							URL:           "https://github.com/weaveworks/profiles-examples",
 							CatalogSource: "repo",
@@ -383,11 +383,11 @@ var _ = Describe("Acceptance", func() {
 							return description
 						}, "60s", "5s").Should(Equal(profilesv1.ProfileCatalogEntry{
 							ProfileDescription: profilesv1.ProfileDescription{
-								Name:          "weaveworks-nginx",
 								Description:   "Profile for deploying nginx",
 								Maintainer:    "weaveworks",
 								Prerequisites: []string{"kubernetes 1.19"},
 							},
+							Name:          "weaveworks-nginx",
 							Tag:           "weaveworks-nginx/v0.2.0",
 							URL:           "ssh://git@github.com/weaveworks/profiles-examples-private",
 							CatalogSource: "repo",
@@ -429,9 +429,9 @@ var _ = Describe("Acceptance", func() {
 			It("updates a ProfileCatalogSource with new profiles", func() {
 				pCatalog.Spec.Profiles = append(pCatalog.Spec.Profiles, profilesv1.ProfileCatalogEntry{
 					ProfileDescription: profilesv1.ProfileDescription{
-						Name:        "new-profile",
 						Description: "I am new here",
 					},
+					Name: "new-profile",
 				})
 				Expect(kClient.Update(context.Background(), &pCatalog)).To(Succeed())
 				Eventually(func() profilesv1.ProfileCatalogEntry {
@@ -440,10 +440,10 @@ var _ = Describe("Acceptance", func() {
 					return description
 				}).Should(Equal(profilesv1.ProfileCatalogEntry{
 					ProfileDescription: profilesv1.ProfileDescription{
-						Name:          "new-profile",
 						Description:   "I am new here",
 						Prerequisites: []string{},
 					},
+					Name:          "new-profile",
 					CatalogSource: sourceName,
 				}))
 			})
