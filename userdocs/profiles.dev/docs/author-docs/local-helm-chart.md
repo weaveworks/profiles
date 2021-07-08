@@ -17,6 +17,14 @@ Profile Authors may wish to add remote Charts to their profile repos if they:
 _(If you do not believe you require a "local" Helm Chart artifact, please refer to
 the page on [remote Helm Chart](/docs/author-docs/remote-helm-chart) artifacts.)_
 
+:::tip
+When you add local artifacts to your profile, we recommend noting that you have done
+so in your Readme, or other documentation, because users of such profiles will have to provide additional flags
+when installing.
+
+Take care to also note whether you are adding a nested profile which contains local resources.
+:::
+
 To use local Helm resources, store the chart in a subdirectory within the profile
 directory. Taking a previous structure example:
 

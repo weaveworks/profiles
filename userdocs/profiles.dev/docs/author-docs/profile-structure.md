@@ -44,6 +44,14 @@ The following artifact types are supported:
 Please refer to their dedicated docs pages for details on how to register different artifact
 types in a profile.
 
+:::info
+Please take care to name your profile artifacts sensibly. This will help those who are
+installing your profile locate and refer to artifacts later.
+
+See [how users use artifact names to configure values](/docs/installer-docs/setting-values)
+for an example of how artifact names are used.
+:::
+
 ## Profile repo directories
 
 It will be assumed that everything contained within the same directory as a `profile.yaml`
@@ -80,3 +88,16 @@ Profile directories can contain other objects related to various artifacts. Thes
 will be demonstrated in subsequent pages.
 
 Examples of profiles with various artifacts and configurations can be found [here](https://github.com/weaveworks/profiles-examples).
+
+## Documenting profiles
+
+When you add ['local' Helm](/docs/author-docs/local-helm-chart), [raw yaml or Kustomize](/docs/author-docs/kustomize-and-raw)
+artifacts to your profile, we recommend noting that you have done
+so in your Readme, or other documentation, because users of such profiles will have to provide additional flags
+when installing.
+
+Take care to also note whether you are adding a [nested profile](/docs/author-docs/nested-profiles) which contains local resources
+such as the ones listed above.
+
+Users are also able to configure values on Helm artifacts. To help them discover which values
+are available, you can provide information or links to the Charts you have used in your profile.

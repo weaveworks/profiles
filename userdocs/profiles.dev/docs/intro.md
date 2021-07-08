@@ -74,7 +74,7 @@ information.
 
 A Profile is a "package" of Kubernetes deployable objects, known as Artifacts, along with any configurable values.
 An artifact can be one of:
-- Helm Chart;
+- Helm Chart
 - Raw Kubernetes yaml
 - Kustomize patch
 - Another nested Profile
@@ -86,7 +86,7 @@ profile artifact types.
 
 The Profiles CLI.
 
-### Profile Repository
+### Profile repository
 
 A profile repository holds the definition and other necessary items for an upstream profile
 or profiles. A single repository can hold multiple profiles, separated by directories.
@@ -105,7 +105,7 @@ Refer to the [Flux documentation](https://fluxcd.io/) for more detail on how to 
 To install a Profile means to generate the required component manifests for a Profile and commit
 them to a GitOps repo. From there, Flux will recognise the changes and apply the manifests.
 
-For more information, see the [Installer documentation](/docs/installer-docs/simple-install).
+For more information, see the [Installer documentation](/docs/installer-docs/installing-via-gitops).
 
 ### Catalog
 

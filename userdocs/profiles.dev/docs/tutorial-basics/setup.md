@@ -16,8 +16,11 @@ Please refer to the [Introduction](/docs/intro) to read about the core concepts 
 
 In this tutorial you will create and install a simple profile onto your Kubernetes cluster using various GitOps tools.
 
-_If you are not interested in writing profiles, just installing them, please skip ahead to the relevant section
+_If you are only interested in **installing** profiles, not writing them, please skip ahead to the relevant section
 once you have set up your environment._
+
+_If you are only interested in **writing** profiles, not installing them, you can skip the environment
+setup steps._
 
 ------------------
 
@@ -29,6 +32,13 @@ In order to install profiles, you need to have the following set up:
 
 For local testing, we recommend using [kind](https://kind.sigs.k8s.io/docs/user/quick-start/).
 The cluster must be version 1.16 or newer.
+
+### pctl: the Profiles CLI
+
+Profiles are installed and managed via the official CLI: `pctl`.
+Releases can be found [here](https://github.com/weaveworks/pctl/releases).
+`pctl` binaries are not backwards compatible, and we recommended keeping your local
+version regularly updated.
 
 ### Profiles CRDs and Flux CRDs
 
@@ -58,14 +68,6 @@ If you choose to use a private repo, please ensure that your local git environme
 up correctly for the rest of the tutorial.
 :::
 
-
-### pctl: the Profiles CLI
-
-Profiles are installed and managed via the official CLI: `pctl`.
-Releases can be found [here](https://github.com/weaveworks/pctl/releases).
-`pctl` binaries are not backwards compatible, and we recommended keeping your local
-version regularly updated.
-
 ### Personal Access Token
 
 The profile will be installed in a GitOps way, therefore `pctl` will push all manifests to your cluster git repo.
@@ -82,11 +84,11 @@ Check you have everything on this list and go back if something is missing.
 
  :white_check_mark: [Cluster](#kubernetes-cluster)
 
+ :white_check_mark: [Pctl binary](#pctl-the-profiles-cli)
+
  :white_check_mark: [Profiles CRDs and Flux CRDs](#profiles-crds-and-flux-crds)
 
  :white_check_mark: [GitHub repo](#a-github-repo-synced-to-flux)
-
- :white_check_mark: [Pctl binary](#pctl-the-profiles-cli)
 
  :white_check_mark: [GitHub token](#personal-access-token)
 
