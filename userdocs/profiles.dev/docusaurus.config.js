@@ -50,7 +50,7 @@ module.exports = {
             },
             {
               label: 'Developer Docs: Profile User',
-              to: '/docs/installer-docs/simple-install',
+              to: '/docs/installer-docs/installing-via-gitops',
             },
             {
               label: 'Developer Docs: Catalog Manager',
