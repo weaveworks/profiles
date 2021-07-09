@@ -62,7 +62,7 @@ lint: ## Run lint against code
 ##@ Tests
 
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
-test: docs lint generate fmt vet manifests test_deps ## Run unit and integration tests
+test: lint generate fmt vet manifests test_deps ## Run unit and integration tests
 	source hack/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); ginkgo -r --skipPackage acceptance
 
 acceptance: local-env ## Run acceptance tests
@@ -161,11 +161,11 @@ bundle-build: ## Build the bundle image.
 
 docs: mdtoc ## Build the docs
 	mdtoc -inplace README.md
+	pctl docgen --path userdocs/profiles.dev/docs/pctl || (echo "please update your pctl version to >= 0.0.4" && exit 1)
 	pushd userdocs/profiles.dev/ && yarn install && yarn build && popd
 
-local-docs: docs
+local-docs: docs ## Serve the docs locally
 	pushd userdocs/profiles.dev/ && yarn start && popd
-
 
 mdtoc: ## Download mdtoc binary if necessary
 	GO111MODULE=off go get sigs.k8s.io/mdtoc || true
