@@ -16,6 +16,11 @@ jobs:
       - uses: webfactory/ssh-agent@v0.5.0
         with:
           ssh-private-key: ${{ secrets.PROFILES_DOCS_WEAVEWORKS_DOCS_BOT_DEPLOY_KEY }}
+      - name: Fetch latest pctl binary
+        run: |
+          curl -sL https://api.github.com/repos/weaveworks/pctl/releases/latest 2>/dev/null | \
+          jq -r '.assets[] | select(.browser_download_url | contains("linux_amd64")) | .browser_download_url' | \
+          xargs curl -sL | tar xvz -C /tmp && chmod +x /tmp/pctl && /tmp/pctl --help
       - name: Release to GitHub Pages
         env:
           USE_SSH: true
@@ -24,6 +29,7 @@ jobs:
           git config --global user.email "actions@github.com"
           git config --global user.name "gh-actions"
           cd userdocs/profiles.dev/
+          /tmp/pctl docgen --path docs/pctl
           if [ -e yarn.lock ]; then
           yarn install --frozen-lockfile
           elif [ -e package-lock.json ]; then

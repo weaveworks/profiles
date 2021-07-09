@@ -28,7 +28,7 @@ are private, remember to ensure that your local git environment is configured co
 :::
 
 To install a profile, we use `pctl install`. To see all flags available on this subcommand,
-see [the help](/docs/pctl/install).
+see [the help](/docs/pctl/pctl-install-cmd).
 
 There are two methods by which you can install a profile: with a direct URL and via a catalog.
 Please see [the page here](/docs/installer-docs/using-catalogs) for specific instructions on how to install a profile from a catalog.
@@ -93,7 +93,7 @@ pctl install \
   --pr-base tea-time
 ```
 
-To see all flags available on this subcommand, see [the help](/docs/pctl/install).
+To see all flags available on this subcommand, see [the help](/docs/pctl/pctl-install-cmd).
 
 ## The `git-repository` flag
 
