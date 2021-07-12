@@ -69,8 +69,22 @@ spec:
                             the remote repository
                           type: string
                       type: object
+                    dependsOn:
+                      description: DependsOn is an optional field which defines dependency
+                        on other artifacts.
+                      items:
+                        description: DependsOn defines an optional artifact name on
+                          which this artifact depends on.
+                        properties:
+                          name:
+                            description: Name of the artifact to depend on.
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
                     kustomize:
-                      description: Kustomize defines properties to for a kustmize
+                      description: Kustomize defines properties to for a kustomize
                         artifact.
                       properties:
                         path:

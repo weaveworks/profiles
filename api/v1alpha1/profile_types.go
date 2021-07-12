@@ -55,6 +55,9 @@ type ProfileDescription struct {
 type Artifact struct {
 	// Name is the name of the Artifact
 	Name string `json:"name,omitempty"`
+	// DependsOn is an optional field which defines dependency on other artifacts.
+	// +optional
+	DependsOn []DependsOn `json:"dependsOn,omitempty"`
 	// Chart defines properties to access a remote chart.
 	// This is an optional value. It is ignored in case Path is defined.
 	// +optional
@@ -62,11 +65,18 @@ type Artifact struct {
 	// Profiles defines properties to access a remote profile.
 	// +optional
 	Profile *Profile `json:"profile,omitempty"`
-	// Kustomize defines properties to for a kustmize artifact.
+	// Kustomize defines properties to for a kustomize artifact.
 	// +optional
 	Kustomize *Kustomize `json:"kustomize,omitempty"`
 }
 
+// DependsOn defines an optional artifact name on which this artifact depends on.
+type DependsOn struct {
+	// Name of the artifact to depend on.
+	Name string `json:"name"`
+}
+
+// Kustomize defines properties to for a kustomize artifact.
 type Kustomize struct {
 	// Path is the local path to the Artifact in the Profile repo.
 	Path string `json:"path,omitempty"`
