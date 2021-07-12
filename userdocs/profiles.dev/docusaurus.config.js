@@ -54,7 +54,7 @@ module.exports = {
             },
             {
               label: 'Developer Docs: Catalog Manager',
-              to: '/docs/catalog-docs/simple-catalog',
+              to: '/docs/catalog-docs/add-profiles',
             },
           ],
         },
