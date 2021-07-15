@@ -52,6 +52,7 @@ pctl prepare
 ```
 
 This will install the latest version of the profiles CRD, which may not always be stable.
+
 To specify a [specific version](https://github.com/weaveworks/profiles/releases), use the `--version` flag.
 
 ### A GitHub repo, synced to Flux
@@ -82,14 +83,14 @@ export GIT_TOKEN=<your token>
 
 Check you have everything on this list and go back if something is missing.
 
- :white_check_mark: [Cluster](#kubernetes-cluster)
+ :white_check_mark: &nbsp;&nbsp; [Cluster](#kubernetes-cluster)
 
- :white_check_mark: [Pctl binary](#pctl-the-profiles-cli)
+ :white_check_mark: &nbsp;&nbsp; [Pctl binary](#pctl-the-profiles-cli)
 
- :white_check_mark: [Profiles CRDs and Flux CRDs](#profiles-crds-and-flux-crds)
+ :white_check_mark: &nbsp;&nbsp; [Profiles CRDs and Flux CRDs](#profiles-crds-and-flux-crds)
 
- :white_check_mark: [GitHub repo](#a-github-repo-synced-to-flux)
+ :white_check_mark: &nbsp;&nbsp; [GitHub repo](#a-github-repo-synced-to-flux)
 
- :white_check_mark: [GitHub token](#personal-access-token)
+ :white_check_mark: &nbsp;&nbsp; [GitHub token](#personal-access-token)
 
 Once you have completed the prerequisites installation you can start writing a profile!

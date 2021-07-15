@@ -18,7 +18,7 @@ Thank you!
 
 ## What are Profiles?
 
-In short, a profile is a Kubernetes package. Much as you would expect from another package
+In short, Profiles is a Kubernetes package manager. Much as you would expect from another package
 manager (`brew`, `apt`, etc), the Profiles mechanism allows Kubernetes operators
 to manage their clusters in the same way they manage their host systems. Available
 packages are listed somewhere searchable; they are versioned; they are tested and verified;
@@ -84,7 +84,7 @@ profile artifact types.
 
 ### pctl
 
-The Profiles CLI.
+Profiles are installed and managed via the official CLI: `pctl`.
 
 ### Profile repository
 

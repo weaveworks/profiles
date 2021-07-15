@@ -4,20 +4,20 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 module.exports = {
   title: 'Profiles',
-  tagline: 'GitOps native package management',
+  tagline: 'GitOps native package manager',
   url: 'https://docs.profiles.dev/',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon_150px.png',
   organizationName: 'weaveworks', // Usually your GitHub org/user name.
   projectName: 'profiles', // Usually your repo name.
   themeConfig: {
     navbar: {
-      title: 'profiles',
+      title: 'Profiles',
       logo: {
         alt: 'something cute coming soon',
-        src: 'img/logo.svg',
+        src: 'img/weave-logo.png',
       },
       items: [
         {
@@ -26,7 +26,7 @@ module.exports = {
           label: 'Getting started',
         },
         {to: '/docs/intro', label: 'Docs', position: 'left'},
-        {to: '/blog', label: 'Blog', position: 'left'},
+        {to: '/docs/installer-docs/installing-via-gitops', label: 'Installing Profiles', position: 'left'},
         {
           href: 'https://github.com/weaveworks/profiles',
           label: 'GitHub',
@@ -90,10 +90,6 @@ module.exports = {
         },
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Weaveworks, Inc. Built with Docusaurus.`,
-    },
-    prism: {
-      theme: lightCodeTheme,
-      darkTheme: darkCodeTheme,
     },
   },
   presets: [

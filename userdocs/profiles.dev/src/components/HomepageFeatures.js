@@ -4,29 +4,32 @@ import styles from './HomepageFeatures.module.css';
 
 const FeatureList = [
   {
-    title: 'GitOps Native package manager',
+    title: 'What are Profiles?',
     Svg: require('../../static/img/undraw_docusaurus_mountain.svg').default,
     description: (
       <>
-      some cool text here
+      Profiles is a GitOps Native Package Manager. 
+      <p><a href="/docs/intro">Read more</a></p>
       </>
     ),
   },
   {
-    title: 'something else',
+    title: 'The Profiles CLI: pctl',
     Svg: require('../../static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
-      more cool text
+      Profiles are installed and managed via the official CLI: pctl. 
+      Releases can be found <a href="https://github.com/weaveworks/pctl/releases">here</a>.  
       </>
     ),
   },
   {
-    title: 'hmmmm',
+    title: 'Powered by Flux',
     Svg: require('../../static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
-      something about flux maybe. don't forget to also change the logos
+        <a href="https://fluxcd.io">Flux</a> is a leading CNCF project around GitOps automation.
+        Weave GitOps builds on this foundation to create a highly effective GitOps runtime.
       </>
     ),
   },
