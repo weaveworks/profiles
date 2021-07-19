@@ -18,7 +18,7 @@ Thank you!
 
 ## What are Profiles?
 
-In short, Profiles is a Kubernetes package manager. Much as you would expect from another package
+In short, Profiles is a GitOps package management mechanism. Much as you would expect from another package
 manager (`brew`, `apt`, etc), the Profiles mechanism allows Kubernetes operators
 to manage their clusters in the same way they manage their host systems. Available
 packages are listed somewhere searchable; they are versioned; they are tested and verified;
@@ -51,7 +51,7 @@ No worries, here's the breakdown:
 - A profile: an individual package of Kubernetes components. Lives in a git repo "upstream"
   of users who have installed it on their cluster
 - `N` profiles: more than one profile
-- Profiles (capital 'P'): a blanket term for this concept of GitOps native package management
+- Profiles (capital 'P'): a blanket term for this concept of GitOps native package management mechanism
 - Pctl: the CLI tool. Use this to install and manage profiles on your cluster
 :::
 
