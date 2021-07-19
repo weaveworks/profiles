@@ -66,6 +66,19 @@ spec:
                 description: ConfigMap is the name of the configmap to pull helm values
                   from
                 type: string
+              gitRepository:
+                description: GitRepository is the git repository flux resource the
+                  installation uses
+                properties:
+                  name:
+                    description: Name is the name of the git repository resource responsible
+                      for deploying the profile
+                    type: string
+                  namespace:
+                    description: Namespace is the namespace of the git repository
+                      resource responsible for deploying the profile
+                    type: string
+                type: object
               source:
                 description: Source defines properties of the source of the profile
                 properties:

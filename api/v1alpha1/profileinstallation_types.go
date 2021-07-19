@@ -31,11 +31,22 @@ type ProfileInstallationSpec struct {
 	// +optional
 	ConfigMap string `json:"configMap,omitempty"`
 
+	// GitRepository is the git repository flux resource the installation uses
+	GitRepository *GitRepository `json:"gitRepository,omitempty"`
 	// Source defines properties of the source of the profile
 	Source *Source `json:"source,omitempty"`
 
 	// Catalog defines properties of the catalog reference
 	Catalog *Catalog `json:"catalog,omitempty"`
+}
+
+type GitRepository struct {
+	// Name is the name of the git repository resource responsible for
+	// deploying the profile
+	Name string `json:"name,omitempty"`
+	// Namespace is the namespace of the git repository resource responsible for
+	// deploying the profile
+	Namespace string `json:"namespace,omitempty"`
 }
 
 // Source defines the location of the profile
