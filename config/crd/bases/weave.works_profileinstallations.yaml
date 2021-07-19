@@ -67,8 +67,8 @@ spec:
                   from
                 type: string
               gitRepository:
-                description: GitRepository is the git repositoy flux resource the
-                  installation used
+                description: GitRepository is the git repository flux resource the
+                  installation uses
                 properties:
                   name:
                     description: Name is the name of the git repository resource responsible

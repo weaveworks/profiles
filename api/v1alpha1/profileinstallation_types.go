@@ -31,7 +31,7 @@ type ProfileInstallationSpec struct {
 	// +optional
 	ConfigMap string `json:"configMap,omitempty"`
 
-	// GitRepository is the git repositoy flux resource the installation used
+	// GitRepository is the git repository flux resource the installation uses
 	GitRepository *GitRepository `json:"gitRepository,omitempty"`
 	// Source defines properties of the source of the profile
 	Source *Source `json:"source,omitempty"`
