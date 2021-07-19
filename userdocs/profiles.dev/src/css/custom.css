@@ -47,3 +47,7 @@
     --ifm-alert-background-color: #cc2c00;
     --ifm-alert-border-color: #cc2c00;
 }
+
+.hero {
+    background-color: #00b3ec;
+}
