@@ -75,7 +75,7 @@ jobs:
       - name: Do release
         uses: softprops/action-gh-release@v1
         with:
-          bodyPath: "docs/release_notes/${{ steps.prep.outputs.VERSION }}.md"
+          body_path: "docs/release_notes/${{ steps.prep.outputs.VERSION }}.md"
           files: |
             config/release/manifests.tar.gz
             config/prepare/prepare.yaml
