@@ -18,7 +18,7 @@ Thank you!
 
 ## What are Profiles?
 
-In short, Profiles is a GitOps package management mechanism. Much as you would expect from another package
+In short, a profile is a Kubernetes package. Much as you would expect from another package
 manager (`brew`, `apt`, etc), the Profiles mechanism allows Kubernetes operators
 to manage their clusters in the same way they manage their host systems. Available
 packages are listed somewhere searchable; they are versioned; they are tested and verified;
@@ -129,3 +129,5 @@ A `ProfileCatalogSource` is a custom resource through which approved profiles ca
 
 The Profile Catalog Source Controller reconciles `ProfileCatalogSource` resources.
 See architecture diagrams below for what the reconciliation process does.
+
+ 

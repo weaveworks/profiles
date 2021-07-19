@@ -17,14 +17,33 @@
     --ifm-code-font-size: 95%;
   }
   
-  .docusaurus-highlight-code-line {
+.docusaurus-highlight-code-line {
     background-color: rgb(99, 117, 165);
     display: block;
     margin: 0 calc(-1 * var(--ifm-pre-padding));
     padding: 0 var(--ifm-pre-padding);
-  }
-  
-  .button.button--secondary.button--outline:not(.button--active):not(:hover) {
+}
+
+.button.button--secondary.button--outline:not(.button--active):not(:hover) {
     color: var(--ifm-font-color);
-  }
- 
+}
+
+.alert--info {
+    --ifm-alert-background-color: #00a7cc;
+    --ifm-alert-border-color: #00a7cc;
+}
+
+.alert--warning {
+    --ifm-alert-background-color: #d3ab27;
+    --ifm-alert-border-color: #d3ab27;
+}
+
+.alert--success {
+    --ifm-alert-background-color: #38bc93;
+    --ifm-alert-border-color: #38bc93;
+}
+
+.alert--danger {
+    --ifm-alert-background-color: #cc2c00;
+    --ifm-alert-border-color: #cc2c00;
+}

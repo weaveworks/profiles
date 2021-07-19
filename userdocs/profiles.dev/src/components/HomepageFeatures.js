@@ -5,17 +5,15 @@ import styles from './HomepageFeatures.module.css';
 const FeatureList = [
   {
     title: 'What are Profiles?',
-    Svg: require('../../static/img/undraw_docusaurus_mountain.svg').default,
     description: (
       <>
-      Profiles is a GitOps package management mechanism. 
-      <p><a href="/docs/intro">Read more</a></p>
+      Profiles is a GitOps package management mechanism.
+      <a href="/docs/intro">Read more</a>
       </>
     ),
   },
   {
     title: 'Powered by Flux',
-    Svg: require('../../static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
         <a href="https://fluxcd.io">Flux</a> is a leading CNCF project around GitOps automation.
@@ -24,8 +22,7 @@ const FeatureList = [
     ),
   },
   {
-    title: 'The Profiles CLI',
-    Svg: require('../../static/img/undraw_docusaurus_tree.svg').default,
+    title: 'Profiles CLI',
     description: (
       <>
       Profiles are installed and managed via the official CLI <code>pctl</code>. 
@@ -35,13 +32,10 @@ const FeatureList = [
   },
 ];
 
-function Feature({Svg, title, description}) {
+function Feature({title, description}) {
   return (
     <div className={clsx('col col--4')}>
-      <div className="text--center">
-        <Svg className={styles.featureSvg} alt={title} />
-      </div>
-      <div className="text--center padding-horiz--md">
+      <div className="text--center padding-horiz--md padding-vert--md">
         <h3>{title}</h3>
         <p>{description}</p>
       </div>

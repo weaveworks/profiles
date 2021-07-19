@@ -33,7 +33,7 @@ In order to install profiles, you need to have the following set up:
 For local testing, we recommend using [kind](https://kind.sigs.k8s.io/docs/user/quick-start/).
 The cluster must be version 1.16 or newer.
 
-### pctl: the Profiles CLI
+### Profiles CLI
 
 Profiles are installed and managed via the official CLI: `pctl`.
 Releases can be found [here](https://github.com/weaveworks/pctl/releases).
