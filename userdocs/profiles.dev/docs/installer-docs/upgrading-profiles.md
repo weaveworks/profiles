@@ -6,7 +6,7 @@ sidebar_position: 5
 
 When newer versions of a profile are available you will be able to discover them by 
 [listing installed profiles](/docs/installer-docs/listing-installed-profiles#listing-installed-profiles).
-Once you know what version you want to upgrade to you can upgrade your profile by running:
+Once you know which version you want to upgrade to, run the following:
 
 ```bash
 pctl upgrade path-to-installation/ <version>
