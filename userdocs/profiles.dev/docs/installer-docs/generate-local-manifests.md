@@ -59,9 +59,9 @@ This profile installs an `nginx` using a remote helm chart. The folders contain 
 
 * bitnami-nginx - the name of the artifact
 * helm-chart - contains the resources which install the actual nginx
-* ConfigMap.yaml - contains any settings which the artifact had
+* ConfigMap.yaml - contains any default values set by the author on the artifact
 * HelmRelease.yaml - contains the HelmRelease object which installs nginx
-* HelmRepository.yaml - contains the definition of the helm chart repository where the chart is located at
+* HelmRepository.yaml - contains the definition of the helm chart repository where the chart is located
 * kustomization.yaml - this is a file which tells flux what to install -- more on this later
 * kustomize-flux.yaml - this is a Kustomization object which deals with [dependencies](/docs/author-docs/dependencies)
 * profiles-installation.yaml - contains information about the profile -- mainly used by pctl
