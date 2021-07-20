@@ -30,3 +30,52 @@ pctl install \
   --out relative-path \
   <catalog name>/<profile>
 ```
+
+Consider the following installation:
+
+```
+pctl install --git-repository flux-system/flux-system nginx-catalog/nginx/v2.0.1
+generating profile installation from source: catalog entry nginx-catalog/nginx/v2.0.1
+installation completed successfully
+```
+
+Let's take a look inside:
+
+```
+tree nginx
+nginx
+├── artifacts
+│   └── bitnami-nginx
+│       ├── helm-chart
+│       │   ├── ConfigMap.yaml
+│       │   ├── HelmRelease.yaml
+│       │   └── HelmRepository.yaml
+│       ├── kustomization.yaml
+│       └── kustomize-flux.yaml
+└── profile-installation.yaml
+```
+
+This profile installs an `nginx` using a remote helm chart. The folders contain the following files in order:
+
+* bitnami-nginx - the name of the artifact
+* helm-chart - contains the resources which install the actual nginx
+* ConfigMap.yaml - contains any settings which the artifact had
+* HelmRelease.yaml - contains the HelmRelease object which installs nginx
+* HelmRepository.yaml - contains the definition of the helm chart repository where the chart is located at
+* kustomization.yaml - this is a file which tells flux what to install -- more on this later
+* kustomize-flux.yaml - this is a Kustomization object which deals with [dependencies](/docs/author-docs/dependencies)
+* profiles-installation.yaml - contains information about the profile -- mainly used by pctl
+
+What is `kustomization.yaml`? This is to prevent flux installing whatever there is in the `helm-chart` folder. The `helm-chart`
+folder can contain local resources such as, helm chart definition, READMEs and non-kubernetes objects. If flux would try
+installing those, it would fail.
+
+`kustomization.yaml` contains a single resource line:
+
+```yaml
+resources:
+- kustomize-flux.yaml
+```
+
+Which means, flux will only install the resource defined in this file. The Kustomization object in `kustomize-flux.yaml`
+will take care of installing HelmRelease.
