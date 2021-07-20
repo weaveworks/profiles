@@ -4,41 +4,38 @@ import styles from './HomepageFeatures.module.css';
 
 const FeatureList = [
   {
-    title: 'GitOps Native package manager',
-    Svg: require('../../static/img/undraw_docusaurus_mountain.svg').default,
+    title: 'What is Profiles?',
     description: (
       <>
-      some cool text here
+      Profiles is a GitOps package management mechanism.
+      <a href="/docs/intro">Read more</a>
       </>
     ),
   },
   {
-    title: 'something else',
-    Svg: require('../../static/img/undraw_docusaurus_tree.svg').default,
+    title: 'Powered by Flux',
     description: (
       <>
-      more cool text
+        <a href="https://fluxcd.io">Flux</a> is a leading CNCF project around GitOps automation.
+        Weave GitOps builds on this foundation to create a highly effective GitOps runtime.
       </>
     ),
   },
   {
-    title: 'hmmmm',
-    Svg: require('../../static/img/undraw_docusaurus_react.svg').default,
+    title: 'Profiles CLI',
     description: (
       <>
-      something about flux maybe. don't forget to also change the logos
+      Profiles are installed and managed via the official CLI <code>pctl</code>. 
+      Releases can be found <a href="https://github.com/weaveworks/pctl/releases">here</a>.  
       </>
     ),
   },
 ];
 
-function Feature({Svg, title, description}) {
+function Feature({title, description}) {
   return (
     <div className={clsx('col col--4')}>
-      <div className="text--center">
-        <Svg className={styles.featureSvg} alt={title} />
-      </div>
-      <div className="text--center padding-horiz--md">
+      <div className="text--center padding-horiz--md padding-vert--md">
         <h3>{title}</h3>
         <p>{description}</p>
       </div>
