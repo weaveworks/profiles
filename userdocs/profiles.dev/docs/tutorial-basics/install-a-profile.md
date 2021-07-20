@@ -13,8 +13,12 @@ Please refer back to the [set up docs](/docs/tutorial-basics/setup) if not.
 
 To install a profile, we use `pctl`.
 
-With the following command `pctl` will generate a set of manifests for each profile artifact.
-Commit those manifests to a branch in your GitOps repo, push that branch and open a PR to merge the changes.
+With the following command `pctl` will:
+- generate a set of manifests for each profile artifact
+- commit those manifests to a branch in your GitOps repo
+- push that branch and
+- open a PR to merge the changes
+
 Your GitOps repository is the one you synced to Flux in your cluster in the
 [environment setup](/docs/tutorial-basics/setup#a-github-repo-synced-to-flux) section of this tutorial.
 
