@@ -51,7 +51,7 @@ No worries, here's the breakdown:
 - A profile: an individual package of Kubernetes components. Lives in a git repo "upstream"
   of users who have installed it on their cluster
 - `N` profiles: more than one profile
-- Profiles (capital 'P'): a blanket term for this concept of GitOps native package management mechanism
+- Profiles (capital 'P'): a blanket term for this concept of a GitOps native package management mechanism
 - Pctl: the CLI tool. Use this to install and manage profiles on your cluster
 :::
 

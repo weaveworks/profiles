@@ -4,7 +4,7 @@ import styles from './HomepageFeatures.module.css';
 
 const FeatureList = [
   {
-    title: 'What are Profiles?',
+    title: 'What is Profiles?',
     description: (
       <>
       Profiles is a GitOps package management mechanism.
