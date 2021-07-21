@@ -46,6 +46,9 @@ spec:
         url: https://charts.bitnami.com/bitnami
         name: nginx
         version: "8.9.1"
+        defaultValues: |
+          service:
+            type: ClusterIP
 ```
 
 The section of note here is `spec.artifacts`. Each artifact represents a component of a Profile.
