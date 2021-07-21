@@ -2,7 +2,7 @@
 sidebar_position: 3
 ---
 
-# Install a profile
+# Add a profile
 
 :::info
 
@@ -11,9 +11,9 @@ This stage of the tutorial assumes you have prepared your environment correctly.
 Please refer back to the [set up docs](/docs/tutorial-basics/setup) if not.
 :::
 
-To install a profile, we use `pctl`.
+To add a profile, we use `pctl add`.
 
-With the following command `pctl` will:
+With the following command `pctl add` will:
 - generate a set of manifests for each profile artifact
 - commit those manifests to a branch in your GitOps repo
 - push that branch and
@@ -25,12 +25,12 @@ Your GitOps repository is the one you synced to Flux in your cluster in the
 _(A breakdown of each flag is provided below.)_
 
 ```bash
-pctl install \
-  --profile-url <URL of profile to install> \
+pctl add \
+  --profile-url <URL of profile to add> \
   --profile-path=. \
   --create-pr \
   --pr-repo <gitops repo username or orgname>/<gitops repo name> \
-  --pr-branch install-simple-profile
+  --pr-branch add-simple-profile
 ```
 
 Above we use the following flags:

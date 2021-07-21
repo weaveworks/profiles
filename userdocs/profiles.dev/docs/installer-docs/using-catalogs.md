@@ -48,13 +48,13 @@ Prerequisites   kubernetes 1.19
 
 _Note that the Prerequisites field is not yet processed, we are working on it!_
 
-## Installing a profile from the catalog
+## Adding a profile from the catalog
 
-To install a profile from the catalog we provide a positional argument after all other flags
+To add a profile from the catalog we provide a positional argument after all other flags
 in the format of `<catalog name>/<profile name>`.
 
 ```bash
-pctl install \
+pctl add \
   --create-pr \
   --pr-repo <gitops repo username or orgname>/<gitops repo name> \
   nginx-catalog/weaveworks-nginx
@@ -64,13 +64,13 @@ The above command will install the latest version.
 To install a specific version of a profile, simply add it to the end:
 
 ```bash
-pctl install \
+pctl add \
   --create-pr \
   --pr-repo <gitops repo username or orgname>/<gitops repo name> \
   nginx-catalog/weaveworks-nginx/v0.0.2
 ```
 
 :::info
-We recommended also setting the `--git-repository` flag. See [the section here](/docs/installer-docs/installing-via-gitops#the-git-repository-flag)
+We recommended also setting the `--git-repository` flag. See [the section here](/docs/installer-docs/adding-via-gitops#the-git-repository-flag)
 for more information.
 :::

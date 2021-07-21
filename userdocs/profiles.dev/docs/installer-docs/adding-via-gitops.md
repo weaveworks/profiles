@@ -2,11 +2,11 @@
 sidebar_position: 1
 ---
 
-# Installing with GitOps
+# Adding Profile with GitOps
 
 ## Environment setup
 
-To install profiles with GitOps you will need to have completed the following environment setup.
+To add profiles with GitOps you will need to have completed the following environment setup.
 
  :white_check_mark: &nbsp;&nbsp; [Cluster](/docs/tutorial-basics/setup#kubernetes-cluster)
 
@@ -20,18 +20,18 @@ To install profiles with GitOps you will need to have completed the following en
 
 The full setup docs can be found [here](/docs/tutorial-basics/setup#prerequisites).
 
-## Simple install from a profile URL
+## Simple add from a profile URL
 
 :::caution Private repos
 If either your GitOps repository, or the repository containing the profile you wish to install
 are private, remember to ensure that your local git environment is configured correctly.
 :::
 
-To install a profile, we use `pctl install`. To see all flags available on this subcommand,
-see [the help](/docs/pctl/pctl-install-cmd).
+To add a profile, we use `pctl add`. To see all flags available on this subcommand,
+see [the help](/docs/pctl/pctl-add-cmd).
 
-There are two methods by which you can install a profile: with a direct URL and via a catalog.
-Please see [the page here](/docs/installer-docs/using-catalogs) for specific instructions on how to install a profile from a catalog.
+There are two methods by which you can add a profile: with a direct URL and via a catalog.
+Please see [the page here](/docs/installer-docs/using-catalogs) for specific instructions on how to add a profile from a catalog.
 
 With the following command, `pctl` will:
 - generate a set of manifests for each artifact declared in the profile at the given URL
@@ -42,7 +42,7 @@ Your GitOps repo is the one you synced to Flux in your cluster in the
 [environment setup](/docs/tutorial-basics/setup#a-github-repo-synced-to-flux).
 
 ```bash
-pctl install \
+pctl add \
   --profile-url <URL of profile to install> \
   --create-pr \
   --pr-repo <gitops repo username or orgname>/<gitops repo name>
@@ -73,7 +73,7 @@ Once discovered, you can set the relative path to this file using the `--profile
 
 ## Further configurations
 
-You can pass further arguments to `pctl install` for more control over the format
+You can pass further arguments to `pctl add` for more control over the format
 and destination of your PR. For example, the following command will:
 - generate the profile manifests in the `ethel` directory within my GitOps repo
 - set the objects to be deployed in the `two-sugars-please` namespace in my cluster
@@ -82,7 +82,7 @@ and destination of your PR. For example, the following command will:
 - open a PR against the `tea-time` branch in my target GitOps repo
 
 ```bash
-pctl install \
+pctl add \
   --profile-url https://github.com/weaveworks/nginx-profile \
   --create-pr \
   --pr-repo drwho/thirteen \
@@ -93,7 +93,7 @@ pctl install \
   --pr-base tea-time
 ```
 
-To see all flags available on this subcommand, see [the help](/docs/pctl/pctl-install-cmd).
+To see all flags available on this subcommand, see [the help](/docs/pctl/pctl-add-cmd).
 
 ## The `git-repository` flag
 
@@ -128,7 +128,7 @@ This should return something like:
 flux-system/flux-system
 ```
 
-Then add the following flag to your `install` command:
+Then add the following flag to your `add` command:
 
 ```sh
 --git-repository <output from the command above>

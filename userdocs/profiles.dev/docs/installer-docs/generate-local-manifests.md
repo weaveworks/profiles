@@ -10,7 +10,7 @@ related flags.
 
 For example, using a profile URL:
 ```yaml
-pctl install \
+pctl add \
   --profile-url <URL of profile to install> \
   --out relative-path
 ```
@@ -26,7 +26,7 @@ Once discovered, you can set the relative path to this file using the `--profile
 Example generating from a profile listed in a catalog:
 
 ```yaml
-pctl install \
+pctl add \
   --out relative-path \
   <catalog name>/<profile>
 ```
@@ -34,7 +34,7 @@ pctl install \
 Consider the following installation:
 
 ```
-pctl install --git-repository flux-system/flux-system nginx-catalog/nginx/v2.0.1
+pctl add --git-repository flux-system/flux-system nginx-catalog/nginx/v2.0.1
 generating profile installation from source: catalog entry nginx-catalog/nginx/v2.0.1
 installation completed successfully
 ```
