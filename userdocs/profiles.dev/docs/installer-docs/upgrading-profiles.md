@@ -14,4 +14,4 @@ pctl upgrade path-to-installation/ <version>
 
 This will then perform an upgrade of your local installation. You can also pass in the `--create-pr` flag to automatically create a PR
 . Pctl uses a 3-way merge behind the scenes to perform the upgrade. If you have made local modifications to
-your installation that conflict with changes in the upgrades you will get merge conflicts, and will have to manual resolve them.
+your installation that conflict with changes in the upgrades you will get merge conflicts, and will have to manually resolve them.
