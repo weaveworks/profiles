@@ -8,15 +8,15 @@ sidebar_position: 1
 
 To install profiles with GitOps you will need to have completed the following environment setup.
 
- :white_check_mark: [Cluster](/docs/tutorial-basics/setup#kubernetes-cluster)
+ :white_check_mark: &nbsp;&nbsp; [Cluster](/docs/tutorial-basics/setup#kubernetes-cluster)
 
- :white_check_mark: [Pctl binary](/docs/tutorial-basics/setup#pctl-the-profiles-cli)
+ :white_check_mark: &nbsp;&nbsp; [Pctl binary](/docs/tutorial-basics/setup#pctl-the-profiles-cli)
 
- :white_check_mark: [Profiles CRDs and Flux CRDs](/docs/tutorial-basics/setup#profiles-crds-and-flux-crds)
+ :white_check_mark: &nbsp;&nbsp; [Profiles CRDs and Flux CRDs](/docs/tutorial-basics/setup#profiles-crds-and-flux-crds)
 
- :white_check_mark: [GitHub repo](/docs/tutorial-basics/setup#a-github-repo-synced-to-flux)
+ :white_check_mark: &nbsp;&nbsp; [GitHub repo](/docs/tutorial-basics/setup#a-github-repo-synced-to-flux)
 
- :white_check_mark: [GitHub token](/docs/tutorial-basics/setup#personal-access-token)
+ :white_check_mark: &nbsp;&nbsp; [GitHub token](/docs/tutorial-basics/setup#personal-access-token)
 
 The full setup docs can be found [here](/docs/tutorial-basics/setup#prerequisites).
 
