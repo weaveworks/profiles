@@ -1,5 +1,5 @@
 ---
-sidebar_position: 9
+sidebar_position: 7
 ---
 
 # Dependencies between artifacts
@@ -30,7 +30,7 @@ spec:
             type: ClusterIP
       dependsOn:
         - name: artifact-a
-        # ... the name of any other further dependencies this artifact might have 
+        # ... the name of any other further dependencies this artifact might have
 ```
 
 :::info

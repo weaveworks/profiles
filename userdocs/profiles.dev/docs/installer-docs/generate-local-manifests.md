@@ -67,8 +67,8 @@ This profile installs an NGINX load balancer using a remote helm chart. The fold
 * profiles-installation.yaml - contains information about the profile -- mainly used by pctl
 
 What is `kustomization.yaml`? This is to prevent flux installing whatever there is in the `helm-chart` folder. The `helm-chart`
-folder can contain local resources such as, helm chart definition, READMEs and non-kubernetes objects. If flux would try
-installing those, it would fail.
+folder can contain local resources such as helm chart definitions, READMEs and non-kubernetes objects. If flux were to try to
+install those, it would fail.
 
 `kustomization.yaml` contains a single resource line:
 
@@ -77,5 +77,5 @@ resources:
 - kustomize-flux.yaml
 ```
 
-Which means, flux will only install the resource defined in this file. The Kustomization object in `kustomize-flux.yaml`
+Which means flux will only install the resource defined in this file. The Kustomization object in `kustomize-flux.yaml`
 will take care of installing HelmRelease.
