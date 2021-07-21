@@ -13,10 +13,13 @@ Please refer back to the [set up docs](/docs/tutorial-basics/setup) if not.
 
 To install a profile, we use `pctl`.
 
-With the following command `pctl` will generate a set of manifests for each profile artifact,
-commit those manifests to a branch in your GitOps repo, push that branch and open a
-PR on your repo to merge the changes.
-Your GitOps repo is the one you synced to Flux in your cluster in the
+With the following command `pctl` will:
+- generate a set of manifests for each profile artifact
+- commit those manifests to a branch in your GitOps repo
+- push that branch and
+- open a PR to merge the changes
+
+Your GitOps repository is the one you synced to Flux in your cluster in the
 [environment setup](/docs/tutorial-basics/setup#a-github-repo-synced-to-flux) section of this tutorial.
 
 _(A breakdown of each flag is provided below.)_
@@ -37,7 +40,7 @@ Above we use the following flags:
   will install an NGINX server: https://github.com/weaveworks/nginx-profile
 - `--profile-path`. This is the relative path within the profile definition repo which contains the
   `profile.yaml`. Upstream profile repos can contain multiple profiles separated into
-  different subdirectories. In our case, whether you are using the example repo or the
+  different subdirectories. In our case, whether you are using the example repo, or the
   one you created in the previous section, there is just one profile, and the `profile.yaml`
   is located at the top level: `.`.
 - `--create-pr`. This directs `pctl` to open a PR against the main branch of your GitOps repo.
@@ -48,12 +51,12 @@ Above we use the following flags:
   changes to and open a PR against your main branch.
 
 :::caution Private repos
-If either your GitOps repo or the repo containing the profile you wish to install
+If either your GitOps repository, or the repository containing the profile you wish to install
 are private, remember to ensure that your local git environment is configured correctly.
 :::
 
 Once you have run the command, navigate to your GitOps repo and approve the PR.
-Flux will then sync the new files and the profile will be applied to your cluster.
+Flux will then sync the new files, and the profile will be applied to your cluster.
 
 You can eventually see the profile artifact running in the `default` namespace of your cluster
 by running `kubctl get pod/nginx-server`.
