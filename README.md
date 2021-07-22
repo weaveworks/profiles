@@ -10,7 +10,7 @@ and run: mdtoc -inplace README.md
 - [Getting started](#getting-started)
   - [Dependencies](#dependencies)
   - [Local environment using <a href="https://kind.sigs.k8s.io/">Kind</a>](#local-environment-using-kind)
-  - [Adding Profiles](#adding-profiles)
+  - [Installing Profiles](#installing-profiles)
 - [Development](#development)
   - [Tests](#tests)
   - [Release process](#release-process)
@@ -47,9 +47,9 @@ the Controller or its test-suite locally. [Docs on install libgit2](https://gith
 
 1. Deploy an example catalog source `kubectl apply -f examples/profile-catalog-source.yaml`
 
-### Adding Profiles
+### Installing Profiles
 
-1. Profiles can be added using [pctl](https://github.com/weaveworks/pctl).
+1. Profiles can be installed using [pctl](https://github.com/weaveworks/pctl).
 
 ## Development
 
@@ -184,24 +184,24 @@ Illustration of how Profiles are added to the Catalog and how they can then be q
 
 ![](/docs/assets/catalog.jpg)
 
-### Profile Addition
+### Profile Installation 
 
-To see how a profile addition works, take a look at the [pctl documentation](https://github.com/weaveworks/pctl)
+To see how a profile installation  works, take a look at the [pctl documentation](https://github.com/weaveworks/pctl)
 
 ## Roadmap
 
 ### Profiles
 
 Install:
-- [x] Add a simple profile which contains a single Helm release artifact
-- [x] Add a simple profile which contains a raw yaml artifact (k8s object manifest)
-- [x] Add a simple profile which contains another profile (single nesting)
-- [x] Add a profile which contains a mix of all artifact types
-- [x] Add a profile which contains nested profiles to depth N
-- [x] Add a profile with `pctl` in a gitops way (ie there is a PR involved, and nobody touches the cluster)
-- [x] Add a profile which is listed in the catalog
-- [x] Add a profile which is NOT listed in the catalog
-- [x] Add a private profile
+- [x] Install a simple profile which contains a single Helm release artifact
+- [x] Install a simple profile which contains a raw yaml artifact (k8s object manifest)
+- [x] Install a simple profile which contains another profile (single nesting)
+- [x] Install a profile which contains a mix of all artifact types
+- [x] Install a profile which contains nested profiles to depth N
+- [x] Install a profile with `pctl` in a gitops way (ie there is a PR involved, and nobody touches the cluster)
+- [x] Install a profile which is listed in the catalog
+- [x] Install a profile which is NOT listed in the catalog
+- [x] Install a private profile
 
 Configure:
 - [x] Configure a Helm release artifact installation
@@ -220,7 +220,7 @@ Catalog sources:
 - [ ] Grant/Revoke access to CatalogSources
 
 Catalog management:
-- [x] Add profiles to the catalog
+- [x] Install profiles to the catalog
 - [X] Update profiles in the catalog
 - [ ] Delete profiles from the catalog
 

@@ -20,7 +20,7 @@ To install profiles with GitOps you will need to have completed the following en
 
 The full setup docs can be found [here](/docs/tutorial-basics/setup#prerequisites).
 
-## Simple add from a profile URL
+## Simple install from a profile URL
 
 :::caution Private repos
 If either your GitOps repository, or the repository containing the profile you wish to install
