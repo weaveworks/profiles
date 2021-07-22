@@ -100,12 +100,12 @@ When installing profiles, the generated manifests will be saved to this repo.
 
 Refer to the [Flux documentation](https://fluxcd.io/) for more detail on how to work with Flux.
 
-### Add
+### Install
 
-To add a Profile means to generate the required component manifests for a Profile and commit
+To install a Profile means to generate the required component manifests for a Profile and commit
 them to a GitOps repo. From there, Flux will recognise the changes and apply the manifests.
 
-For more information, see the [documentation](/docs/installer-docs/adding-via-gitops).
+For more information, see the [documentation](/docs/installer-docs/installing-via-gitops).
 
 ### Catalog
 

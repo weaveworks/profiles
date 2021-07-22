@@ -26,7 +26,7 @@ module.exports = {
           label: 'Getting started',
         },
         {to: '/docs/intro', label: 'Docs', position: 'left'},
-        {to: '/docs/installer-docs/adding-via-gitops', label: 'Installing Profiles', position: 'left'},
+        {to: '/docs/installer-docs/installing-via-gitops', label: 'Installing Profiles', position: 'left'},
         {
           href: 'https://github.com/weaveworks/profiles',
           label: 'GitHub',
@@ -50,7 +50,7 @@ module.exports = {
             },
             {
               label: 'Developer Docs: Profile User',
-              to: '/docs/installer-docs/adding-via-gitops',
+              to: '/docs/installer-docs/installing-via-gitops',
             },
             {
               label: 'Developer Docs: Catalog Manager',

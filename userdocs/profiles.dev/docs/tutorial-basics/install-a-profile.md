@@ -2,7 +2,7 @@
 sidebar_position: 3
 ---
 
-# Add a profile
+# Install a profile
 
 :::info
 
@@ -11,7 +11,7 @@ This stage of the tutorial assumes you have prepared your environment correctly.
 Please refer back to the [set up docs](/docs/tutorial-basics/setup) if not.
 :::
 
-To add a profile, we use `pctl add`.
+To install a profile, we use `pctl add`.
 
 With the following command `pctl add` will:
 - generate a set of manifests for each profile artifact
