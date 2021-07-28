@@ -184,9 +184,9 @@ Illustration of how Profiles are added to the Catalog and how they can then be q
 
 ![](/docs/assets/catalog.jpg)
 
-### Profile Installation
+### Profile Installation 
 
-To see how a profile installation works, take a look at the [pctl documentation](https://github.com/weaveworks/pctl)
+To see how a profile installation  works, take a look at the [pctl documentation](https://github.com/weaveworks/pctl)
 
 ## Roadmap
 
@@ -201,7 +201,7 @@ Install:
 - [x] Install a profile with `pctl` in a gitops way (ie there is a PR involved, and nobody touches the cluster)
 - [x] Install a profile which is listed in the catalog
 - [x] Install a profile which is NOT listed in the catalog
-- [ ] Install a private profile
+- [x] Install a private profile
 
 Configure:
 - [x] Configure a Helm release artifact installation
@@ -220,7 +220,7 @@ Catalog sources:
 - [ ] Grant/Revoke access to CatalogSources
 
 Catalog management:
-- [x] Add profiles to the catalog
+- [x] Install profiles to the catalog
 - [X] Update profiles in the catalog
 - [ ] Delete profiles from the catalog
 

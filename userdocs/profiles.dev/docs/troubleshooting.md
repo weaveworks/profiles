@@ -4,7 +4,7 @@ sidebar_position: 11
 
 # Troubleshooting
 
-The following error is returned on `pctl install`:
+The following error is returned on `pctl add`:
 ```
 failed to build artifact: in case of local resources, the flux gitrepository object's details must be provided
 ```

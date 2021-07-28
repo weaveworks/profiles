@@ -54,7 +54,7 @@ To install a profile from the catalog we provide a positional argument after all
 in the format of `<catalog name>/<profile name>`.
 
 ```bash
-pctl install \
+pctl add \
   --create-pr \
   --pr-repo <gitops repo username or orgname>/<gitops repo name> \
   nginx-catalog/weaveworks-nginx
@@ -64,7 +64,7 @@ The above command will install the latest version.
 To install a specific version of a profile, simply add it to the end:
 
 ```bash
-pctl install \
+pctl add \
   --create-pr \
   --pr-repo <gitops repo username or orgname>/<gitops repo name> \
   nginx-catalog/weaveworks-nginx/v0.0.2

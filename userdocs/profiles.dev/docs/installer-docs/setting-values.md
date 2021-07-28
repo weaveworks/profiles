@@ -5,7 +5,7 @@ sidebar_position: 2
 # Configuring values
 
 Users can partially configure their profile installations with the `--config-map`
-flag on the `pctl install` command.
+flag on the `pctl add` command.
 
 ## Helm Chart artifact values
 
@@ -51,10 +51,10 @@ you are configuring.
 :::
 
 Commit your ConfigMap yaml to your GitOps repository so that Flux can sync it to your cluster.
-You can then provide the name of your ConfigMap to the `install` command:
+You can then provide the name of your ConfigMap to the `add` command:
 
 ```bash
-pctl install \
+pctl add \
   --profile-url <URL of profile to install> \
   --create-pr \
   --pr-repo <gitops repo username or orgname>/<gitops repo name> \
