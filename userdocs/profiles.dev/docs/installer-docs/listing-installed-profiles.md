@@ -23,4 +23,4 @@ NAMESPACE       NAME            SOURCE                                  AVAILABL
 default         pctl-profile    nginx-catalog/weaveworks-nginx/v0.1.0   v0.1.1
 ```
 
-_There is currently no native way to update profiles, but we are working on it!_
+To upgrade a profile see [upgrades](/docs/installer-docs/upgrading-profiles#upgrading-profiles)
