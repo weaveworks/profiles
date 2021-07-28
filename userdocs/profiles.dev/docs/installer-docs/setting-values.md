@@ -75,7 +75,7 @@ so please check any profile documentation.
 ## Configuring multiple Helm artifacts with one value
 
 This is not possible with the current version of profiles/pctl, but we are working
-on a way for users to specify values required by all artifacts (eg `hostname` or `clustername`)
+on a way for users to specify values required by all artifacts (e.g. `hostname` or `clustername`)
 across multiple Helm Chart artifacts. Watch this space!
 
 ## Other profile artifacts

@@ -93,7 +93,7 @@ Examples of profiles with various artifacts and configurations can be found [her
 
 When you add ['local' Helm](/docs/author-docs/local-helm-chart), [raw yaml or Kustomize](/docs/author-docs/kustomize-and-raw)
 artifacts to your profile, we recommend noting that you have done
-so in your Readme, or other documentation, because users of such profiles will have to provide additional flags
+so in your Readme, or other documentation. Users of such profiles will have to provide additional flags
 when installing.
 
 Take care to also note whether you are adding a [nested profile](/docs/author-docs/nested-profiles) which contains local resources

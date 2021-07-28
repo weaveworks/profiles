@@ -23,7 +23,7 @@ The full setup docs can be found [here](/docs/tutorial-basics/setup#prerequisite
 ## Simple install from a profile URL
 
 :::caution Private repos
-If either your GitOps repo or the repo containing the profile you wish to install
+If either your GitOps repository, or the repository containing the profile you wish to install
 are private, remember to ensure that your local git environment is configured correctly.
 :::
 
@@ -61,7 +61,7 @@ for more information.
 :::
 
 Once you have run the command, navigate to your GitOps repo and approve and merge the PR.
-Flux will then sync the new files and the profile will be applied to your cluster.
+Flux will then sync the new files, and the profile will be applied to your cluster.
 
 :::info
 When installing a profile via its URL (i.e. when using the `--profile-url` flag)
