@@ -32,7 +32,3 @@ spec:
         - name: artifact-a
         # ... the name of any other further dependencies this artifact might have
 ```
-
-:::info
-At the time of this writing, nested-profile dependencies are not functional yet.
-:::
