@@ -27,7 +27,7 @@ _(A breakdown of each flag is provided below.)_
 ```bash
 pctl add \
   --profile-url <URL of profile to add> \
-  --profile-path=. \
+  --profile-path . \
   --create-pr \
   --pr-repo <gitops repo username or orgname>/<gitops repo name> \
   --pr-branch add-simple-profile
