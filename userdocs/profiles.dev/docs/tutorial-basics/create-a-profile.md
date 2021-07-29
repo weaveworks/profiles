@@ -60,7 +60,10 @@ Artifacts can be one of:
 
 In this example we are creating a Profile with just one artifact: a remote Helm Chart.
 The artifact type is denoted here by the `chart` key, and we provide further details for the
-specific chart with the `url`, `version` and `name` fields.
+specific chart with the `url`, `version` and `name` fields. The `defaultValues` field allows 
+default values to be applied to artifacts when users install their profile. In this case, we 
+are setting the `service.type` to `ClusterIP` by default. You can read more about `defaultValues` [here](/docs/author-docs/default-values).
+
 
 Write the above snippet to `profile.yaml` inside your profile repository. Commit the file
 and push to the remote.
