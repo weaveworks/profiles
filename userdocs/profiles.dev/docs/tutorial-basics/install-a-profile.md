@@ -59,7 +59,7 @@ Once you have run the command, navigate to your GitOps repo and approve the PR.
 Flux will then sync the new files, and the profile will be applied to your cluster.
 
 You can eventually see the profile artifact running in the `default` namespace of your cluster
-by running `kubctl get pod/nginx-server`.
+by running `kubectl get pod/nginx-server`.
 
 To delete the profile, there is no need to use `pctl`. Simply remove the generated files from
 your GitOps repo, merge the changes, and wait for Flux to delete those resources.
