@@ -48,7 +48,7 @@ Profiles uses Flux to do this.
 To install both the profiles CRD and the required Flux CRDs, run:
 
 ```bash
-pctl prepare
+pctl install
 ```
 
 This will install the latest version of the profiles CRD, which may not always be stable.
