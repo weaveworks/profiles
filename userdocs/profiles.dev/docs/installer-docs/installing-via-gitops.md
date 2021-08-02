@@ -119,7 +119,7 @@ To see all flags available on this subcommand, see [the help](/docs/pctl/pctl-ad
 
 This flag is required for installing profiles because pctl generates flux `Kustomization` resources for
 deploying the profile artifacts, and these resources need to know which `GitRepository` resource is governing the repository.
-To prevent this flag from being required on every `pctl add` users can bootstrap the repository, see [here](#bootstrapping-your-local-git-repository).
+To avoid setting this flag on every call of `pctl add`, users can bootstrap the repository; see [here](#bootstrapping-your-local-git-repository).
 
 First, look up the ID of the `GitRepository` resource connected to your repo. (This is
 what Flux uses internally to keep things up to date between the repo and the cluster.)
