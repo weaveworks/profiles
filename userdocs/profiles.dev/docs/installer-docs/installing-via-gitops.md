@@ -35,6 +35,8 @@ To bootstrap your local git repository run the following:
 pctl bootstrap --git-repository flux-system/gitops-repo ~/workspace/gitops-repo/
 ```
 
+_See [below](#the-git-repository-flag) for how to find the namespace and name of your `GitRepository` resource._
+
  This will create a `.pctl/config.yaml` in your git repository to store the value for `--git-repository`. Future
 `pctl add` commands in this repository will then detect the pctl config and re-use the value.
 
