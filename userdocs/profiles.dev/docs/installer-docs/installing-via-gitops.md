@@ -117,8 +117,8 @@ To see all flags available on this subcommand, see [the help](/docs/pctl/pctl-ad
 
 ## The `git-repository` flag
 
-This flag is required for installing profiles because pctl generate flux `Kustomization` resources for
-deploying the profile artifacts, and these resources need to know what `GitRepository` resource is governing the repository.
+This flag is required for installing profiles because pctl generates flux `Kustomization` resources for
+deploying the profile artifacts, and these resources need to know which `GitRepository` resource is governing the repository.
 To prevent this flag from being required on every `pctl add` users can bootstrap the repository, see [here](#bootstrapping-your-local-git-repository).
 
 First, look up the ID of the `GitRepository` resource connected to your repo. (This is
@@ -142,4 +142,3 @@ Then add the following flag to your `add` command:
 ```sh
 --git-repository <output from the command above>
 ```
-
