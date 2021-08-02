@@ -22,6 +22,24 @@ The full setup docs can be found [here](/docs/tutorial-basics/setup#prerequisite
 
 ## Simple install from a profile URL
 
+
+### Bootstrapping your local git repository
+When installing profiles you will have to provide the `--git-repository` flag (See [below](#the-git-repository-flag)) unless
+you have bootstrapped your local git repository. The `--git-repository` references what the namespace and name of the Flux `GitRepository`
+resource that is pointing at your GitOps repository. The value should be in the format `<namespace>/<name>`, for example
+`flux-system/gitops-repo`. This value is needed in order for pctl to generate Flux resources, such as `Kustomization`s.
+To bootstrap your local git repository run the following:
+
+```bash
+pctl bootstrap --git-repository flux-system/gitops-repo ~/workspace/gitops-repo/
+```
+
+ This will create a `.pctl/config.yaml` in your git repository to store the value for `--git-repository`. Future
+`pctl add` commands in this repository will then detect the pctl config and re-use the value, meaning users no longer
+have to provide the `--git-repository` flag.
+
+### Installing
+
 :::caution Private repos
 If either your GitOps repository, or the repository containing the profile you wish to install
 are private, remember to ensure that your local git environment is configured correctly.
@@ -31,7 +49,8 @@ To install a profile, we use `pctl add`. To see all flags available on this subc
 see [the help](/docs/pctl/pctl-add-cmd).
 
 There are two methods by which you can install a profile: with a direct URL and via a catalog.
-Please see [the page here](/docs/installer-docs/using-catalogs) for specific instructions on how to install a profile from a catalog.
+Please see [the page here](/docs/installer-docs/using-catalogs) for specific instructions on how to
+install a profile from a catalog.
 
 With the following command, `pctl` will:
 - generate a set of manifests for each artifact declared in the profile at the given URL
@@ -56,7 +75,8 @@ Above we use the following flags:
   `username/repo-name` (or `org-name/repo-name`).
 
 :::info
-We recommended also setting the `--git-repository` flag. See [below](#the-git-repository-flag)
+If you have not bootstrapped your local git repository you must provide the`--git-repository` flag.
+See [below](#the-git-repository-flag)
 for more information.
 :::
 
@@ -97,20 +117,9 @@ To see all flags available on this subcommand, see [the help](/docs/pctl/pctl-ad
 
 ## The `git-repository` flag
 
-:::tip
-While not required, it is recommended to always set the `--git-repository` flag.
-This flag is needed by the majority of artifact types, so it may be easier to always
-set it rather than have to discover whether a profile requires it.
-
-Keep reading for instructions on how to set this option.
-:::
-
-This flag is required for installing profiles with local resources.
-A local resource is any profile artifact which refers to manifests stored within the profile
-repository. You can see [this page](/docs/author-docs/local-helm-chart) from the author docs as an example.
-
-In order to install profiles with local resources, you must provide `pctl` with information
-about your GitOps repo (very meta, I know).
+This flag is required for installing profiles because pctl generate flux `Kustomization` resources for
+deploying the profile artifacts, and these resources need to know what `GitRepository` resource is governing the repository.
+To prevent this flag from being required on every `pctl add` users can bootstrap the repository, see [here](#bootstrapping-your-local-git-repository).
 
 First, look up the ID of the `GitRepository` resource connected to your repo. (This is
 what Flux uses internally to keep things up to date between the repo and the cluster.)
@@ -134,17 +143,3 @@ Then add the following flag to your `add` command:
 --git-repository <output from the command above>
 ```
 
-### When to use the `--git-repository` flag
-
-As a general rule, we recommended always setting this flag, but if you're curious to find out
-you can navigate to the repository of the profile and look at the `profile.yaml`.
-In this file you will find a list of `artifacts`. Those which have local resources can be identified
-with one of the following keys:
-- `chart.path`
-- `kustomize.path`
-
-If the list of artifacts includes any `profile.source` keys,
-these may point to other profiles which themselves could contain local resources.
-
-Profile authors may also note in their documentation that their profile contains
-local resources, but this should not be relied upon.
