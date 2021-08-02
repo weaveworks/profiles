@@ -36,8 +36,7 @@ pctl bootstrap --git-repository flux-system/gitops-repo ~/workspace/gitops-repo/
 ```
 
  This will create a `.pctl/config.yaml` in your git repository to store the value for `--git-repository`. Future
-`pctl add` commands in this repository will then detect the pctl config and re-use the value, meaning users no longer
-have to provide the `--git-repository` flag.
+`pctl add` commands in this repository will then detect the pctl config and re-use the value.
 
 ### Installing
 
