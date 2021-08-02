@@ -25,7 +25,7 @@ The full setup docs can be found [here](/docs/tutorial-basics/setup#prerequisite
 
 ### Bootstrapping your local git repository
 When installing profiles you will have to provide the `--git-repository` flag (See [below](#the-git-repository-flag)) unless
-you have bootstrapped your local git repository. The `--git-repository` references what the namespace and name of the Flux `GitRepository`
+you have bootstrapped your local git repository. The `--git-repository` references the namespace and name of the Flux `GitRepository`
 resource that is pointing at your GitOps repository. The value should be in the format `<namespace>/<name>`, for example
 `flux-system/gitops-repo`. This value is needed in order for pctl to generate Flux resources, such as `Kustomization`s.
 To bootstrap your local git repository run the following:
