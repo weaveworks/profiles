@@ -24,6 +24,9 @@ The full setup docs can be found [here](/docs/tutorial-basics/setup#prerequisite
 
 
 ### Bootstrapping your local git repository
+You can use the `flux bootstrap` command to save commonly used `pctl` configuration to your GitOps repo.
+
+Once such piece of configuration is your repo's `GitRepository` resource.
 When installing profiles you will have to provide the `--git-repository` flag (See [below](#the-git-repository-flag)) unless
 you have bootstrapped your local git repository. The `--git-repository` references the namespace and name of the
 [Flux `GitRepository`](https://fluxcd.io/docs/components/source/gitrepositories/)
