@@ -81,3 +81,16 @@ jobs:
             config/prepare/prepare.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get release doc content
+        id: vars
+        run: echo ::set-output name=release_notes::$(cat docs/release_notes/${{ steps.prep.outputs.VERSION }}.md)
+      - name: Notify slack of new release
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        uses: pullreminders/slack-action@a5a262c896a1cc80dcbae59ba95513e2dfb21439
+        with:
+          args: |
+            {
+              "channel": "C01M9BYDE5U",
+              "message": ":sparkles: A new release has been created for Profiles! :sparkles:\n\n${{ steps.vars.outputs.release_notes }}"
+            }
