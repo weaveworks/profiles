@@ -24,7 +24,7 @@ The full setup docs can be found [here](/docs/tutorial-basics/setup#prerequisite
 
 
 ### Bootstrapping your local git repository
-You can use the `flux bootstrap` command to save commonly used `pctl` configuration to your GitOps repo.
+You can use the `pctl bootstrap` command to save commonly used `pctl` configuration to your GitOps repo.
 
 Once such piece of configuration is your flux repo's `GitRepository` resource.
 If you have **not** bootstrapped your local GitOps repository, you will have to provide the `--git-repository` flag when installing profiles (see [below](#the-git-repository-flag) for more detail). The `--git-repository` references the namespace and name of the
@@ -124,6 +124,7 @@ To see all flags available on this subcommand, see [the help](/docs/pctl/pctl-ad
 This flag is required for installing profiles because pctl generates flux `Kustomization` resources for
 deploying the profile artifacts, and these resources need to know which `GitRepository` resource is governing the repository.
 To avoid setting this flag on every call of `pctl add`, users can bootstrap the repository; see [here](#bootstrapping-your-local-git-repository).
+Any `pctl add` call from within this repository will then no longer need this flag.
 
 First, look up the ID of the `GitRepository` resource connected to your repo. (This is
 what Flux uses internally to keep things up to date between the repo and the cluster.)
