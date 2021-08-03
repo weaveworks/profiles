@@ -4,9 +4,9 @@ sidebar_position: 3
 
 # Local Helm Chart artifacts
 
-A "local" Helm Chart artifact means the chart itself, and any supporting material,
-is stored locally in the profile directory. On installation these local manifests
-will be processed for addition to the GitOps repo, rather than fetched down from a remote chart server.
+A "local" Helm Chart artifact means the chart itself is stored locally in the profile directory.
+On installation these local manifests will be processed for addition to the GitOps repo, rather
+than fetched down from a remote chart server.
 
 Profile Authors may wish to add remote Charts to their profile repos if they:
 - Are installing on a cluster with no internet access

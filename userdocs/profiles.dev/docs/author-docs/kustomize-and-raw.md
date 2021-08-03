@@ -2,7 +2,7 @@
 sidebar_position: 4
 ---
 
-# Kustomize patches and raw yaml artifacts
+# Kustomize patches and raw YAML artifacts
 
 Both Kustomize patches and raw YAMLs (such as a simple deployment manifest,
 or any other Kubernetes object) can be added to a profile under the same key.

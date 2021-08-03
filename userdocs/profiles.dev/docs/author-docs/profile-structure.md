@@ -15,10 +15,12 @@ The following fields are required:
 apiVersion: weave.works/v1alpha1
 kind: ProfileDefinition
 metadata:
-  name: # the name of your profile
+  name: nginx # the name of your profile 
 spec:
-  description: # a brief description of what your profile installs
+  description: Profile for deploying local nginx chart # a brief description of what your profile installs
 ```
+
+These fields will show up later when a user searches for this profile in the catalog, as shown [here](https://profiles.dev/docs/installer-docs/using-catalogs#inspecting-profiles-in-the-catalog).
 
 These fields are optional:
 
@@ -26,9 +28,9 @@ These fields are optional:
 # ...
 spec:
   # ...
-  maintainer: # the name(s) of the profile author
+  maintainer: weaveworks # the name(s) of the profile author
   prerequisites:
-  - # a list of strings detailing things the profile needs to run.
+  - kubernetes 1.19 # a list of strings detailing things the profile needs to run.
   - # this field is not processed at the moment, but will be soon.
 ```
 
@@ -45,8 +47,8 @@ Please refer to their dedicated docs pages for details on how to register differ
 types in a profile.
 
 :::info
-Please take care to name your profile artifacts sensibly. This will help those who are
-installing your profile locate and refer to artifacts later.
+Please take care to name your profile artifacts sensibly e.g. `fluent-bit`, `nginx-server`. 
+This will help those who are installing your profile locate and refer to artifacts later.
 
 See [how users use artifact names to configure values](/docs/installer-docs/setting-values)
 for an example of how artifact names are used.
