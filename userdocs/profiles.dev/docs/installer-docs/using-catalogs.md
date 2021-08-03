@@ -12,31 +12,31 @@ use `pctl` to search for and install profiles approved by your organisation.
 To search the catalog for available profiles which match a query, call:
 
 ```bash
-pctl search <query>
+pctl get <query> --catalog
 ```
 
 For example, to search for all profiles which would install an NGINX server:
 
 ```bash
-$ pctl search nginx
+$ pctl get nginx --catalog
 CATALOG/PROFILE                 VERSION DESCRIPTION
 nginx-catalog/bitnami-nginx     v0.0.2  Profile for deploying local nginx chart
 nginx-catalog/weaveworks-nginx  v0.1.0  Profile for deploying nginx
 ...
 ```
 
-To see all available profiles, just pass the `--all` flag:
+To see all available profiles, just pass the `--catalog` flag without `<query>`:
 
 ```bash
-pctl search --all
+pctl get --catalog
 ```
 
 ## Inspecting profiles in the catalog
 
-To learn more about a particular profile, use the `show` subcommand:
+To learn more about a particular profile, use the `get` subcommand:
 
 ```bash
-$ pctl show nginx-catalog/bitnami-nginx
+$ pctl get nginx-catalog/bitnami-nginx --profile-version v0.0.2
 Catalog         nginx-catalog
 Name            bitnami-nginx
 Version         v0.0.2
