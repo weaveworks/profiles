@@ -12,7 +12,7 @@ For example, using a profile URL:
 ```yaml
 pctl add \
   --profile-url <URL of profile to install> \
-  --out relative-path
+  --out <relative path>
 ```
 
 :::info
@@ -27,7 +27,7 @@ Example generating from a profile listed in a catalog:
 
 ```yaml
 pctl add \
-  --out relative-path \
+  --out <relative path> \
   <catalog name>/<profile>
 ```
 
@@ -55,7 +55,9 @@ nginx
 └── profile-installation.yaml
 ```
 
-This profile installs an NGINX load balancer using a remote helm chart. The folders contain the following files in order:
+This profile installs an NGINX load balancer using a remote helm chart.
+
+The folders contain the following files in order:
 
 * bitnami-nginx - the name of the artifact
 * helm-chart - contains the resources which install the actual nginx
