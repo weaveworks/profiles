@@ -55,7 +55,7 @@ wego gitops install
 Please note that we need to tell it that our GitOps runtime is running in the wego-system namespace.
 
 ```
-pctl prepare --flux-namespace=wego-system
+pctl install --flux-namespace=wego-system
 ```
 
 6. Then, we clone the GitOps repo and setup our Weave GitOps automation for it.
@@ -79,4 +79,5 @@ git push origin main
 ```
 
 Here’s the pod list after you have the MLOps profile installed.
-_screenshot file goes here_
+
+![MLOps profile](/img/mlops.png)
