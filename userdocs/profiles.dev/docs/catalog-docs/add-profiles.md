@@ -39,7 +39,7 @@ spec:
   - url: https://github.com/weaveworks/profiles-examples
 ```
 
-After applying the manifest and waiting a moment, we can use `pctl get` to see the
+After applying the manifest and waiting a moment, we can use `pctl get --catalog` to see the
 catalogued profiles:
 
 ```bash
@@ -47,10 +47,7 @@ $ kubectl apply -f dynamic-catalog-source.yaml
 # allow a few moments. the more profiles/tags, the more time the catalog manager
 # will need to discover them all
 
-$ pctl get 
-INSTALLED PACKAGES
-NAMESPACE       NAME            SOURCE                                  AVAILABLE UPDATES
-default         pctl-profile    nginx-catalog/weaveworks-nginx/v0.1.0   v0.1.1
+$ pctl get --catalog
 CATALOG/PROFILE                 VERSION DESCRIPTION
 nginx-catalog/bitnami-nginx     v0.0.2  Profile for deploying local nginx chart
 nginx-catalog/weaveworks-nginx  v0.1.0  Profile for deploying nginx
