@@ -51,7 +51,7 @@ export GITHUB_REPO=test-mlops-profile
 wego gitops install
 ```
 
-5. After that, we install the ProfileManager controller using the pctl prepare command. 
+5. After that, we install the ProfileManager controller using the pctl install command. 
 Please note that we need to tell it that our GitOps runtime is running in the wego-system namespace.
 
 ```
