@@ -7,7 +7,7 @@ sidebar_position: 3
 If your cluster admin has added a profile catalog to your cluster, you can
 use `pctl` to search for and install profiles approved by your organisation.
 
-Check out the [Managing Catalogs](/docs/catalog-docs/add-profiles) section to learn 
+Check out the [Adding Profiles](/docs/catalog-docs/add-profiles) section to learn 
 how to create a catalog.
 
 ## Searching the catalog
