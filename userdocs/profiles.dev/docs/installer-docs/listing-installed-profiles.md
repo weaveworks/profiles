@@ -4,7 +4,7 @@ sidebar_position: 5
 
 # Listing installed profiles
 
-You can see which profiles are installed on your cluster with the `pctl get` subcommand.
+You can see which profiles are installed on your cluster with the `pctl get --installed` subcommand.
 
 ```bash
 $ pctl get --installed
