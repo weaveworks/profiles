@@ -7,6 +7,9 @@ sidebar_position: 3
 If your cluster admin has added a profile catalog to your cluster, you can
 use `pctl` to search for and install profiles approved by your organisation.
 
+Check out the [Managing Catalogs](/docs/catalog-docs/add-profiles) section to learn 
+how to create a catalog.
+
 ## Searching the catalog
 
 To search the catalog for available profiles which match a query, call:
@@ -57,7 +60,7 @@ in the format of `<catalog name>/<profile name>`.
 pctl add \
   --create-pr \
   --pr-repo <gitops repo username or orgname>/<gitops repo name> \
-  nginx-catalog/weaveworks-nginx
+  nginx-catalog/bitnami-nginx
 ```
 
 The above command will install the latest version.
@@ -67,7 +70,7 @@ To install a specific version of a profile, simply add it to the end:
 pctl add \
   --create-pr \
   --pr-repo <gitops repo username or orgname>/<gitops repo name> \
-  nginx-catalog/weaveworks-nginx/v0.0.2
+  nginx-catalog/bitnami-nginx/v0.0.2
 ```
 
 :::info
