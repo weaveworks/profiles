@@ -9,7 +9,9 @@ When newer versions of a profile are available you will be able to discover them
 Once you know which version you want to upgrade to, run the following:
 
 ```bash
-pctl upgrade path-to-installation/ <version>
+# The first argument is the relative or aboslute path to the local installation directory
+# and the second argument is the version to upgrade to.
+pctl upgrade ~/workspace/demo-profile/ v0.0.2
 ```
 
 This will then perform an upgrade of your local installation. You can also pass in the `--create-pr` flag to automatically create a PR
