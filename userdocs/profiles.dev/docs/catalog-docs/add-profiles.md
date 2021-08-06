@@ -39,7 +39,7 @@ spec:
   - url: https://github.com/weaveworks/profiles-examples
 ```
 
-After applying the manifest and waiting a moment, we can use `pctl search` to see the
+After applying the manifest and waiting a moment, we can use `pctl get --catalog` to see the
 catalogued profiles:
 
 ```bash
@@ -47,7 +47,7 @@ $ kubectl apply -f dynamic-catalog-source.yaml
 # allow a few moments. the more profiles/tags, the more time the catalog manager
 # will need to discover them all
 
-$ pctl search --all
+$ pctl get --catalog
 CATALOG/PROFILE                 VERSION DESCRIPTION
 nginx-catalog/bitnami-nginx     v0.0.2  Profile for deploying local nginx chart
 nginx-catalog/weaveworks-nginx  v0.1.0  Profile for deploying nginx
@@ -158,7 +158,7 @@ The source manifest can be applied the same way.
 $ kubectl apply -f manual-catalog-source.yaml
 # in this case the addition will be instantaneous
 
-$ pctl search --all
+$ pctl get --catalog
 CATALOG/PROFILE         VERSION DESCRIPTION
 nginx-catalog/nginx     v1.0.0  This installs some nginx.
 ```
@@ -175,6 +175,6 @@ Likewise, removing a catalog source, and its profiles, is also straightforward:
 ```sh
 $ kubectl delete -f manual-catalog-source.yaml
 $ kubectl delete -f dynamic-catalog-source.yaml
-$ pctl search --all
+$ pctl get --catalog
 No profiles found
 ```
