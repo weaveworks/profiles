@@ -11,16 +11,17 @@ related flags.
 For example, using a profile URL:
 ```yaml
 pctl add \
-  --profile-url <URL of profile to install> \
+  --profile-repo-url <URL of repo containing profile to install> \
   --out <relative path>
 ```
 
 :::info
-When installing a profile via its URL (i.e. when using the `--profile-url` flag)
+When installing a profile via its repository's URL (i.e. when using the `--profile-repo-url` flag)
 remember to check where the profile's `profile.yaml` file is located within
 the profile's source repository.
 
-Once discovered, you can set the relative path to this file using the `--profile-path` flag.
+Once discovered, you can set the relative path to this file using the `--profile-path` flag, which 
+defaults to the root of the repository.
 :::
 
 Example generating from a profile listed in a catalog:
