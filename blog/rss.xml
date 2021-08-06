@@ -4,15 +4,15 @@
         <title>Profiles Blog</title>
         <link>https://docs.profiles.dev/blog</link>
         <description>Profiles Blog</description>
-        <lastBuildDate>Mon, 21 Jun 2021 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Wed, 04 Aug 2021 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <item>
-            <title><![CDATA[Hello]]></title>
-            <link>https://docs.profiles.dev/blog/hello-world</link>
-            <guid>hello-world</guid>
-            <pubDate>Mon, 21 Jun 2021 00:00:00 GMT</pubDate>
-            <description><![CDATA[Welcome to Profiles, part of WeaveGitOps Core.]]></description>
+            <title><![CDATA[Install MLOps Profile with Weave GitOps]]></title>
+            <link>https://docs.profiles.dev/blog/mlops-profile</link>
+            <guid>mlops-profile</guid>
+            <pubDate>Wed, 04 Aug 2021 00:00:00 GMT</pubDate>
+            <description><![CDATA[“Profiles” is a GitOps-native package management system, which allows you to apply a Profile to add a set of capabilities to your GitOps-enabled cluster.  Here’s a quick tutorial on how to provision a cluster, install Weave GitOps and apply the MLOps profile to enable Kubeflow Pipeline for your cluster. To try this setup, we strongly recommend that you use Kind as a local cluster on your laptop.]]></description>
         </item>
     </channel>
 </rss>
