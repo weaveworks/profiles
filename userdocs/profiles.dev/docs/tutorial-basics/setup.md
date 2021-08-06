@@ -42,16 +42,33 @@ version regularly updated.
 
 ### Profiles CRDs and Flux CRDs
 
-While profiles can be installed manually, it is recommended to install them in a GitOps fashion.
-Profiles uses Flux to do this.
+Profiles relies on Flux to deploy artifacts to your cluster, this means that at a minimum
+you much have the following Flux CRDs and associated controllers installed:
 
-To install both the profiles CRD and the required Flux CRDs, run:
+- `helmreleases.helm.toolkit.fluxcd.io`
+- `gitrepositories.source.toolkit.fluxcd.io`
+- `helmrepositories.source.toolkit.fluxcd.io`
+- `kustomizations.kustomize.toolkit.fluxcd.io`
+
+You can install everything by running Flux's [install command](https://fluxcd.io/docs/cmd/flux_install/):
+
+```bash
+flux install
+```
+
+Or to install specific components:
+
+```bash
+flux install --components="source-controller,kustomize-controller,helm-controller"
+```
+
+Next install the Profiles CRD, with:
 
 ```bash
 pctl install
 ```
 
-This will install the latest version of the profiles CRD, which may not always be stable.
+Note: This will install the latest version of the profiles CRD, which may not always be stable.
 
 To specify a [specific version](https://github.com/weaveworks/profiles/releases), use the `--version` flag.
 
