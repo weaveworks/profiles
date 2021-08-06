@@ -12,7 +12,7 @@ around Catalogs.
 To add profiles to a catalog, you must first deploy the catalog API
 and `ProfileCatalogSource` controller to your cluster.
 
-This can be done with the `pctl prepare` command. By default, this command
+This can be done with the `pctl install` command. By default, this command
 will install latest, but you can pass a specific version with the `--version`
 flag.
 
