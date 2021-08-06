@@ -27,6 +27,7 @@ module.exports = {
         },
         {to: '/docs/intro', label: 'Docs', position: 'left'},
         {to: '/docs/installer-docs/installing-via-gitops', label: 'Installing Profiles', position: 'left'},
+        {to: '/blog', label: 'Blog', position: 'left'},
         {
           href: 'https://github.com/weaveworks/profiles',
           label: 'GitHub',
