@@ -6,7 +6,7 @@ author_title: DX Engineer, WeaveWorks
 tags: [mlops, profile, gitops]
 ---
 
-“_Profiles_” is a GitOps-native package management system, which allows you to apply a Profile to add a set of capabilities to your GitOps-enabled cluster.  Here’s a quick tutorial on how to provision a cluster, install Weave GitOps and apply the MLOps profile to enable Kubeflow Pipeline for your cluster. To try this setup, we strongly recommend that you use KinD as a local cluster on your laptop.
+“_Profiles_” is a GitOps-native package management system, which allows you to apply a Profile to add a set of capabilities to your GitOps-enabled cluster.  Here’s a quick tutorial on how to provision a cluster, install Weave GitOps and apply the MLOps profile to enable Kubeflow Pipeline for your cluster. To try this setup, we strongly recommend that you use [Kind](https://github.com/kubernetes-sigs/kind) as a local cluster on your laptop.
 
 <!--truncate-->
 
