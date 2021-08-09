@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go v0.81.0 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/fluxcd/helm-controller/api v0.11.1
-	github.com/fluxcd/kustomize-controller/api v0.13.2
+	github.com/fluxcd/kustomize-controller/api v0.13.3
 	github.com/fluxcd/pkg/apis/meta v0.10.1
 	github.com/fluxcd/pkg/version v0.1.0
 	github.com/fluxcd/source-controller v0.15.3
@@ -26,8 +26,8 @@ require (
 	google.golang.org/grpc v1.39.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.27.1
-	k8s.io/api v0.21.3
-	k8s.io/apimachinery v0.21.3
-	k8s.io/client-go v0.21.3
+	k8s.io/api v0.22.0
+	k8s.io/apimachinery v0.22.0
+	k8s.io/client-go v0.22.0
 	sigs.k8s.io/controller-runtime v0.9.5
 )
