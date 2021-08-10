@@ -1,0 +1,12 @@
+---
+sidebar_position: 7
+---
+
+import Schema from '../../src/components/Schema.js'
+import ExecutionEnvironment from '@docusaurus/ExecutionEnvironment';
+
+# Profile definition schema
+
+<>
+    {ExecutionEnvironment.canUseDOM ? <Schema jsonFile={"../../docs/assets/schema/profiledef.json"} /> : null}
+</>

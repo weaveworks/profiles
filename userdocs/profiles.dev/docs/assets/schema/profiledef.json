@@ -1,0 +1,249 @@
+{
+  "$ref": "#/definitions/ProfileDefinition",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Artifact": {
+      "properties": {
+        "chart": {
+          "$ref": "#/definitions/Chart",
+          "description": "defines properties to access a remote chart. This is an optional value. It is ignored in case Path is defined",
+          "x-intellij-html-description": "defines properties to access a remote chart. This is an optional value. It is ignored in case Path is defined"
+        },
+        "dependsOn": {
+          "items": {
+            "$ref": "#/definitions/DependsOn"
+          },
+          "type": "array",
+          "description": "an optional field which defines dependency on other artifacts.",
+          "x-intellij-html-description": "an optional field which defines dependency on other artifacts."
+        },
+        "kustomize": {
+          "$ref": "#/definitions/Kustomize",
+          "description": "defines properties to for a kustomize artifact",
+          "x-intellij-html-description": "defines properties to for a kustomize artifact"
+        },
+        "name": {
+          "type": "string",
+          "description": "name of the Artifact",
+          "x-intellij-html-description": "name of the Artifact"
+        },
+        "profile": {
+          "$ref": "#/definitions/Profile",
+          "description": "defines properties to access a remote profile",
+          "x-intellij-html-description": "defines properties to access a remote profile"
+        }
+      },
+      "preferredOrder": [
+        "name",
+        "dependsOn",
+        "chart",
+        "profile",
+        "kustomize"
+      ],
+      "additionalProperties": false,
+      "description": "defines a bundled resource of the components for this profile",
+      "x-intellij-html-description": "defines a bundled resource of the components for this profile"
+    },
+    "Chart": {
+      "properties": {
+        "defaultValues": {
+          "type": "string",
+          "description": "holds the default values for this Helm release Artifact. These can be overridden by the user, but will otherwise apply",
+          "x-intellij-html-description": "holds the default values for this Helm release Artifact. These can be overridden by the user, but will otherwise apply"
+        },
+        "name": {
+          "type": "string",
+          "description": "defines the name of the chart at the remote repository",
+          "x-intellij-html-description": "defines the name of the chart at the remote repository"
+        },
+        "path": {
+          "type": "string",
+          "description": "local path to the Artifact in the Profile repo. This is an optional value. If defined, it takes precedence over other Chart fields",
+          "x-intellij-html-description": "local path to the Artifact in the Profile repo. This is an optional value. If defined, it takes precedence over other Chart fields"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL of the Helm repository containing a Helm chart and possible values",
+          "x-intellij-html-description": "URL of the Helm repository containing a Helm chart and possible values"
+        },
+        "version": {
+          "type": "string",
+          "description": "defines the version of the chart at the remote repository",
+          "x-intellij-html-description": "defines the version of the chart at the remote repository"
+        }
+      },
+      "preferredOrder": [
+        "url",
+        "name",
+        "version",
+        "path",
+        "defaultValues"
+      ],
+      "additionalProperties": false,
+      "description": "defines properties to access remote helm charts.",
+      "x-intellij-html-description": "defines properties to access remote helm charts."
+    },
+    "DependsOn": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "of the artifact to depend on.",
+          "x-intellij-html-description": "of the artifact to depend on."
+        }
+      },
+      "preferredOrder": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "description": "defines an optional artifact name on which this artifact depends on.",
+      "x-intellij-html-description": "defines an optional artifact name on which this artifact depends on."
+    },
+    "Kustomize": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "local path to the Artifact in the Profile repo",
+          "x-intellij-html-description": "local path to the Artifact in the Profile repo"
+        }
+      },
+      "preferredOrder": [
+        "path"
+      ],
+      "additionalProperties": false,
+      "description": "defines properties to for a kustomize artifact.",
+      "x-intellij-html-description": "defines properties to for a kustomize artifact."
+    },
+    "Meta": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "profile name",
+          "x-intellij-html-description": "profile name"
+        }
+      },
+      "preferredOrder": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "Profile": {
+      "properties": {
+        "source": {
+          "$ref": "#/definitions/Source",
+          "description": "defines properties of the source of the profile",
+          "x-intellij-html-description": "defines properties of the source of the profile"
+        }
+      },
+      "preferredOrder": [
+        "source"
+      ],
+      "additionalProperties": false,
+      "description": "defines properties for accessing a profile",
+      "x-intellij-html-description": "defines properties for accessing a profile"
+    },
+    "ProfileDefinition": {
+      "properties": {
+        "apiVersion": {
+          "type": "string",
+          "enum": [
+            "weave.works/v1alpha1"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "ProfileDefinition"
+          ]
+        },
+        "metadata": {
+          "$ref": "#/definitions/Meta"
+        },
+        "spec": {
+          "$ref": "#/definitions/ProfileDefinitionSpec"
+        }
+      },
+      "preferredOrder": [
+        "kind",
+        "apiVersion",
+        "metadata",
+        "spec"
+      ],
+      "additionalProperties": false,
+      "description": "Schema for the profiles API",
+      "x-intellij-html-description": "Schema for the profiles API"
+    },
+    "ProfileDefinitionSpec": {
+      "properties": {
+        "artifacts": {
+          "items": {
+            "$ref": "#/definitions/Artifact"
+          },
+          "type": "array",
+          "description": "a list of Profile artifacts. An artifact can be one of chart, kustomize or profile",
+          "x-intellij-html-description": "a list of Profile artifacts. An artifact can be one of chart, kustomize or profile"
+        },
+        "description": {
+          "type": "string",
+          "description": "a short description of the profile",
+          "x-intellij-html-description": "a short description of the profile"
+        },
+        "maintainer": {
+          "type": "string",
+          "description": "name of the author(s)",
+          "x-intellij-html-description": "name of the author(s)"
+        },
+        "prerequisites": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "a list of dependencies required by the profile",
+          "x-intellij-html-description": "a list of dependencies required by the profile"
+        }
+      },
+      "preferredOrder": [
+        "description",
+        "maintainer",
+        "prerequisites",
+        "artifacts"
+      ],
+      "additionalProperties": false,
+      "description": "defines the desired state of ProfileDefinition",
+      "x-intellij-html-description": "defines the desired state of ProfileDefinition"
+    },
+    "Source": {
+      "properties": {
+        "branch": {
+          "type": "string",
+          "description": "git repo branch containing the profile definition (default: main)",
+          "x-intellij-html-description": "git repo branch containing the profile definition (default: main)"
+        },
+        "path": {
+          "type": "string",
+          "description": "location in the git repo containing the profile definition",
+          "x-intellij-html-description": "location in the git repo containing the profile definition"
+        },
+        "tag": {
+          "type": "string",
+          "description": "git tag containing the profile definition",
+          "x-intellij-html-description": "git tag containing the profile definition"
+        },
+        "url": {
+          "type": "string",
+          "description": "a fully qualified URL to a profile repo",
+          "x-intellij-html-description": "a fully qualified URL to a profile repo"
+        }
+      },
+      "preferredOrder": [
+        "url",
+        "branch",
+        "path",
+        "tag"
+      ],
+      "additionalProperties": false,
+      "description": "defines the location of the profile",
+      "x-intellij-html-description": "defines the location of the profile"
+    }
+  }
+}

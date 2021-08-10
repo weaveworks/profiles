@@ -51,3 +51,26 @@
 .hero {
     background-color: #00b3ec;
 }
+
+table#schema {
+        font-family: monospace;
+        font-size: 13px;
+    }
+    table#schema span.const {
+        filter: opacity(70%);
+    }
+    table#schema span.example,
+    table#schema span.value {
+        font-size: 0.9em;
+        filter: opacity(70%);
+        display: inline-block;
+        padding: 0px 4px;
+        border-radius: 5px;
+    }
+    table#schema td.type {
+        font-size: 0.8em;
+    }
+    table#schema td:first-child {
+        white-space: nowrap;
+        padding-right: 50px;
+    }

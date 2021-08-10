@@ -1,0 +1,12 @@
+---
+sidebar_position: 2
+---
+
+import Schema from '../../src/components/Schema.js'
+import ExecutionEnvironment from '@docusaurus/ExecutionEnvironment';
+
+# Catalog Source schema
+
+<>
+    {ExecutionEnvironment.canUseDOM ? <Schema jsonFile={"../../docs/assets/schema/catalogdef.json"} /> : null}
+</>

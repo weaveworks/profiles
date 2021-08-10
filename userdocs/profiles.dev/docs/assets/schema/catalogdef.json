@@ -1,0 +1,211 @@
+{
+  "$ref": "#/definitions/ProfileCatalogSource",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Meta": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "profile name",
+          "x-intellij-html-description": "profile name"
+        }
+      },
+      "preferredOrder": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "ProfileCatalogEntry": {
+      "properties": {
+        "catalogSource": {
+          "type": "string",
+          "description": "name of the catalog the profile is listed in",
+          "x-intellij-html-description": "name of the catalog the profile is listed in"
+        },
+        "description": {
+          "type": "string",
+          "description": "a short description of the profile",
+          "x-intellij-html-description": "a short description of the profile"
+        },
+        "maintainer": {
+          "type": "string",
+          "description": "name of the author(s)",
+          "x-intellij-html-description": "name of the author(s)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Profile name",
+          "x-intellij-html-description": "Profile name"
+        },
+        "prerequisites": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "a list of dependencies required by the profile",
+          "x-intellij-html-description": "a list of dependencies required by the profile"
+        },
+        "tag": {
+          "type": "string",
+          "description": "tag of the profile. Must be valid semver",
+          "x-intellij-html-description": "tag of the profile. Must be valid semver"
+        },
+        "url": {
+          "type": "string",
+          "description": "full URL path to the profile.yaml",
+          "x-intellij-html-description": "full URL path to the profile.yaml"
+        }
+      },
+      "preferredOrder": [
+        "tag",
+        "catalogSource",
+        "url",
+        "name",
+        "description",
+        "maintainer",
+        "prerequisites"
+      ],
+      "additionalProperties": false,
+      "description": "defines details about a given profile.",
+      "x-intellij-html-description": "defines details about a given profile."
+    },
+    "ProfileCatalogSource": {
+      "properties": {
+        "apiVersion": {
+          "type": "string",
+          "enum": [
+            "weave.works/v1alpha1"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "ProfileCatalogSource"
+          ]
+        },
+        "metadata": {
+          "$ref": "#/definitions/Meta"
+        },
+        "spec": {
+          "$ref": "#/definitions/ProfileCatalogSourceSpec"
+        }
+      },
+      "preferredOrder": [
+        "kind",
+        "apiVersion",
+        "metadata",
+        "spec"
+      ],
+      "additionalProperties": false,
+      "description": "Schema for the ProfileCatalogSources API",
+      "x-intellij-html-description": "Schema for the ProfileCatalogSources API"
+    },
+    "ProfileCatalogSourceSpec": {
+      "properties": {
+        "profiles": {
+          "items": {
+            "$ref": "#/definitions/ProfileCatalogEntry"
+          },
+          "type": "array",
+          "description": "list of profiles exposed by the catalog",
+          "x-intellij-html-description": "list of profiles exposed by the catalog"
+        },
+        "repositories": {
+          "items": {
+            "$ref": "#/definitions/Repository"
+          },
+          "type": "array",
+          "description": "contains a list of repositories to scan for profiles",
+          "x-intellij-html-description": "contains a list of repositories to scan for profiles"
+        }
+      },
+      "preferredOrder": [
+        "profiles",
+        "repositories"
+      ],
+      "additionalProperties": false,
+      "description": "defines the desired state of ProfileCatalogSource",
+      "x-intellij-html-description": "defines the desired state of ProfileCatalogSource"
+    },
+    "ProfileCatalogSourceStatus": {
+      "properties": {
+        "scannedRepositories": {
+          "items": {
+            "$ref": "#/definitions/ScannedRepository"
+          },
+          "type": "array"
+        }
+      },
+      "preferredOrder": [
+        "scannedRepositories"
+      ],
+      "additionalProperties": false,
+      "description": "defines the observed state of ProfileCatalogSource",
+      "x-intellij-html-description": "defines the observed state of ProfileCatalogSource"
+    },
+    "Repository": {
+      "properties": {
+        "secretRef": {
+          "$ref": "#/definitions/github.com|fluxcd|pkg|apis|meta.LocalObjectReference",
+          "description": "The secret name containing the Git credentials. For HTTPS repositories the secret must contain `username` and `password` fields. For SSH repositories the secret must contain `identity`, `identity.pub` and `known_hosts` fields.",
+          "x-intellij-html-description": "The secret name containing the Git credentials. For HTTPS repositories the secret must contain <code>username</code> and <code>password</code> fields. For SSH repositories the secret must contain <code>identity</code>, <code>identity.pub</code> and <code>known_hosts</code> fields."
+        },
+        "url": {
+          "type": "string",
+          "description": "URL of the repository. When using SSH credentials to access must be in format ssh://git@github.com/stefanprodan/podinfo When using username/password must be in format https://github.com/stefanprodan/podinfo",
+          "x-intellij-html-description": "URL of the repository. When using SSH credentials to access must be in format ssh://git@github.com/stefanprodan/podinfo When using username/password must be in format https://github.com/stefanprodan/podinfo"
+        }
+      },
+      "preferredOrder": [
+        "url",
+        "secretRef"
+      ],
+      "additionalProperties": false,
+      "description": "defines the list of repositories to scan for profiles",
+      "x-intellij-html-description": "defines the list of repositories to scan for profiles"
+    },
+    "ScannedRepository": {
+      "properties": {
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "list of tags that have been scanned",
+          "x-intellij-html-description": "list of tags that have been scanned"
+        },
+        "url": {
+          "type": "string",
+          "description": "repository URL",
+          "x-intellij-html-description": "repository URL"
+        }
+      },
+      "preferredOrder": [
+        "url",
+        "tags"
+      ],
+      "additionalProperties": false,
+      "description": "contains the list of repositories that have been scanned and what tags have been processed",
+      "x-intellij-html-description": "contains the list of repositories that have been scanned and what tags have been processed"
+    },
+    "github.com|fluxcd|pkg|apis|meta.LocalObjectReference": {
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "of the referent",
+          "x-intellij-html-description": "of the referent"
+        }
+      },
+      "preferredOrder": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "description": "contains enough information to let you locate the referenced object inside the same namespace",
+      "x-intellij-html-description": "contains enough information to let you locate the referenced object inside the same namespace"
+    }
+  }
+}
