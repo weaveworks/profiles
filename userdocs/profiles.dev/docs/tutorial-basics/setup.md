@@ -93,7 +93,7 @@ Create a [personal access token](https://help.github.com/en/github/authenticatin
 on your GitHub account and export it:
 
 ```bash
-export GIT_TOKEN=<your token>
+export GITHUB_TOKEN=<your token>
 ```
 
 ## Get started!
