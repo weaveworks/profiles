@@ -41,20 +41,20 @@ type Repository struct {
 	// https://github.com/stefanprodan/podinfo
 	URL string `json:"url,omitempty"`
 	// The secret name containing the Git credentials.
-	// For HTTPS repositories the secret must contain username and password
+	// For HTTPS repositories the secret must contain `username` and `password`
 	// fields.
-	// For SSH repositories the secret must contain identity, identity.pub and
-	// known_hosts fields.
+	// For SSH repositories the secret must contain `identity`, `identity.pub` and
+	// `known_hosts` fields.
 	// +optional
 	SecretRef *meta.LocalObjectReference `json:"secretRef,omitempty"`
 }
 
 // ProfileCatalogEntry defines details about a given profile.
 type ProfileCatalogEntry struct {
-	// Tag
-	// +optional
 	// +kubebuilder:validation:Pattern=^([a-zA-Z\-]+\/)?(v)?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$
 
+	// Tag is the tag of the profile. Must be valid semver
+	// +optional
 	Tag string `json:"tag,omitempty"`
 	// CatalogSource is the name of the catalog the profile is listed in
 	// +optional
