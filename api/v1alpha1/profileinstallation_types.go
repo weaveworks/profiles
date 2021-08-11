@@ -51,11 +51,12 @@ type GitRepository struct {
 
 // Source defines the location of the profile
 type Source struct {
-	// ProfileURL is a fully qualified URL to a profile repo
+	// URL is a fully qualified URL to a profile repo
 	URL string `json:"url,omitempty"`
 
-	// Branch is the git repo branch containing the profile definition (default: main)
 	// +kubebuilder:default:=main
+
+	// Branch is the git repo branch containing the profile definition (default: main)
 	// +optional
 	Branch string `json:"branch,omitempty"`
 

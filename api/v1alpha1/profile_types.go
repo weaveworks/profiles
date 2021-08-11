@@ -35,13 +35,14 @@ const ProfileKind = "Profile"
 // ProfileDefinitionSpec defines the desired state of ProfileDefinition
 type ProfileDefinitionSpec struct {
 	ProfileDescription `json:",inline"`
-	// Artifacts is a list of Profile artifacts
+	// Artifacts is a list of Profile artifacts. An artifact can be one of chart,
+	// kustomize or profile
 	Artifacts []Artifact `json:"artifacts,omitempty"`
 }
 
 // ProfileDescription defines details about a given profile.
 type ProfileDescription struct {
-	// Profile description
+	// Description is a short description of the profile
 	Description string `json:"description,omitempty"`
 	// Maintainer is the name of the author(s)
 	// +optional
@@ -51,7 +52,7 @@ type ProfileDescription struct {
 	Prerequisites []string `json:"prerequisites,omitempty"`
 }
 
-// Artifact defines a bundled resource of the components for this profile.
+// Artifact defines a bundled resource of the components for this profile
 type Artifact struct {
 	// Name is the name of the Artifact
 	Name string `json:"name,omitempty"`
@@ -59,13 +60,13 @@ type Artifact struct {
 	// +optional
 	DependsOn []DependsOn `json:"dependsOn,omitempty"`
 	// Chart defines properties to access a remote chart.
-	// This is an optional value. It is ignored in case Path is defined.
+	// This is an optional value. It is ignored in case Path is defined
 	// +optional
 	Chart *Chart `json:"chart,omitempty"`
-	// Profiles defines properties to access a remote profile.
+	// Profile defines properties to access a remote profile
 	// +optional
 	Profile *Profile `json:"profile,omitempty"`
-	// Kustomize defines properties to for a kustomize artifact.
+	// Kustomize defines properties to for a kustomize artifact
 	// +optional
 	Kustomize *Kustomize `json:"kustomize,omitempty"`
 }
@@ -78,7 +79,7 @@ type DependsOn struct {
 
 // Kustomize defines properties to for a kustomize artifact.
 type Kustomize struct {
-	// Path is the local path to the Artifact in the Profile repo.
+	// Path is the local path to the Artifact in the Profile repo
 	Path string `json:"path,omitempty"`
 }
 
@@ -94,11 +95,11 @@ type Chart struct {
 	// +optional
 	Version string `json:"version,omitempty"`
 	// Path is the local path to the Artifact in the Profile repo.
-	// This is an optional value. If defined, it takes precedence over other Chart fields.
+	// This is an optional value. If defined, it takes precedence over other Chart fields
 	// +optional
 	Path string `json:"path,omitempty"`
 	// DefaultValues holds the default values for this Helm release Artifact.
-	// These can be overridden by the user, but will otherwise apply.
+	// These can be overridden by the user, but will otherwise apply
 	// +optional
 	DefaultValues string `json:"defaultValues,omitempty"`
 }

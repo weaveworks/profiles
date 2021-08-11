@@ -37,19 +37,20 @@ spec:
             description: ProfileDefinitionSpec defines the desired state of ProfileDefinition
             properties:
               artifacts:
-                description: Artifacts is a list of Profile artifacts
+                description: Artifacts is a list of Profile artifacts. An artifact
+                  can be one of chart, kustomize or profile
                 items:
                   description: Artifact defines a bundled resource of the components
-                    for this profile.
+                    for this profile
                   properties:
                     chart:
                       description: Chart defines properties to access a remote chart.
-                        This is an optional value. It is ignored in case Path is defined.
+                        This is an optional value. It is ignored in case Path is defined
                       properties:
                         defaultValues:
                           description: DefaultValues holds the default values for
                             this Helm release Artifact. These can be overridden by
-                            the user, but will otherwise apply.
+                            the user, but will otherwise apply
                           type: string
                         name:
                           description: Name defines the name of the chart at the remote
@@ -58,7 +59,7 @@ spec:
                         path:
                           description: Path is the local path to the Artifact in the
                             Profile repo. This is an optional value. If defined, it
-                            takes precedence over other Chart fields.
+                            takes precedence over other Chart fields
                           type: string
                         url:
                           description: URL is the URL of the Helm repository containing
@@ -85,19 +86,18 @@ spec:
                       type: array
                     kustomize:
                       description: Kustomize defines properties to for a kustomize
-                        artifact.
+                        artifact
                       properties:
                         path:
                           description: Path is the local path to the Artifact in the
-                            Profile repo.
+                            Profile repo
                           type: string
                       type: object
                     name:
                       description: Name is the name of the Artifact
                       type: string
                     profile:
-                      description: Profiles defines properties to access a remote
-                        profile.
+                      description: Profile defines properties to access a remote profile
                       properties:
                         source:
                           description: Source defines properties of the source of
@@ -117,15 +117,15 @@ spec:
                                 definition
                               type: string
                             url:
-                              description: ProfileURL is a fully qualified URL to
-                                a profile repo
+                              description: URL is a fully qualified URL to a profile
+                                repo
                               type: string
                           type: object
                       type: object
                   type: object
                 type: array
               description:
-                description: Profile description
+                description: Description is a short description of the profile
                 type: string
               maintainer:
                 description: Maintainer is the name of the author(s)
