@@ -66,13 +66,13 @@ Your GitOps repo is the one you synced to Flux in your cluster in the
 
 ```bash
 pctl add \
-  --profile-url <URL of profile to install> \
+  --profile-repo-url <URL of repo containing profile to install> \
   --create-pr \
   --pr-repo <gitops repo username or orgname>/<gitops repo name>
 ```
 
 Above we use the following flags:
-- `--profile-url`. This is the full git URL of the profile you wish to install on your cluster.
+- `--profile-repo-url`. This is the full URL of the repository containing the profile you wish to install on your cluster.
 - `--create-pr`. This directs `pctl` to open a PR against the main branch of your GitOps repo.
   _Note that this flag is only supported for GitHub._
 - `--pr-repo`. The partial URL of your GitOps repo synced to your cluster, in the format
@@ -88,11 +88,11 @@ Once you have run the command, navigate to your GitOps repo and approve and merg
 Flux will then sync the new files, and the profile will be applied to your cluster.
 
 :::info
-When installing a profile via its URL (i.e. when using the `--profile-url` flag)
+When installing a profile via its repository's URL (i.e. when using the `--profile-repo-url` flag)
 remember to check where the profile's `profile.yaml` file is located within
 the profile's source repository.
 
-Once discovered, you can set the relative path to this file using the `--profile-path` flag.
+Once discovered, you can set the relative path to this file using the `--profile-path` flag, which defaults to the root of the repository.
 :::
 
 ## Further configurations
@@ -107,7 +107,7 @@ and destination of your PR. For example, the following command will:
 
 ```bash
 pctl add \
-  --profile-url https://github.com/weaveworks/nginx-profile \
+  --profile-repo-url https://github.com/weaveworks/nginx-profile \
   --create-pr \
   --pr-repo drwho/thirteen \
   --out ethel \

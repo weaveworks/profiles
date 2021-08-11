@@ -26,7 +26,7 @@ _(A breakdown of each flag is provided below.)_
 
 ```bash
 pctl add \
-  --profile-url <URL of profile to add> \
+  --profile-repo-url <URL of repo containing profile to add> \
   --profile-path . \
   --create-pr \
   --pr-repo <gitops repo username or orgname>/<gitops repo name> \
@@ -34,9 +34,9 @@ pctl add \
 ```
 
 Above we use the following flags:
-- `--profile-url`. This is the full git URL of the profile you wish to install on your cluster.
+- `--profile-repo-url`. This is the full URL of the repository containing the profile you wish to install on your cluster.
   If you completed the previous section and wrote your own profile, you can use that here.
-  If you chose not to, you can use the following URL to a simple example profile which
+  If you chose not to, you can use the following URL to a repository containing a simple example profile which
   will install an NGINX server: https://github.com/weaveworks/nginx-profile
 - `--profile-path`. This is the relative path within the profile definition repo which contains the
   `profile.yaml`. Upstream profile repos can contain multiple profiles separated into
