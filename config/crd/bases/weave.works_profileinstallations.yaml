@@ -95,8 +95,7 @@ spec:
                     description: Tag is the git tag containing the profile definition
                     type: string
                   url:
-                    description: ProfileURL is a fully qualified URL to a profile
-                      repo
+                    description: URL is a fully qualified URL to a profile repo
                     type: string
                 type: object
             type: object

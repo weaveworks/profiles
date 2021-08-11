@@ -47,7 +47,7 @@ spec:
                         is listed in
                       type: string
                     description:
-                      description: Profile description
+                      description: Description is a short description of the profile
                       type: string
                     maintainer:
                       description: Maintainer is the name of the author(s)
@@ -62,6 +62,7 @@ spec:
                         type: string
                       type: array
                     tag:
+                      description: Tag is the tag of the profile. Must be valid semver
                       pattern: ^([a-zA-Z\-]+\/)?(v)?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$
                       type: string
                     url:
@@ -77,9 +78,9 @@ spec:
                   properties:
                     secretRef:
                       description: The secret name containing the Git credentials.
-                        For HTTPS repositories the secret must contain username and
-                        password fields. For SSH repositories the secret must contain
-                        identity, identity.pub and known_hosts fields.
+                        For HTTPS repositories the secret must contain `username`
+                        and `password` fields. For SSH repositories the secret must
+                        contain `identity`, `identity.pub` and `known_hosts` fields.
                       properties:
                         name:
                           description: Name of the referent
