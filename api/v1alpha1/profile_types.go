@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -101,7 +102,7 @@ type Chart struct {
 	// DefaultValues holds the default values for this Helm release Artifact.
 	// These can be overridden by the user, but will otherwise apply
 	// +optional
-	DefaultValues string `json:"defaultValues,omitempty"`
+	DefaultValues *apiextensionsv1.JSON `json:"defaultValues,omitempty"`
 }
 
 // Profile defines properties for accessing a profile

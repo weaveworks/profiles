@@ -51,7 +51,7 @@ spec:
                           description: DefaultValues holds the default values for
                             this Helm release Artifact. These can be overridden by
                             the user, but will otherwise apply
-                          type: string
+                          x-kubernetes-preserve-unknown-fields: true
                         name:
                           description: Name defines the name of the chart at the remote
                             repository

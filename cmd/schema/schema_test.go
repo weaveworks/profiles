@@ -45,7 +45,7 @@ var _ = Describe("Schema", func() {
 		Expect(json.Unmarshal([]byte(contents), &s)).To(Succeed())
 		Expect(s.Version).To(Equal("http://json-schema.org/draft-07/schema#"))
 		Expect(s.Definition).ToNot(BeNil())
-		Expect(s.Definitions).To(HaveLen(9))
+		Expect(s.Definitions).To(HaveLen(10))
 		// I considered checking each thing here, for ProfileDefinition and ProfileCatalogSource
 		// but then thought it might be a bit annoying when we add bits in the future?
 		// To me, checking that a schema is generated is enough IDK
