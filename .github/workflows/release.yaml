@@ -83,10 +83,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Get release doc content
         id: vars
-        run: echo ::set-output name=release_notes::$(cat docs/release_notes/${{ steps.prep.outputs.VERSION }}.md)
+        run: |
+          echo 'release_notes<<EOF' >> $GITHUB_ENV
+          cat docs/release_notes/${{ steps.prep.outputs.VERSION }}.md >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
       - name: Notify slack of new release
         uses: skarlso/slack-notification-action@28f5c1166e2fba7ed5a1d9ceaeb4f2c89a4e5bc5
         with:
           token: ${{ secrets.WEAVEWORKS_SLACK_PROFILESBOT_TOKEN }}
-          message: ":sparkles: A new release has been created for Profiles! :sparkles:\n\n${{ steps.vars.outputs.release_notes }}"
+          message: ":sparkles: A new release has been created for Profiles! :sparkles:\n\n${{ env.release_notes }}"
           channel: C01M9BYDE5U
