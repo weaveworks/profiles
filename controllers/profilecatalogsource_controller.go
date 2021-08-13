@@ -94,7 +94,7 @@ func (r *ProfileCatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl
 	if len(pCatalog.Spec.Profiles) > 0 {
 		logger.Info("updating catalog entries", "profiles", pCatalog.Spec.Profiles)
 		r.Profiles.AddOrReplace(pCatalog.Name, pCatalog.Spec.Profiles...)
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, r.updateStatus(ctx, req, profilesv1.ProfileCatalogSourceStatus{})
 	}
 
 	gitRepoManager := gitrepository.NewManager(ctx, pCatalog.Namespace, r.Client, r.timeout, r.interval)
