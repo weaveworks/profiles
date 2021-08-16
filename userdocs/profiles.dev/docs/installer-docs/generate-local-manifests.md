@@ -36,8 +36,8 @@ Consider the following installation:
 
 ```
 pctl add --git-repository flux-system/flux-system nginx-catalog/nginx/v2.0.1
-generating profile installation from source: catalog entry nginx-catalog/nginx/v2.0.1
-installation completed successfully
+► generating profile installation from source: catalog entry nginx-catalog/nginx/v2.0.1
+✔ installation completed successfully
 ```
 
 Let's take a look inside:
