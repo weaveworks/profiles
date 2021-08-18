@@ -55,6 +55,7 @@ You can then provide the name of your ConfigMap to the `add` command:
 
 ```bash
 pctl add \
+  --name <profile installation name> \
   --profile-repo-url <URL of repo containing profile to install> \
   --create-pr \
   --pr-repo <gitops repo username or orgname>/<gitops repo name> \
