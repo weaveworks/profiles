@@ -11,6 +11,7 @@ related flags.
 For example, using a profile URL:
 ```yaml
 pctl add \
+  --name <profile installation name> \
   --profile-repo-url <URL of repo containing profile to install> \
   --out <relative path>
 ```
@@ -28,6 +29,7 @@ Example generating from a profile listed in a catalog:
 
 ```yaml
 pctl add \
+  --name <profile installation name> \
   --out <relative path> \
   <catalog name>/<profile>
 ```
@@ -35,16 +37,16 @@ pctl add \
 Consider the following installation:
 
 ```
-pctl add --git-repository flux-system/flux-system nginx-catalog/nginx/v2.0.1
-► generating profile installation from source: catalog entry nginx-catalog/nginx/v2.0.1
-✔ installation completed successfully
+pctl add --name nginx-profile --git-repository flux-system/flux-system nginx-catalog/nginx/v2.0.1
+generating profile installation from source: catalog entry nginx-catalog/nginx/v2.0.1
+installation completed successfully
 ```
 
 Let's take a look inside:
 
 ```
-tree nginx
-nginx
+tree nginx-profile
+nginx-profile
 ├── artifacts
 │   └── bitnami-nginx
 │       ├── helm-chart

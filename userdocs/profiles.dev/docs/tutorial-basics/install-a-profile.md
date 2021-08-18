@@ -26,6 +26,7 @@ _(A breakdown of each flag is provided below.)_
 
 ```bash
 pctl add \
+  --name <profile installation name> \
   --profile-repo-url <URL of repo containing profile to add> \
   --profile-path . \
   --create-pr \
@@ -34,6 +35,7 @@ pctl add \
 ```
 
 Above we use the following flags:
+- `--name`. This is the name of the profile installation. The installation directory will be created using this name.
 - `--profile-repo-url`. This is the full URL of the repository containing the profile you wish to install on your cluster.
   If you completed the previous section and wrote your own profile, you can use that here.
   If you chose not to, you can use the following URL to a repository containing a simple example profile which

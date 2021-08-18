@@ -58,6 +58,7 @@ in the format of `<catalog name>/<profile name>`.
 
 ```bash
 pctl add \
+  --name <profile installation name> \
   --create-pr \
   --pr-repo <gitops repo username or orgname>/<gitops repo name> \
   nginx-catalog/bitnami-nginx
@@ -68,6 +69,7 @@ To install a specific version of a profile, simply add it to the end:
 
 ```bash
 pctl add \
+  --name <profile installation name> \
   --create-pr \
   --pr-repo <gitops repo username or orgname>/<gitops repo name> \
   nginx-catalog/bitnami-nginx/v0.0.2

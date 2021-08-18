@@ -66,12 +66,14 @@ Your GitOps repo is the one you synced to Flux in your cluster in the
 
 ```bash
 pctl add \
+  --name <name of the profile installation> \
   --profile-repo-url <URL of repo containing profile to install> \
   --create-pr \
   --pr-repo <gitops repo username or orgname>/<gitops repo name>
 ```
 
 Above we use the following flags:
+- `--name`. This is the name of the profile installation. The installation directory will be created using this name.
 - `--profile-repo-url`. This is the full URL of the repository containing the profile you wish to install on your cluster.
 - `--create-pr`. This directs `pctl` to open a PR against the main branch of your GitOps repo.
   _Note that this flag is only supported for GitHub._
@@ -107,6 +109,7 @@ and destination of your PR. For example, the following command will:
 
 ```bash
 pctl add \
+  --name pctl-profile \
   --profile-repo-url https://github.com/weaveworks/nginx-profile \
   --create-pr \
   --pr-repo drwho/thirteen \
