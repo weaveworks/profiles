@@ -29,7 +29,7 @@ Example generating from a profile listed in a catalog:
 
 ```yaml
 pctl add \
-  --name pctl-profile \
+  --name <profile installation name> \
   --out <relative path> \
   <catalog name>/<profile>
 ```
