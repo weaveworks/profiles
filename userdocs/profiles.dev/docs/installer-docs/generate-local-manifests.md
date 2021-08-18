@@ -11,7 +11,7 @@ related flags.
 For example, using a profile URL:
 ```yaml
 pctl add \
-  --name pctl-profile \
+  --name <profile installation name> \
   --profile-repo-url <URL of repo containing profile to install> \
   --out <relative path>
 ```
