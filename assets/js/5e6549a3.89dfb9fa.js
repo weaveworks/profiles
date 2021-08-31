@@ -1,0 +1,1 @@
+(self.webpackChunkprofiles_dev=self.webpackChunkprofiles_dev||[]).push([[2167],{9415:function(s){"use strict";s.exports=JSON.parse('{"allTagsPath":"/blog/tags","slug":"/blog/tags/mlops","name":"mlops","count":1,"permalink":"/blog/tags/mlops"}')}}]);

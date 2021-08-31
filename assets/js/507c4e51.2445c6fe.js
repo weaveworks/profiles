@@ -1,0 +1,1 @@
+(self.webpackChunkprofiles_dev=self.webpackChunkprofiles_dev||[]).push([[3833],{284:function(s){"use strict";s.exports=JSON.parse('{"allTagsPath":"/blog/tags","slug":"/blog/tags/gitops","name":"gitops","count":1,"permalink":"/blog/tags/gitops"}')}}]);

@@ -13,5 +13,8 @@
         <link href="https://docs.profiles.dev/blog/mlops-profile"/>
         <updated>2021-08-04T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[“Profiles” is a GitOps-native package management system, which allows you to apply a Profile to add a set of capabilities to your GitOps-enabled cluster.  Here’s a quick tutorial on how to provision a cluster, install Weave GitOps and apply the MLOps profile to enable Kubeflow Pipeline for your cluster. To try this setup, we strongly recommend that you use Kind as a local cluster on your laptop.]]></summary>
+        <author>
+            <name>Chanwit Kaewkasi</name>
+        </author>
     </entry>
 </feed>
