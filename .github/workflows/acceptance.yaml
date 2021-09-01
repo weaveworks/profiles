@@ -1,11 +1,7 @@
 name: Acceptance
 
 on:
-  pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - 'userdocs/**'
-      - 'examples/**'
+  pull_request: {}
 
 jobs:
   test:
