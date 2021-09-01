@@ -176,5 +176,5 @@ Likewise, removing a catalog source, and its profiles, is also straightforward:
 $ kubectl delete -f manual-catalog-source.yaml
 $ kubectl delete -f dynamic-catalog-source.yaml
 $ pctl get --catalog
-✗ No profiles found
+✗ No available catalog profiles found.
 ```
