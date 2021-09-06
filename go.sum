@@ -234,8 +234,8 @@ github.com/fatih/camelcase v1.0.0/go.mod h1:yN2Sb0lFhZJUdVvtELVWefmrXpuZESvPmqwo
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fluxcd/helm-controller/api v0.11.2 h1:IpzGEexjEa9DttikHF40kHFORhsxAeD2Z6SN6BZBA6o=
 github.com/fluxcd/helm-controller/api v0.11.2/go.mod h1:gLPpLa8NMQJ+b4pwP/sExAPkGdFWO1CKIh1Uu82O2gM=
-github.com/fluxcd/kustomize-controller/api v0.13.3 h1:DxKLEUAyYQ0GeKycC4pQSF1gfDyUEpGCLgaeMTVNSbg=
-github.com/fluxcd/kustomize-controller/api v0.13.3/go.mod h1:3RNiEd/XnYjSTGzMqDzDbQkOYpdPFrKuS+XdgWt9pds=
+github.com/fluxcd/kustomize-controller/api v0.14.0 h1:M2i7y8I3DZUlrNDzfxwVxVBrPkB+sQrPAyVtw6OTu9E=
+github.com/fluxcd/kustomize-controller/api v0.14.0/go.mod h1:3RNiEd/XnYjSTGzMqDzDbQkOYpdPFrKuS+XdgWt9pds=
 github.com/fluxcd/pkg/apis/kustomize v0.1.0/go.mod h1:gEl+W5cVykCC3RfrCaqe+Pz+j4lKl2aeR4dxsom/zII=
 github.com/fluxcd/pkg/apis/kustomize v0.2.0 h1:jhu2QHvs+j3Zo9rR6w8hkO3LSC6h3M37zY5ejufOmxY=
 github.com/fluxcd/pkg/apis/kustomize v0.2.0/go.mod h1:gEl+W5cVykCC3RfrCaqe+Pz+j4lKl2aeR4dxsom/zII=
