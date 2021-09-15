@@ -7,10 +7,3 @@ updates:
     labels:
     - "skip-release-notes"
     - "dependencies"
-  - package-ecosystem: "npm"
-    directory: "userdocs/profiles.dev"
-    schedule:
-      interval: "weekly"
-    labels:
-    - "skip-release-notes"
-    - "dependencies"

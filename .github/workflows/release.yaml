@@ -87,6 +87,12 @@ jobs:
           echo 'release_notes<<EOF' >> $GITHUB_ENV
           cat docs/release_notes/${{ steps.prep.outputs.VERSION }}.md >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
+      - name: Build Profiles Userdocs
+        uses: peter-evans/repository-dispatch@0e8ca8c8a5ca5e28d25af2c27fc5aa40f16cffca
+        with:
+          token: ${{ secrets.WEAVEWORKS_PROFILES_USERDOC_DISPATCH_TOKEN }}
+          event-type: profiles-release
+          repository: weaveworks/profiles-userdocs
       - name: Notify slack of new release
         uses: skarlso/slack-notification-action@28f5c1166e2fba7ed5a1d9ceaeb4f2c89a4e5bc5
         with:
