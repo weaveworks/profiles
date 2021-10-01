@@ -17,7 +17,7 @@ spec:
       profile:
         source:
           url: # required: fully qualified URL to the nested profile repository
-          branch: # optional: the repo branch if the profile is somewhere other than `main`
+          branch: # optional: the repo branch 
           path: # optional: the relative path to a profile's directory within the repo
           tag: # optional: the tag of the profile
     # ...
