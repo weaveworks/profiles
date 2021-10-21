@@ -246,8 +246,8 @@ github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5Kwzbycv
 github.com/felixge/httpsnoop v1.0.1/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/fluxcd/helm-controller/api v0.12.0 h1:68GKGZ5dHvOt4rx6gwQaOGliUksv7F/q8JQo2c0Tcis=
 github.com/fluxcd/helm-controller/api v0.12.0/go.mod h1:zWmzV0s2SU4rEIGLPTt+dsaMs40OsNQgSgOATgJmxB0=
-github.com/fluxcd/kustomize-controller/api v0.15.2 h1:6MEt9ke7eQeRZsFPv+OzPeXuURS9axCIFgV3KopDOmo=
-github.com/fluxcd/kustomize-controller/api v0.15.2/go.mod h1:OhnZuXBeDl4NqbDZgpYKRg8nmsmeUIddH3vX8wxym9A=
+github.com/fluxcd/kustomize-controller/api v0.16.0 h1:L/LRxS6oroGZe1AdElP3k1mnNIKGCpi0ntgHwJzdNYY=
+github.com/fluxcd/kustomize-controller/api v0.16.0/go.mod h1:OhnZuXBeDl4NqbDZgpYKRg8nmsmeUIddH3vX8wxym9A=
 github.com/fluxcd/pkg/apis/kustomize v0.1.0/go.mod h1:gEl+W5cVykCC3RfrCaqe+Pz+j4lKl2aeR4dxsom/zII=
 github.com/fluxcd/pkg/apis/kustomize v0.2.0 h1:jhu2QHvs+j3Zo9rR6w8hkO3LSC6h3M37zY5ejufOmxY=
 github.com/fluxcd/pkg/apis/kustomize v0.2.0/go.mod h1:gEl+W5cVykCC3RfrCaqe+Pz+j4lKl2aeR4dxsom/zII=
