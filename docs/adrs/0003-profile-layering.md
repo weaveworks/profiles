@@ -32,6 +32,9 @@ Support Helm Chart [annotation](https://helm.sh/docs/topics/charts/#the-chartyam
 The `weave.works/layer` indicates that a Profile chart should be applied in a
 specific layer.
 
+The idea is that we'd order the selected profiles by their layer, and then setup
+the HelmRelease dependencies based on the layer ordering.
+
 For example, with the following two Profile charts.
 
 
@@ -94,10 +97,27 @@ spec:
 The layers are sorted lexicographically, which provides flexibility in naming,
 but we can determine a recommended layer naming strategy for co-ordinated use.
 
+The names of the layers are not significant, other than for determining the
+ordering of the dependencies.
+
+Given a set of profiles with layers:
+
+ * layer-0
+ * layer-1
+ * layer-2
+
+This would result in installation with dependencies:
+
+ layer-2 profiles _depend on_ layer-1 profiles, which _depend on_ layer-0
+profiles.
+
 ## Profiles without layers
 
 Profiles without explicit layers should be configured to depend on the
 last-to-be-applied layer.
+
+In the above example, any profiles being installed with no layer would be
+configured to depend on layer-2.
 
 ## Alternatives
 
