@@ -1,3 +1,5 @@
+# Archived. Profiles work has moved to https://github.com/weaveworks/weave-gitops
+
 # profiles
 Gitops native package management.
 
