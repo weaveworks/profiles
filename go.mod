@@ -5,7 +5,7 @@ go 1.16
 require (
 	cloud.google.com/go v0.81.0 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1
-	github.com/fluxcd/helm-controller/api v0.12.0
+	github.com/fluxcd/helm-controller/api v0.14.1
 	github.com/fluxcd/kustomize-controller/api v0.16.0
 	github.com/fluxcd/pkg/apis/meta v0.10.1
 	github.com/fluxcd/pkg/version v0.1.0
